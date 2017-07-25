@@ -1,0 +1,1 @@
+Directory for storing fMRI data from various experimental sessions.

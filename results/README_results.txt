@@ -1,0 +1,1 @@
+Directory for storing final results of analyses. 
