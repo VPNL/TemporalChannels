@@ -91,28 +91,28 @@ Fitting a model using `model_roi.m` requires passing at least three input argume
 After fitting the model in each session individually, the function plots the average measured vs. predicted responses for each trial type and returns two outputs: 
 
 1. *roi* — object of the class `ROI` that stores fMRI data and model predictions for the region of interest.
-    1. `roi(1).run_tcs` — stores run time series for *fit_exps* (`roi(2).run_tcs` for *val_exps* if applicable)
-    2. `roi(1).trial_tcs` — stores trial time series for *fit_exps* (`roi(2).trial_tcs` for *val_exps* if applicable)
-    3. Model fit and quantification of performance are stored in `roi(1).model`
+    1. `roi(1).runs` — stores run time series for *fit_exps* (`roi(2).runs` for *val_exps* if applicable)
+    2. `roi(1).trials` —  stores trial time series for *fit_exps* (`roi(2).trials` for *val_exps* if applicable)
+    3. `roi(1).model` — stores model fit and quantification of performance
     4. See properties in `ROI.m` class file for more details
 2. *model* — object of the class `ModelTS` that stores run and trial predictors for each session.
-    1. Run predictors are stored in `model(1).run_preds` for *fit_exps* (and in `model(2).run_preds` for *val_exps* if applicable)
-    2. Trial predictors are stored in `model(1).trial_preds` for *fit_exps* (and in `model(2).trial_preds` for *val_exps* if applicable)
-    3. Impulse response functions are stored in `model(1).irfs`
-    4. Model parameters are stored in `model(1).params`
+    1. `model(1).run_preds` — stores run predictors for *fit_exps* (`model(2).run_preds` for *val_exps* if applicable)
+    2. `model(1).trial_preds` — stores trial predictors for *fit_exps* (`model(2).trial_preds` for *val_exps* if applicable)
+    3. `model(1).irfs` — stores impulse response functions
+    4. `model(1).params` — stores model parameters
     5. See properties in `ModelTS.m` class file for more details
 
-By default, the function saves the outputs of each execution of the function in `~/TemporalChannels/results/`. 
+By default, outputs are saved in `~/TemporalChannels/results/`. 
 
 ## Example code
 
 ### Using the model_roi function
 
-Example of fitting the 2 temporal-channel model using V1 data from Exp1:
+Example of fitting the 2 temporal-channel model using V1 data from Exp1 & Exp2:
 
-    [roi, model] = model_roi(‘V1', '2ch', ‘Exp1’);
+    [roi, model] = model_roi(‘V1', '2ch', {‘Exp1’ 'Exp2'});
 
-Example of fitting the standard model using V1 data from Exp1/Exp2 and validating on V1 data from Exp3:
+Example of fitting the standard model using V1 data from Exp1 & Exp2 and validating on V1 data from Exp3:
 
     [roi, model] = model_roi(‘V1', 'standard', {‘Exp1’ 'Exp2'}, 'Exp3');
 
@@ -122,9 +122,9 @@ The `ModelTS.m` class file defines a class of objects that store predictors for 
 
 Example of creating predictors using a ModelTS object (`model`): 
 
-    model_type = '2ch';                              % type of model to use
+    model_type = '2ch';                              % specify the type of model to use
     fit_exps = {'Exp1' 'Exp2'};                      % list of experiments for fitting
-    sessions = roi.sessions;                         % list of sessions to model
+    sessions = roi.sessions;                         % list of sessions to model (see below)
     model = ModelTS(model_type, fit_exps, sessions); % setup ModelTS object
     model = code_stim(model);                        % code the timing of stimuli 
     model = pred_runs(model);                        % generate run predictors

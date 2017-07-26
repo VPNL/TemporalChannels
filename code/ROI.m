@@ -1,6 +1,6 @@
 % Stores and operates on fMRI time series of an ROI across multiple scan
-% scan sessions. Used with ModelTS object to fit and validate different 
-% temporal encoding models in each participant with a given ROI. 
+% sessions. Used with ModelTS object to fit and validate various temporal
+% encoding models in each participant with a given ROI. 
 % 
 % CONSTRUCTOR INPUTS
 %   1) name: name of ROI to model (e.g., 'V2')
@@ -267,7 +267,7 @@ classdef ROI
             roi.trials = trials;
         end
         
-        % use GLM to fit amplitudes for each predictor in model
+        % use GLM to fit weights for each predictor in model
         function [roi, model] = tc_fit(roi, model, optimize_flag)
             if nargin < 3
                 optimize_flag = 0;
