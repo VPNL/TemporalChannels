@@ -1,5 +1,5 @@
 # TemporalChannels
-Framework for modeling fMRI responses to time-varying stimuli using a temporal channels approach.
+Code for modeling fMRI responses to time-varying stimuli using a temporal channels approach.
 * * *
 *Technical notes:*
 - The code in this repository is compatible with MATLAB R2015a and later versions. 
