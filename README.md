@@ -16,6 +16,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
     1. [Using the model_roi function](#using-the-model_roi-function)
     2. [Using ModelTS class methods](#using-modelts-class-methods)
     3. [Using ROI class methods](#using-roi-class-methods)
+    4. [Using Voxel class methods](#using-voxel-class-methods)
 * * *
 ## Instructions
 
@@ -197,3 +198,15 @@ Plot mean response to each trial type across all sessions:
 Plot response vs. model prediction for each run in individual sesssions:
 
     fig = plot_model(roi);
+
+### Using Voxel class methods
+
+The `Voxel.m` class file defines a class of objects that store and operate on fMRI time series in each voxel using the methods listed in the example below.
+
+Example of fitting a model to a Voxel object (`vox`): 
+
+    fit_exps = {'Exp1' 'Exp2'};                      % list of experiments for fitting
+    vox = Voxel(fit_exps);                           % setup Voxel object for all sessions
+    vox = tc_runs(vox);                              % preprocess run time series
+    vox = tc_trials(vox, model);                     % compile responses to each trial
+    vox = tc_fit(vox, model);                        % fit model for each voxel

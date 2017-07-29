@@ -8,8 +8,9 @@ function all_sessions = find_sessions(project_dir)
 % AS 5/2017
 
 data_dirs = dir(fullfile(project_dir, 'data'));
-all_sessions = {data_dirs.name};
+all_sessions = {data_dirs([data_dirs.isdir]).name};
 all_sessions(ismember(all_sessions, {'.' '..'})) = [];
+
 if isempty(all_sessions)
     error('No sessions found in data directory.');
 end

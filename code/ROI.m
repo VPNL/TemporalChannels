@@ -1,7 +1,7 @@
 % Stores and operates on fMRI time series of an ROI across multiple scan
 % sessions. Used with ModelTS object to fit and validate various temporal
-% encoding models in each participant with a given ROI. 
-% 
+% encoding models in each participant with a given ROI.
+%
 % CONSTRUCTOR INPUTS
 %   1) name: name of ROI to model (e.g., 'V2')
 %   2) exps: list of experiments to model (e.g., {'Exp1' 'Exp2'})
@@ -15,7 +15,7 @@
 %   plot_exps -- plots comparison of trial responses across experiments
 %   plot_model -- plots measured vs. predicted reponses for each trial type
 %   recompute -- validates model solution on indpendent data
-% 
+%
 % Example model fitting steps ("model" is a ModelTS object):
 %   roi = ROI('V1', {'Exp1' 'Exp2'})
 %   roi = tc_runs(roi)
@@ -23,7 +23,7 @@
 %   roi = tc_fit(roi, model)
 %   roi = tc_pred(roi, model)
 %   fig = plot_model(roi)
-% 
+%
 % AS 2/2017
 
 classdef ROI
@@ -155,14 +155,14 @@ classdef ROI
             end
         end
         
-        % average run time series across all voxels in each ROI 
+        % average run time series across all voxels in each ROI
         function run_avgs = get.run_avgs(roi)
             run_avgs = cellfun(@(x) mean(x, 2), roi.runs, 'uni', false);
             empty_mats = cellfun(@isempty, run_avgs);
             run_avgs(empty_mats) = {[]};
         end
         
-        % average trial time series across all voxels in each ROI 
+        % average trial time series across all voxels in each ROI
         function trial_avgs = get.trial_avgs(roi)
             trial_avgs = cellfun(@(x) mean(x, 2), roi.trials, 'uni', false);
         end
@@ -275,12 +275,13 @@ classdef ROI
             check_model(roi, model);
             nruns_max = size(model.run_preds, 1); % max number of runs
             nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
+            sessions = roi.sessions;
             % concatenate data and preds across all runs in each session
-            for ss = 1:length(roi.sessions)
+            for ss = 1:length(sessions)
                 predictors = []; tc = [];
                 for rr = 1:nruns(ss)
                     [nframes, npreds] = size(model.run_preds{rr, ss});
-                    pred = zeros(nframes, npreds + nruns(ss)); 
+                    pred = zeros(nframes, npreds + nruns(ss));
                     pred(:, 1:npreds) = model.run_preds{rr, ss};
                     pred(:, npreds + rr) = 1; % add nuisance run regressors
                     predictors = [predictors; pred];
@@ -299,31 +300,36 @@ classdef ROI
             % optimize model parameters if applicable
             omodels = {'cts' 'cts-norm' 'dcts' '2ch-cts' '2ch-dcts' '3ch'};
             if optimize_flag && sum(strcmp(model.type, omodels))
-                % load grid search results if saved, otherwise compute
-                fname = ['grid_search_' roi.nickname '_' model.type '.mat'];
-                fpath = fullfile(roi.project_dir, 'tmp', fname);
-                if exist(fpath, 'file') == 2
-                    fprintf('Loading grid search results. \n');
-                    load(fpath);
-                else
-                    [rois, models] = grid_search(roi, model, 3);
-                    save(fpath, 'rois', 'models', '-v7.3');
+                param_names = fieldnames(model.params);
+                for ss = 1:length(sessions)
+                    % load grid search results if saved, otherwise compute
+                    fname = ['grid_search_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fpath = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname);
+                    if exist(fpath, 'file') == 2
+                        fprintf('Loading grid search results. \n');
+                        load(fpath);
+                    else
+                        [rois, models] = grid_search(roi, model, ss, 5);
+                        save(fpath, 'rois', 'models', '-v7.3');
+                    end
+                    % load grad desc results if saved, otherwise compute
+                    fname = ['grad_desc_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fpath = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname);
+                    if exist(fpath, 'file') == 2
+                        fprintf('Loading gradient descent results. \n');
+                        load(fpath);
+                    else
+                        [rois, models] = optimize_fit(rois, models);
+                        save(fpath, 'rois', 'models', '-v7.3');
+                    end
+                    for pp = 1:length(param_names)
+                        model.params.(param_names{pp}){ss} = models.params.(param_names{pp}){1};
+                        model = update_param(model, param_names{pp}, 0);
+                    end
+                    model = pred_runs(model);
+                    model = pred_trials(model);
+                    [roi, model] = tc_fit(roi, model, 0);
                 end
-                % load grad desc results if saved, otherwise compute
-                fname = ['grad_desc_' roi.nickname '_' model.type '.mat'];
-                fpath = fullfile(roi.project_dir, 'tmp', fname);
-                if exist(fpath, 'file') == 2
-                    fprintf('Loading gradient descent results. \n');
-                    load(fpath);
-                else
-                    [rois, models] = optimize_fit(rois, models);
-                    save(fpath, 'rois', 'models', '-v7.3');
-                end
-                model.params = models.params;
-                model.irfs = models.irfs;
-                model = pred_runs(model);
-                model = pred_trials(model);
-                [roi, model] = tc_fit(roi, model, 0);
             end
             % carry over model parameters to roi model struct
             roi.model.type = model.type;
@@ -381,7 +387,7 @@ classdef ROI
                             else
                                 roi.pred{cc, ss, ee} = fmriS + fmriT;
                             end
-                        % if using single-channel model
+                            % if using single-channel model
                         else
                             % find beta values
                             amp = roi.model.betas{ss}(1:ncats);
@@ -479,7 +485,7 @@ classdef ROI
             nexps = length(roi.experiments);
             sessions = roi.sessions; nsess = length(sessions);
             npreds = length(roi.model.betas{1});
-            xlabs = label_preds(roi.model);            
+            xlabs = label_preds(roi.model);
             amps = reshape([roi.model.betas{:}], npreds, [])';
             R2 = [roi.model.varexp{:}];
             % setup figure

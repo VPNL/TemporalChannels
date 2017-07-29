@@ -53,8 +53,8 @@ model(1) = ModelTS(type, exps_fit, roi(1).sessions);
 fprintf('Coding the stimulus...\n')
 model(1) = code_stim(model(1));
 fprintf('Generating predictors...\n')
-model(1) = run_preds(model(1));
-model(1) = trial_preds(model(1));
+model(1) = pred_runs(model(1));
+model(1) = pred_trials(model(1));
 
 % fit ModelTS to ROI
 fprintf('Extracting trial time series...\n')
@@ -73,8 +73,8 @@ if cv_flag
     roi(2) = tc_runs(roi(2));
     model(2) = ModelTS(type, exps_val, roi(2).sessions);
     model(2) = code_stim(model(2));
-    model(2) = run_preds(model(2));
-    model(2) = trial_preds(model(2));
+    model(2) = pred_runs(model(2));
+    model(2) = pred_trials(model(2));
     % setup model struct by fitting model directly to data
     roi(2) = tc_trials(roi(2), model(2));
     [roi(2), model(2)] = tc_fit(roi(2), model(2));
@@ -91,7 +91,6 @@ plot_model(roi(1));
 
 % plot cross-validated predictions for test_exps if applicable
 if cv_flag; plot_model(roi(2)); end
-
 
 %% Save results
 fname = [roi(1).nickname '_' roi(1).model.type '_fit' [roi(1).experiments{:}]];
