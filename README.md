@@ -34,14 +34,17 @@ To work with your own dataset, create a separate directory for each experimental
 
 ### Generating stimulus timing parameter files
 
-An example stimulus timing parameter file is available here: https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp1_Run1.txt
+Example stimulus timing parameter files are available here: 
+https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp1_Run1.txt
+https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp2_Run1.txt
+https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp3_Run1.txt
 
 #### Header information
 
 Line 1 contains the name of the experiment followed by a list of all trial types (e.g., `Exp1: TrialA, TrialB, TrialC`). 
-  - “Trials” are structured periods of stimulus presentation within a run, which are separated by prolonged baseline periods (ideally ≥12 s) that mark transitions between different conditions that repeat throughout the experiment and across sessions. 
-  - The overall duration and number of stimuli in a trial can vary across trial types, but the timing of stimulus presentations and sequence of stimulus categories must be identical across trials of the same type. 
-  - Note that trial segmentation does not affect the fit of the model but will affect noise ceiling estimation and visualization. 
+- “Trials” are structured periods of stimulus presentation within a run, which are separated by prolonged baseline periods (ideally ≥12 s) that mark transitions between different conditions that repeat throughout the experiment and across sessions. 
+- The overall duration and number of stimuli in a trial can vary across trial types, but the timing of stimulus presentations and sequence of stimulus categories must be identical across trials of the same type. 
+- Note that trial segmentation does not affect the fit of the model but will affect noise ceiling estimation and visualization. 
 
 Line 2 contains the the total duration of the run in seconds (e.g., `Run duration (s): 300`). 
 
@@ -80,10 +83,10 @@ Fitting a model using `model_roi.m` requires passing at least three input argume
 1. *name* — name of a region of interest (e.g., `'V1'`) in the session ROI directories (i.e., `~/TemporalChannels/data/*/ROIs/`). 
 
 2. *type* — label indicating which model to use for predicting responses. 
-    1. `‘standard’` — standard linear systems approach for analyzing fMRI data
-    2. `‘htd’` — hemodynamic temporal derivative model (HTD) proposed by Henson et al. (2002)
-    3. `‘cts’` — compressive temporal summation model (CTS) proposed by Zhou et al. (2017)
-    4. `‘2ch’` — 2 temporal-channel model proposed by Stigliani et al. (2017)
+    1. `‘standard’` — standard linear systems approach for analyzing fMRI data (Boynton et al., 1996)
+    2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
+    3. `‘cts’` — compressive temporal summation model (Zhou et al., 2017)
+    4. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
 
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (i.e., `~/TemporalChannels/data/*/Stimuli/`). 
 
