@@ -1,1 +1,0 @@
-Directory for temporarily storing intermediate analysis stages. 
