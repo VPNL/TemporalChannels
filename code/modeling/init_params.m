@@ -25,7 +25,7 @@ function [params, irfs] = init_params(model_type, nsess, fs)
 if nargin ~= 3
     error('Unexpected input arguements.');
 end
-hrf = spm_hrf(1 / fs, [5 14 28]);
+hrf = canonical_hrf(1 / fs, [5 14 28]);
 dhrf = [diff(hrf); 0]; dhrf = dhrf * (max(hrf) / max(dhrf));
 e = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 params = struct; irfs = struct;

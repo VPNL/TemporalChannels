@@ -26,7 +26,7 @@ To work with the example dataset, download the [archive](http://vpnl.stanford.ed
 
 To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Each session directory should contain the following subdirectories: 
 
-1. *ROIs* – stores `*.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a set of predefined regions of interest. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
+1. *ROIs* – stores `*.mat` files sorted by region/experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a predefined regions of interest. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
 
 2. *Voxels* – stores `*.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a group of experimental sessions. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
 
@@ -188,6 +188,7 @@ Example of fitting a model to a ROI object (`roi`):
     roi = ROI(roi_name, fit_exps);                   % setup ROI object
     roi = tc_runs(roi);                              % preprocess run time series
     roi = tc_trials(roi, model);                     % compile responses to each trial
+    roi = tc_noise_ceil(roi);                        % estimate noise ceiling for each region
     roi = tc_fit(roi, model);                        % fit model for each session
     roi = tc_pred(roi, model);                       % predict responses for each trial type
 

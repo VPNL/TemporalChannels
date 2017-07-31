@@ -39,10 +39,11 @@ classdef ROI
     end
     
     properties (Hidden)
-        runs = {};      % voxel responses for each run (TRs, voxels)
-        trials = {};    % voxel responses for each trial type (TRs, voxels)
-        baseline = {}   % mean baseline response across all trial types
-        isessions = {}; % user-specified session list (optional)
+        runs = {};        % responses for each run (TR x voxel)
+        trials = {};      % responses for each trial type (TR x voxel)
+        baseline = {};    % mean baseline response across all trial types
+        noise_ceils = {}; % estiamte of noice ceiling for each experiment
+        isessions = {};   % user-specified session list (optional)
     end
     
     properties (Constant, Hidden)
@@ -265,6 +266,21 @@ classdef ROI
                 end
             end
             roi.trials = trials;
+        end
+        
+        % estimate noise ceiling for each ROI using inter-trial variability
+        function roi = tc_noise_ceil(roi)
+            trials = roi.trials;
+            trials_avg = cellfun(@(X) mean(X, 2), trials, 'uni', false);
+            trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), trials, trials_avg, 'uni', false);
+            trials_err = cellfun(@(X) sum(sum(X .^ 2)), trials_err, 'uni', false);
+            total_err = []; total_var = []; ceils = [];
+            for ss = 1:size(trials, 2)
+                total_err(ss) = sum([trials_err{:, ss}]);
+                trials_var = vertcat(trials{:, ss}) - mean(mean(vertcat(trials{:, ss})));
+                total_var(ss) = sum(sum(trials_var .^ 2));
+                roi.noise_ceils{ss} = 1 - (total_err / total_var);
+            end
         end
         
         % use GLM to fit weights for each predictor in model
