@@ -195,13 +195,17 @@ Example of fitting a model to a ROI object (`roi`):
     roi = tc_fit(roi, model);      % fit model for each session
     roi = tc_pred(roi, model);     % predict responses for each trial type
 
-Plot mean response to each trial type across all sessions:
+Plot mean response across all sessions for each trial type in experiments:
 
     fig = plot_exps(roi);
 
-Plot response vs. model prediction for each run in individual sesssions:
+Plot mean response vs. model prediction across all sesssions for each trial type:
 
     fig = plot_model(roi);
+
+Plot response vs. model prediction in individual sesssions for each run:
+
+    fig = plot_runs(roi);
 
 ### Using Voxel class methods
 
