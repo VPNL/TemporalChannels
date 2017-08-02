@@ -172,13 +172,13 @@ The `ModelTS.m` class file defines a class of objects that store predictors for 
 
 Example of creating predictors using a ModelTS object (`model`): 
 
-    model_type = '2ch';                              % specify the type of model to use
-    fit_exps = {'Exp1' 'Exp2'};                      % list of experiments for fitting
-    sessions = roi.sessions;                         % list of sessions to model (see below)
-    model = ModelTS(model_type, fit_exps, sessions); % setup ModelTS object
-    model = code_stim(model);                        % code the timing of stimuli 
-    model = pred_runs(model);                        % generate run predictors
-    model = pred_trials(model);                      % generate trial predictors
+    type = '2ch';                              % specify the type of model to use
+    fit_exps = {'Exp1' 'Exp2'};                % list of experiments for fitting
+    sessions = roi.sessions;                   % list of sessions to model (see below)
+    model = ModelTS(type, fit_exps, sessions); % setup ModelTS object
+    model = code_stim(model);                  % code the timing of stimuli 
+    model = pred_runs(model);                  % generate run predictors
+    model = pred_trials(model);                % generate trial predictors
 
 ### Using ROI class methods
 
@@ -186,14 +186,14 @@ The `ROI.m` class file defines a class of objects that store and operate on fMRI
 
 Example of fitting a model to a ROI object (`roi`): 
 
-    roi_name = 'V1';                                 % name of region to model
-    fit_exps = {'Exp1' 'Exp2'};                      % list of experiments for fitting
-    roi = ROI(roi_name, fit_exps);                   % setup ROI object
-    roi = tc_runs(roi);                              % preprocess run time series
-    roi = tc_trials(roi, model);                     % compile responses to each trial
-    roi = tc_noise_ceil(roi);                        % estimate noise ceiling for each region
-    roi = tc_fit(roi, model);                        % fit model for each session
-    roi = tc_pred(roi, model);                       % predict responses for each trial type
+    roi_name = 'V1';               % name of region to model
+    fit_exps = {'Exp1' 'Exp2'};    % list of experiments for fitting
+    roi = ROI(roi_name, fit_exps); % setup ROI object
+    roi = tc_runs(roi);            % preprocess run time series
+    roi = tc_trials(roi, model);   % compile responses to each trial
+    roi = tc_noise_ceil(roi);      % estimate noise ceiling for each region
+    roi = tc_fit(roi, model);      % fit model for each session
+    roi = tc_pred(roi, model);     % predict responses for each trial type
 
 Plot mean response to each trial type across all sessions:
 
@@ -209,8 +209,8 @@ The `Voxel.m` class file defines a class of objects that store and operate on fM
 
 Example of fitting a model to a Voxel object (`vox`): 
 
-    fit_exps = {'Exp1' 'Exp2'};                      % list of experiments for fitting
-    vox = Voxel(fit_exps);                           % setup Voxel object for all sessions
-    vox = tc_runs(vox);                              % preprocess run time series
-    vox = tc_trials(vox, model);                     % compile responses to each trial
-    vox = tc_fit(vox, model);                        % fit model for each voxel
+    fit_exps = {'Exp1' 'Exp2'};  % list of experiments for fitting
+    vox = Voxel(fit_exps);       % setup Voxel object for all sessions
+    vox = tc_runs(vox);          % preprocess run time series
+    vox = tc_trials(vox, model); % compile responses to each trial
+    vox = tc_fit(vox, model);    % fit model for each voxel
