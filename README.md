@@ -30,7 +30,7 @@ To work with your own dataset, create a separate directory for each experimental
 
 2. *Voxels* – contains `*.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a scan session. Each run of data is formatted as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). This data is used for fitting model to the response of each voxel in a fMRI volume separately. 
 
-3. *Stimuli* – contains `*.txt` files labeled by experiment and run number (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`) that list information about the timing of each stimulus in a run of an experiment. The names of experiments in the filenames must must names of folders in the session *ROIs* and *Voxels* directories and be delimited from the run number by an underscore. 
+3. *Stimuli* – contains `*.txt` files labeled by experiment and run number that list information about the timing of each stimulus in a run of an experiment. The names of experiments in the filenames must must names of folders in the session *ROIs* and *Voxels* directories and be delimited from the run number by an underscore (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`). 
 
 ### Generating stimulus timing parameter files
 
@@ -41,9 +41,12 @@ https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp3_Run1.txt
 
 #### Header information
 
-Line 1 contains the name of the experiment followed by a list of all trial types (e.g., `Exp1: TrialA, TrialB, TrialC`). 
-- “Trials” are structured periods of stimulus presentation within a run, which are separated by prolonged baseline periods (ideally ≥12 s) that mark transitions between different conditions that repeat throughout the experiment and across sessions. 
+Line 1 contains the name of the experiment followed by a list of all trial types (e.g., `Exp1 conditions: TrialA, TrialB, TrialC`). 
+
+- “Trials” are structured periods of stimulus presentation within a run, which are separated by prolonged baseline periods (ideally ≥ 12 s) that mark transitions between different conditions that repeat throughout the experiment and across sessions. 
+
 - The overall duration and number of stimuli in a trial can vary across trial types, but the timing of stimulus presentations and sequence of stimulus categories must be identical across trials of the same type. 
+
 - Note that trial segmentation does not affect the fit of the model but will affect noise ceiling estimation and visualization. 
 
 Line 2 contains the the total duration of the run in seconds (e.g., `Run duration (s): 300`). 
@@ -62,17 +65,27 @@ Lines 5 and below contain the following information about each stimulus delimite
 
 5. *Filename* — descriptor composed of a category label and stimulus-specific identifier delimited by a dash (e.g., `face-1.jpg`). Note that a separate array of predictors is coded for each unique category label. 
 
+It is important to be aware that the code assumes a baseline condition for all time windows within the run that are not encompassed by stimuli. We recommend inserting a prolonged (≥ 12 s) baseline period immediately before each trial to be able to use the trial segmentation code and associated plotting functions. 
+
 ### Modeling a region of interest using model_roi
 
-The `model_roi.m` wrapper function is used to fit and validate various temporal models using the procedure described below: 
+The `model_roi.m` wrapper function is used to fit and validate various temporal models to the mean ROI time series of each session using the procedures described below: 
 
-1. An object of the class ROI is generated that loads, preprocesses, and stores the fMRI time series of voxels in a region of interest for a group of experimental sessions. 
+1. An object `roi` of the class `ROI` is generated that loads, preprocesses, and compiles the run time series of a region of interest for a set of experiments in each session. 
+    1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi.run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi.run_avgs(1, :)` contains all runs from the first session in the object). 
+    2. Storing time series in a cell array allows the code to accomodate runs with different durations as well as sessions with different numbers of runs. 
 
-2. A object of the class ModelTS is generated that creates predictors for each run of data being used to fit the model for each session in the ROI object. 
+2. An object `model` of the class `ModelTS` is generated that creates predictors for a set of experiments in each session. 
+    1. Run predictors are stored in a 2D cell array `model.run_preds` with each row indexing a run and each column indexing a session (e.g., `model.run_preds(2, :)` contains all run predictors for the second session in the object). 
+    2. Predictors are also generated for each trial type in the experiments and stored in a 3D cell array `model.trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model.trial_preds(3, 1, 2)` contains a predictor for the third trial type in the second experiment of the first session). Note that trial predictors will vary across session for models with various hyperparameters such as the CTS model.
 
-3. Response amplitudes (β weights) for each predictor in the model are estimated using a general linear model (GLM).
+3. Response amplitudes (*β* weights) for each predictor in the model are estimated separately for each session using a general linear model (GLM). 
+    1. Fitted *β* weights for each predictor are stored in a 1D cell array `roi.model.betas` with each cell containing the model solution for an individual session (e.g., `roi.model.betas{1}` contains the *β* weights for the first session). For multi-channel models, the weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel. 
+    2. Model performance (*R*^2) is calculated across all experiments and stored in a 1D cell array `roi.model.varexp` with each cell indexing model performance for a single session (e.g., `roi.model.varexp{1}` contains *R*^2 for the first session). 
 
-4. Fitted β weights are used to predict responses to each trial type in the data being used to fit the model. 
+4. Fitted β weights are used to predict responses to each trial type in the experiments being evaluated. 
+    1. The average response to each trial type is stored in a 3D cell array `roi.trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi.trial_avgs(3, 1, 2)` contains contains the average resposne to the third trial type in the second experiment of the first session). 
+    2. The predicted response to each trial type is stored in a 3D cell array `roi.trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi.trial_avgs(3, 1, 2)` contains contains the average resposne to the third trial type in the second experiment of the first session). 
 
 5. Model validation is performed using these fitted β weights to predict responses in independent data. 
 
