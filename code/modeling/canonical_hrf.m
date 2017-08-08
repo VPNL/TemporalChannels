@@ -24,7 +24,7 @@ if nargin > 1
 end
 
 % derive positive gamma function
-x1 = 0:p(3) / dt; h1 = p(1); l1 = dt; f1 = zeros(size(x1)); Q1  = find(x1 > 0);
+x1 = 0:p(3) / dt; h1 = p(1); f1 = zeros(size(x1)); Q1  = find(x1 > 0);
 f1(Q1) = exp((h1 - 1) .* log(x1(Q1)) + h1 .* log(dt) - dt .* x1(Q1) - gammaln(h1));
 
 % derive negative gamma function
