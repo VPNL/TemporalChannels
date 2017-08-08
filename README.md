@@ -72,26 +72,28 @@ It is important to be aware that the code assumes a baseline condition for all t
 The `model_roi.m` wrapper function is used to fit and validate various temporal models to the mean ROI time series of each session using the procedures described below: 
 
 1. An object `roi` of the class `ROI` is generated that loads, preprocesses, and compiles the run time series of a region of interest for a set of experiments in each session. 
-    1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi.run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi.run_avgs(1, :)` contains all runs from the first session in the object). 
+    1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi(1).run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi(1).run_avgs(1, :)` contains all runs from the first session in the object). 
     2. Storing time series in a cell array allows the code to accomodate runs with different durations as well as sessions with different numbers of runs. 
 
 2. An object `model` of the class `ModelTS` is generated that creates predictors for a set of experiments in each session. 
-    1. Run predictors are stored in a 2D cell array `model.run_preds` with each row indexing a run and each column indexing a session (e.g., `model.run_preds(2, :)` contains all run predictors for the second session in the object). 
-    2. Predictors are also generated for each trial type in the experiments and stored in a 3D cell array `model.trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model.trial_preds(3, 1, 2)` contains a predictor for the third trial type in the second experiment of the first session). Note that trial predictors will vary across session for models with various hyperparameters such as the CTS model.
+    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(2, :)` contains all run predictors for the second session in the object). 
+    2. Predictors are also generated for each trial type in the experiments and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, 1, 2)` contains a predictor for each trial type in the second experiment of the first session). Note that trial predictors will vary across sessions for models with hyperparameters such as the CTS model.
 
 3. Response amplitudes (*β* weights) for each predictor in the model are estimated separately for each session using a general linear model (GLM). 
-    1. Fitted *β* weights for each predictor are stored in a 1D cell array `roi.model.betas` with each cell containing the model solution for an individual session (e.g., `roi.model.betas{1}` contains the *β* weights for the first session). For multi-channel models, the weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel. 
-    2. Model performance (*R*^2) is calculated across all experiments and stored in a 1D cell array `roi.model.varexp` with each cell indexing model performance for a single session (e.g., `roi.model.varexp{1}` contains *R*^2 for the first session). 
+    1. Fitted *β* weights for each predictor are stored in a 1D cell array `roi(1).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(1).model.betas{1}` contains the *β* weights for the first session). For multi-channel models, the weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel. 
+    2. Model performance (*R*^2) is calculated across all experiments and stored in a 1D cell array `roi(1).model.varexp` with each cell indexing model performance for a single session (e.g., `roi(1).model.varexp{1}` contains *R*^2 for the first session). 
 
 4. Fitted β weights are used to predict responses to each trial type in the experiments being evaluated. 
-    1. The average response to each trial type is stored in a 3D cell array `roi.trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi.trial_avgs(3, 1, 2)` contains contains the average resposne to the third trial type in the second experiment of the first session). 
-    2. The predicted response to each trial type is stored in a 3D cell array `roi.trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi.trial_avgs(3, 1, 2)` contains contains the average resposne to the third trial type in the second experiment of the first session). 
+    1. The average response to each trial type is stored in a 3D cell array `roi(1).trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_avgs(:, 1, 2)` contains contains the average response to each trial type in the second experiment of the first session). 
+    2. The predicted response to each trial type is stored in a 3D cell array `roi(1).pred` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).pred(:, 1, 2)` contains contains the predicted response to each trial type in the second experiment of the first session). 
 
 5. Model validation is performed using these fitted β weights to predict responses in independent data. 
+    1. *β* weights fitted to independent data are stored in a 1D cell array `roi(2).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(2).model.betas{1}` contains the *β* weights for the first session fitted to data in `roi(1)`). 
+    2. Model performance (*R*^2) is calculated across all experiments in the validation set and stored in a 1D cell array `roi(2).model.varexp` with each cell indexing validation performance for a single session (e.g., `roi(2).model.varexp{1}` contains cross-validated *R*^2 for the first session). 
 
 #### Inputs
 
-Fitting a model using `model_roi.m` requires passing at least three input arguments: 
+Fitting a model using the `model_roi` function requires passing at least three input arguments: 
 
 1. *name* — name of a region of interest (e.g., `'V1'`) in the session ROI directories (i.e., `~/TemporalChannels/data/*/ROIs/`). 
 
@@ -107,37 +109,46 @@ Fitting a model using `model_roi.m` requires passing at least three input argume
 
 #### Outputs
 
-After fitting the model in each session individually, the function plots the average measured vs. predicted responses for each trial type and returns two outputs: 
+After fitting a model to data from each session individually, the function plots the average measured vs. predicted responses for each trial type and returns two outputs: 
 
 1. *roi* — object of the class `ROI` that stores fMRI data and model predictions for the region of interest.
-    1. `roi(1).runs` — stores run time series for *fit_exps* (`roi(2).runs` for *val_exps* if applicable)
-    2. `roi(1).trials` —  stores trial time series for *fit_exps* (`roi(2).trials` for *val_exps* if applicable)
-    3. `roi(1).model` — stores model fit and quantification of performance
-    4. See properties in `ROI.m` class file for more details
-2. *model* — object of the class `ModelTS` that stores run and trial predictors for each session.
-    1. `model(1).run_preds` — stores run predictors for *fit_exps* (`model(2).run_preds` for *val_exps* if applicable)
-    2. `model(1).trial_preds` — stores trial predictors for *fit_exps* (`model(2).trial_preds` for *val_exps* if applicable)
-    3. `model(1).irfs` — stores impulse response functions
-    4. `model(1).params` — stores model parameters
-    5. See properties in `ModelTS.m` class file for more details
+    1. `roi(1).run_avgs` — stores average ROI time series for each run in *fit_exps* (see `roi(2).run_avgs` for *val_exps* if applicable)
+    2. `roi(1).trial_avgs` —  stores average ROI time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for *val_exps*)
+    3. `roi(1).model` — stores model fit and quantification of performance (see `roi(2).model` for *val_exps*)
+    4. See properties in `ROI` class file for more details (`~/TemporalChannels/functions/ROI.m`)
 
-By default, outputs are saved in `~/TemporalChannels/results/`. 
+2. *model* — object of the class `ModelTS` that stores run and trial predictors for each session.
+    1. `model(1).run_preds` — stores run predictors for *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
+    2. `model(1).trial_preds` — stores trial predictors for *fit_exps* (see `model(2).trial_preds` for *val_exps*)
+    3. `model(1).irfs` — stores impulse response functions
+    4. `model(1).params` — stores model hyperparameters
+    5. See properties in `ModelTS` class file for more details (`~/TemporalChannels/functions/ModelTS.m`)
+
+By default, both outputs are saved in mat file in the results directory (`~/TemporalChannels/results/`). 
 
 ### Generating maps of model parameters
 
-The `model_vox.m` wrapper function is used to generate maps of model parameters using the procedure described below: 
+The `model_vox` wrapper function can be used to fit a model in each individual voxel and generate maps of model parameters using the procedure described below: 
 
-1. An object of the class Voxel is generated that loads, preprocesses, and stores the fMRI time series of each voxel in each session. 
+1. An object `vox` of the class `Voxel` is generated that loads, preprocesses, and stores the run time series of each voxel in each session.  
+    1. Run time series for each voxel are stored in a 2D cell array `vox(1).runs` with each row indexing a run and each column indexing a session (e.g., `vox(1).runs(1, 2)` contains voxel time series from the first run of the second session in the object). 
+    2. Be sure to make note of the reshape parameters you used flatten the fMRI volmues so you can perform the inverse transformation to reshape the model parameter vectors back to volume space. 
 
-2. A object of the class ModelTS is generated that creates predictors for each run of data being used to fit the model for each session. 
-
-3. Response amplitudes (β weights) for each predictor in the model are estimated in each voxel using a general linear model (GLM).
+2. An object `model` of the class `ModelTS` is generated that creates predictors for a set of experiments in each session. 
+    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(2, :)` contains all run predictors for the second session in the object). 
+    2. Predictors are also generated for each trial type in the experiments and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, 1, 2)` contains a predictor for each trial type in the second experiment of the first session). 
+    
+3. Response amplitudes (β weights) for each predictor in the model are estimated separetly in each voxel using a GLM.
+    1. Fitted *β* weights for each predictor are stored in a 1D cell array `vox(1).model.betas` with each cell containing the model solutions for all voxels in a session (e.g., `vox(1).model.betas{1}` contains the *β* weights for each voxel in the first session). For multi-channel models, the weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel. 
+    2. Model performance (*R*^2) is calculated in each voxel across all experiments and stored in a 1D cell array `vox(1).model.varexp` with each cell indexing model performance for a single session (e.g., `vox(1).model.varexp{1}` contains *R*^2 for each voxel in the first session). 
 
 4. Model validation is performed using these fitted β weights for each voxel to predict responses in independent data. 
+    1. *β* weights fitted to independent data are stored in a 1D cell array `vox(2).model.betas` with each cell containing the model solutions for all voxels in an individual session (e.g., `vox(2).model.betas{1}` contains the *β* weights for the first session fitted to data in `vox(1)`). 
+    2. Model performance (*R*^2) is calculated in each voxel across all experiments in the validation set and stored in a 1D cell array `vox(2).model.varexp` with each cell indexing validation performance for a single session (e.g., `vox(2).model.varexp{1}` contains cross-validated *R*^2 for each voxel the first session). 
 
 #### Inputs
 
-Fitting a model using `model_vox.m` requires passing at least two input arguments: 
+Fitting models to each voxel using the `model_vox` function requires passing at least two input arguments: 
 
 1. *type* — label indicating which model to use for predicting responses. 
     1. `‘standard’` — standard linear systems approach for analyzing fMRI data
@@ -147,16 +158,16 @@ Fitting a model using `model_vox.m` requires passing at least two input argument
 
 2. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (i.e., `~/TemporalChannels/data/*/Stimuli/`). 
 
-4. *val_exps* - optional arguement specifying which experiment/s to use for validating the model (e.g., `'Exp 3'`).
+3. *val_exps* - optional arguement specifying which experiment/s to use for validating the model (e.g., `'Exp 3'`).
 
 #### Outputs
 
 After fitting the model in each voxel, the function returns two outputs: 
 
 1. *vox* — object of the class `Voxel` that stores fMRI data and model parameters for each voxel.
-    1. `vox(1).runs` — stores run time series for *fit_exps* (`vox(2).runs` for *val_exps* if applicable)
-    2. `vox(1).trials` —  stores trial time series for *fit_exps* (`vox(2).trials` for *val_exps* if applicable)
-    3. `vox(1).model` — stores model fit and quantification of performance
+    1. `vox(1).runs` — stores run time series for *fit_exps* (see `vox(2).runs` for *val_exps* if applicable)
+    2. `vox(1).trials` —  stores trial time series for *fit_exps* (see `vox(2).trials` for *val_exps*)
+    3. `vox(1).model` — stores fitted model solution and quantification of performance (see `vox(2).model` for *val_exps*)
     4. See properties in `Voxel.m` class file for more details
 2. *model* — object of the class `ModelTS` that stores run and trial predictors for each session.
     1. `model(1).run_preds` — stores run predictors for *fit_exps* (`model(2).run_preds` for *val_exps* if applicable)
@@ -165,7 +176,7 @@ After fitting the model in each voxel, the function returns two outputs:
     4. `model(1).params` — stores model parameters
     5. See properties in `ModelTS.m` class file for more details
 
-By default, outputs are saved in `~/TemporalChannels/results/`. To generate whole-brain maps of model parameters, you must apply the inverse of the transformation used to flatten volumetric data stored in `~/TemporalChannels/data/*/Voxels/`. 
+By default, outputs are saved in the results directory (`~/TemporalChannels/results/`). To generate whole-brain maps of model parameters, you must apply the inverse of the transformation used to flatten the volumetric data stored in `~/TemporalChannels/data/*/Voxels/`. 
 
 ## Example code
 
