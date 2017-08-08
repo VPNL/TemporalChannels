@@ -26,11 +26,11 @@ To work with the example dataset, download the [archive](http://vpnl.stanford.ed
 
 To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Each session directory should contain the following subdirectories: 
 
-1. *ROIs* – stores `*.mat` files sorted by region/experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a predefined regions of interest. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
+1. *ROIs* – contains `*.mat` files sorted by region/experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`). Each mat file contains the raw fMRI time series of each voxel in a predefined region of interest. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
 
-2. *Voxels* – stores `*.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a group of experimental sessions. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
+2. *Voxels* – contains `*.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a group of experimental sessions. Each run of data is stored as a matrix `tSeries` with each row indexing a TR (sorted in ascending order) and each column indexing a voxel (sorted in arbitrary order). 
 
-3. *Stimuli* – stores the stimulus timing parameters for each run as `*.txt` files labeled by experiment and run number (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`). 
+3. *Stimuli* – contains the stimulus timing parameters for each run as `*.txt` files labeled by experiment and run number (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`). 
 
 ### Generating stimulus timing parameter files
 
