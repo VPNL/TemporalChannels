@@ -329,7 +329,7 @@ classdef Voxel
                 vox.model.run_preds{ss} = run_pred;
                 res = tc - run_pred;
                 % calculate model performance
-                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(res .^ 2, 1) ./ sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1))
+                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(res .^ 2, 1) ./ sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
             end
             % store new fit in vox structure
             vox.model.betas = fit.betas;

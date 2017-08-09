@@ -623,8 +623,6 @@ classdef ROI
                 beta_vec = zeros(1, npreds + nsruns);
                 beta_vec(1:npreds) = fit.betas{ss};
                 beta_vec(npreds + 1:npreds + nsruns) = roi.model.rbetas{ss};
-                % rectify negative amplitudes for cross-validation
-                beta_vec(beta_vec(1:npreds) < 0) = 0;
                 % predict predict fMRI responses for each run
                 run_pred = run_preds * beta_vec';
                 roi.model.run_preds{ss} = run_pred;
