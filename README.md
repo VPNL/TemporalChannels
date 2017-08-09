@@ -83,7 +83,7 @@ There is no need to model the baseline explicitly. That is, the code assumes a b
  
 ### Modeling a region of interest using model_roi
  
-The `model_roi.m` wrapper function is used to fit and validate various temporal models to the mean ROI time series of each session using the procedures described below:
+The `model_roi.m` wrapper function is used to fit and validate various temporal models to the mean time series of a region in each session using the procedures described below:
  
 1. An object `roi` of the class `ROI` is generated that loads, preprocesses, and organizes the run time series of a region of interest for a set of experiments in each session. As explained in detail below `roi(1)` is an object containing model fits, and `roi(2)` is an object containing validation of those fits.
     1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi(1).run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi(1).run_avgs(N, :)` contains all runs from the *N*-th session in the object).
@@ -144,7 +144,7 @@ By default, both outputs are saved in a `.mat` file in the results directory (`~
  
 The `model_vox` wrapper function can be used to fit a model in each individual voxel and solve model parameters for each voxel using the procedure described below:
  
-1. An object `vox` of the class `Voxel` is generated and used to load, preprocess, and stores the run time series of each voxel in each session. 
+1. An object `vox` of the class `Voxel` is generated and used to load, preprocess, and organizes the run time series of each voxel in each session. 
     1. Run time series for each voxel are stored in a 2D cell array `vox(1).runs` with each row indexing a run and each column indexing a session (e.g., `vox(1).runs(K, N)` contains voxel time series from the *K*-th run of the *N*-th session in the object).
     2. Make note of the reshape parameters you used flatten the fMRI volumes so you can perform the inverse transformation to reshape the model parameter vectors back to volume space.
  
