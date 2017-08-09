@@ -39,13 +39,13 @@ Each session directory should contain the following subdirectories:
  
 ### Generating stimulus timing parameter files
  
-Example stimulus timing parameter files are available in `~/fLoc/examples/`
+Example stimulus timing parameter files are available in `~/fLoc/examples/`.
  
-Experiment with long stimulus presentations: [Exp1_Run1.txt](https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp1_Run1.txt
+Experiment with long stimulus presentations: [Exp1_Run1.txt](https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp1_Run1.txt)
  
 Experiment with short stimulus presentations: [Exp2_Run1.txt](https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp2_Run1.txt)
 
-Experiment with varied stimulus presentation durations: [Exp3_Run1.txt](https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp3_Run1.txt)
+Experiment with varied presentation durations: [Exp3_Run1.txt](https://github.com/VPNL/TemporalChannels/tree/master/examples/Exp3_Run1.txt)
  
 #### Header information
  
