@@ -182,13 +182,13 @@ After fitting the model in each voxel, the function returns two outputs:
     1. `vox(1).runs` — contains run time series for *fit_exps* (see `vox(2).runs` for *val_exps* if applicable)
     2. `vox(1).trials` —  contains trial time series for *fit_exps* (see `vox(2).trials` for *val_exps*)
     3. `vox(1).model` — contains model fits and *R*^2 (see `vox(2).model` for *val_exps*)
-    4. See properties in `Voxel.m` class file for more details
+    4. See properties in `Voxel.m` class file for more details [`~/TemporalChannels/functions/Voxel.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/Voxel.m)
 2. *model* — object of the class `ModelTS` that stores channel predictors for each session.
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
     2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
     4. `model(1).params` — stores model hyperparameters
-    5. See properties in `ModelTS` class file for more details (`~/TemporalChannels/functions/ModelTS.m`)
+    5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))
  
 By default, outputs are saved in the results directory (`~/TemporalChannels/results/`). To generate whole-brain maps of model parameters, you must apply the inverse of the transformation used to flatten the volumetric data stored in `~/TemporalChannels/data/*/Voxels/`.
  
