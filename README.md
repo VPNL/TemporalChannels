@@ -129,14 +129,14 @@ After fitting a model to data from each session, the function plots the session-
     1. `roi(1).run_avgs` — contains average time series for each run in *fit_exps* (see `roi(2).run_avgs` for *val_exps* if applicable)
     2. `roi(1).trial_avgs` —  contains average time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for *val_exps*)
     3. `roi(1).model` — contains model fits and *R*^2 (see `roi(2).model` for *val_exps*)
-    4. See properties in `ROI` class file for more details (`~/TemporalChannels/functions/ROI.m`)
+    4. See properties in `ROI` class file for more details ([`~/TemporalChannels/functions/ROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ROI.m))
  
 2. *model* — object of the class `ModelTS` that stores channel predictors for each session.
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
     2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
     4. `model(1).params` — stores model hyperparameters
-    5. See properties in `ModelTS` class file for more details (`~/TemporalChannels/functions/ModelTS.m`)
+    5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))
  
 By default, both outputs are saved in a `.mat` file in the results directory (`~/TemporalChannels/results/`).
  
