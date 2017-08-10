@@ -3,7 +3,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
 * * *
 *Notes:*
 - The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2015a and later versions. 
-- An example dataset is available [here](http://vpnl.stanford.edu/TemporalChannels/TemporalChannels_data.tar.gz) (**archive is 20 GB**). 
+- An example dataset is available [here](http://vpnl.stanford.edu/TemporalChannels/TemporalChannels_data.tar.gz) (archive is **20 GB**). 
 * * *
 *Contents:*
 1. [Instructions](#instructions)
@@ -33,9 +33,9 @@ Each session directory should contain the following subdirectories:
  
 1. *ROIs* – contains `.mat` files sorted by region name/experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`). Each file contains the raw fMRI time series of each voxel in a predefined region of interest for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing voxels (sorted in arbitrary order). This data is used for fitting models to the mean response of all voxels in a region and performing group analysis across all sessions with that region. To calcualte group statistics, it is necessary for region and experiment directory names to match across sessions. 
  
-2. *Voxels* – contains `.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a scan session for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing a voxels (sorted in arbitrary order). This data is used for fitting models to the response of each voxel in a fMRI session. The results of this voxel-level analysis can be adapted for various subsequent analyses (e.g., generating model parameter maps or perform multi-voxel pattern analysis).
+2. *Voxels* – contains `.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a scan session for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing a voxels (sorted in arbitrary order). This data is used for fitting models to the response of each voxel in a fMRI session. The results of this voxel-level analysis can be adapted for various subsequent analyses (e.g., generating model parameter maps or performing multi-voxel pattern analysis).
  
-3. *Stimuli* – contains `.txt` files labeled by experiment and run number that list information about the timing of each stimulus in a single run of an experiment. The names of experiments in the filenames must match the names of folders in the session *ROIs* and *Voxels* directories and are delimited from the run number by an underscore (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`).
+3. *Stimuli* – contains `.txt` files labeled by experiment and run number that list information about the timing of each stimulus in a single run of an experiment. The names of experiments in the filenames must match the names of folders in the session *ROIs* and *Voxels* directories and are delimited from run numbers by an underscore (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`).
  
 ### Generating stimulus timing parameter files
  
