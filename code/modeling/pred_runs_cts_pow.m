@@ -1,10 +1,10 @@
-function model = run_preds_cts(model)
-% Generates run predictors using the CTS model. 
+function model = pred_runs_cts_pow(model)
+% Generates run predictors using the CTS-pow model proposed by Zhou et al. 
+% (2017).
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
-fs = model.fs; tr = model.tr; rd = model.run_durs;
-stim = model.stim;  stimD = model.stimD;
+fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
 cat_list = unique([model.cats{:}]); ncats = length(cat_list);
 [nruns_max, ~] = size(model.stimfiles);
 params_names = fieldnames(params_init); params = [];
@@ -19,7 +19,7 @@ end
 % generate run predictors for each session
 run_preds = cellfun(@(X) zeros(X / model.tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predS = cellfun(@(X, Y, Z) convolve_vecs(X, Y, fs, fs) .^ Z, stim, irfs.nrfS, params.e, 'uni', false);
+predS = cellfun(@(X, Y, Z) convolve_vecs(X, Y, fs, fs) .^ Z, stim, irfs.nrfS, params.epsilon, 'uni', false);
 predS(empty_cells) = {[]};
 run_preds = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 model.run_preds = run_preds;

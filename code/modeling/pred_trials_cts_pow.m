@@ -1,5 +1,6 @@
-function model = trial_preds_cts(model)
-% Generates trial predictors using the CTS model.
+function model = pred_trials_cts_pow(model)
+% Generates trial predictors using the CTS-pow model proposed by Zhou et
+% al. (2017).
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
@@ -19,7 +20,7 @@ for ee = 1:model.num_exps
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         for ss = 1:length(sessions)
-            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs) .^ params.e{ss};
+            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs) .^ params.epsilon{ss};
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1/ tr);
             model.trial_preds.pred{cc, ss, ee} = fmriS;
         end

@@ -1,14 +1,14 @@
-function model = trial_preds_3ch(model)
-% Generates trial predictors using the 3 temporal-channel model.
+function model = pred_trials_2ch_pow(model)
+% Generates trial predictors using the 2 temporal-channel model with
+% CTS-pow on sustained channel. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
 params = model.params; irfs = model.irfs;
 fs = model.fs; tr = model.tr; cond_list = model.cond_list;
 stimfiles = model.stimfiles; nruns = model.num_runs;
-model.tc_pred.S = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
-model.tc_pred.T = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
-model.tc_pred.D = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+model.trial_preds.S = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+model.trial_preds.T = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 
 rcnt = 1;
 for ee = 1:model.num_exps
@@ -24,20 +24,13 @@ for ee = 1:model.num_exps
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
             predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
-            dstim = double(~cstim);
-            predD = convolve_vecs(dstim, irfs.nrfD{ss}, fs, fs);
-            predDn = predD .^ 2;
-            predDd = convolve_vecs(predD, irfs.lpf{ss}, fs, fs);
-            predDd = params.sigma{ss} .^ 2 + predDd .^ 2;
-            predD = predDn ./ predDd;
+            predS = predS.^params.epsilon{ss};
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predT, irfs.hrf{ss}, fs, 1 / tr);
-            fmriD = convolve_vecs(predD, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
-            model.tc_pred.S{cc, ss, ee} = fmriS;
-            model.tc_pred.T{cc, ss, ee} = fmriT * model.normT;
-            model.tc_pred.D{cc, ss, ee} = fmriD * model.normD;
+            model.trial_preds.S{cc, ss, ee} = fmriS;
+            model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

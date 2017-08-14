@@ -1,4 +1,4 @@
-function model = trial_preds_standard(model)
+function model = pred_trials_standard(model)
 % Generates trial predictors using the standard model.
 
 % get design parameters

@@ -1,10 +1,10 @@
-function model = run_preds_cts_norm(model)
-% Generates run predictors using the dCTS model. 
+function model = pred_runs_cts_div(model)
+% Generates run predictors using the CTS-div model proposed by Zhou et al. 
+% (2017).
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
-fs = model.fs; tr = model.tr; rd = model.run_durs;
-stim = model.stim;  stimD = model.stimD;
+fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
 cat_list = unique([model.cats{:}]); ncats = length(cat_list);
 [nruns_max, ~] = size(model.stimfiles);
 params_names = fieldnames(params_init); params = [];
@@ -17,11 +17,11 @@ for ff = 1:length(irfs_names)
 end
 
 % generate run predictors for each session
-run_preds = cellfun(@(X) zeros(X/model.tr, ncats), rd, 'uni', false);
+run_preds = cellfun(@(X) zeros(X / model.tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predSn = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, stim, irfs.nrfS, 'uni', false);
-predSd = cellfun(@(X, Y) X .^ 2 + Y .^ 2, predSn, params.sigma, 'uni', false);
-predS = cellfun(@(X, Y) X ./ Y, predSn, predSd, 'uni', false);
+predS_num = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, stim, irfs.nrfS, 'uni', false);
+predS_den = cellfun(@(X, Y) X + Y .^ 2, predS_num, params.sigma, 'uni', false);
+predS = cellfun(@(X, Y) X ./ Y, predS_num, predS_den, 'uni', false);
 predS(empty_cells) = {[]};
 run_preds = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 model.run_preds = run_preds;

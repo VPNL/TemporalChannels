@@ -1,5 +1,6 @@
-function model = trial_preds_htd(model)
-% Generates trial predictors using the 2 temporal-channel model.
+function model = pred_trials_htd(model)
+% Generates trial predictors using the hemodynamic temporal derivative 
+% (HTD) model proposed by Henson et al. (2002). 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

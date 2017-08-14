@@ -114,8 +114,9 @@ Fitting a model using the `model_roi` function requires passing at least three i
 2. *type* — label indicating which model to use for predicting responses.
     1. `‘standard’` — standard linear systems analysis of fMRI data (Boynton et al., 1996)
     2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
-    3. `‘cts’` — compressive temporal summation model (Zhou et al., 2017)
-    4. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
+    3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
+    4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
+    5. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
  
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
@@ -167,8 +168,9 @@ Fitting models to each voxel using the `model_vox` function requires passing at 
 1. *type* — label indicating which model to use for predicting responses.
     1. `‘standard’` — standard linear systems analysis of fMRI data (Boynton et al., 1996)
     2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
-    3. `‘cts’` — compressive temporal summation model (Zhou et al., 2017)
-    4. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
+    3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
+    4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
+    5. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
  
 2. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  

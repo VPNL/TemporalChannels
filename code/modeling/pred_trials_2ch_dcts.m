@@ -1,5 +1,6 @@
-function model = trial_preds_2ch_dcts(model)
-% Generates trial predictors using the 2 temopral-channel model with dCTS.
+function model = pred_trials_2ch_dcts(model)
+% Generates trial predictors using the 2 temopral-channel model with dCTS
+% on sustained channel. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

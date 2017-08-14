@@ -1,14 +1,14 @@
-function model = trial_preds_standard(model)
-% Generates trial predictors using the standard model.
+function model = pred_trials_cts_div(model)
+% Generates trial predictors using the CTS-div model proposed by Zhou et
+% al. (2017).
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
 params = model.params; irfs = model.irfs;
 fs = model.fs; tr = model.tr; cond_list = model.cond_list;
 stimfiles = model.stimfiles; nruns = model.num_runs;
-model.tc_pred.pred = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+model.trial_preds.pred = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 
-% generate trial predictors for each session
 rcnt = 1;
 for ee = 1:model.num_exps
     [on, off, c, ims, ton, toff, tc, rd, cl] = stimfileTS(stimfiles{rcnt, 1});
@@ -20,8 +20,11 @@ for ee = 1:model.num_exps
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         for ss = 1:length(sessions)
-            fmri = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / model.tr);
-            model.tc_pred.pred{cc, ss, ee} = fmri;
+            predS_num = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs) .^ 2;
+            predS_den = predS_num + params.sigma{ss};
+            predS = predS_num ./ predS_den;
+            fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1/ tr);
+            model.trial_preds.pred{cc, ss, ee} = fmriS;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

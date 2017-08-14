@@ -2,18 +2,18 @@
 % 
 % CONSTRUCTOR INPUTS
 %   1) type: which model to use
-%      Single channel models:
+%      Linear models:
 %        'standard' -- standard general linear model
-%        'cts'      -- compressive temporal summation (CTS; Zhou 2017)
-%        'cts-norm' -- CTS with normalization components
-%        'dcts'     -- dynamic CTS (dCTS; Zhou 2017)
-%      Multi-channel models:
-%        '2ch'      -- 2 temporal-channel model
-%        '2ch-lin'  -- linear 2 temporal-channel model
-%        '2ch-cts'  -- 2 temporal-channel model with CTS
-%        '2ch-dcts' -- 2 temporal-channel model with dCTS
-%        '3ch'      -- 2 temporal-channel model + delay channel
 %        'htd'      -- hemodynamic temporal derivative (HTD; Henson 2002)
+%      Simple nonlinear models:
+%        '2ch'      -- 2 temporal-channel model (Stigliani et al., 2017)
+%        'cts-pow'  -- CTS with power law (Zhou et al., 2017)
+%        'cts-div'  -- CTS with divisive normalization (Zhou et al., 2017)
+%        'dcts'     -- dynamic CTS (Zhou et al., 2017)
+%      Multi-channel nonlinear models:
+%        '2ch-div'  -- 2 temporal-channel model with CTS-div on sustained
+%        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on sustained
+%        '2ch-dcts' -- 2 temporal-channel model with dCTS on sustained
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of paths to session data directories
 %
@@ -56,17 +56,15 @@ classdef ModelTS
         cond_list = {}; % list of condition names in each experiment
         run_durs = {};  % run durations (s)
         stim = {};      % stimulus step function
-        stimD = {};     % delay activity step function
         normT = 20;     % transient channel normalization scalar
-        normD = 1;      % delay channel normalization scalar
     end
 
     properties (Constant, Hidden)
         % path to project directory
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         % descriptors for each model implemented
-        types = {'standard' 'cts' 'cts-norm' 'dcts' ...
-                 '2ch' '2ch-lin' '2ch-cts' '2ch-dcts' '3ch' 'htd'};
+        types = {'standard' 'htd' '2ch' 'cts-pow' 'cts-div' 'dcts' ...
+                 '2ch-pow' '2ch-div' '2ch-dcts'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -189,9 +187,6 @@ classdef ModelTS
             end
             stims(empty_cells) = {[]};
             model.stim = stims;
-            % generate delay activity predictors
-            stimsD = cellfun(@(X) double(~X), stims, 'uni', false);
-            model.stimD = stimsD;
         end
         
         % compute custom normalization parameters using run predictors
@@ -200,40 +195,26 @@ classdef ModelTS
                 custom_norm = 0;
             end
             % if using a multi-channel model
-            if ~sum(strcmp(model.type, {'standard' 'cts' 'cts-norm' 'dcts'}))
+            if ~sum(strcmp(model.type, {'standard' 'cts-pow' 'cts-div' 'dcts'}))
                 if custom_norm == 1
                     % code run_preds for all experiments in example subject
                     roi_list = dir(fullfile(model.sessions{1}, 'ROIs'));
                     roi = tcROI(roi_list(3).name, model.experiments);
                     imodel = modelTS(model.type, model.experiments, roi.sessions);
-                    imodel.normT = 1; imodel.normD = 1;
+                    imodel.normT = 1;
                     imodel = code_stim(imodel);
                     imodel = pred_runs(imodel);
                     for ss = 1:length(imodel.sessions)
                         % get predictors for all runs in this session
                         iconcat = cell2mat(imodel.run_preds(:, ss));
                         npreds = size(iconcat, 2);
-                        if strcmp(model.type, '3ch')
-                            % find max of predictors
-                            maxS = max(max(iconcat(:, 1:npreds / 3)));
-                            maxT = max(max(iconcat(:, npreds / 3 + 1:2 * npreds / 3)));
-                            maxD = max(max(iconcat(:, 2 * npreds / 3 + 1:npreds)));
-                            % compute scalars to normalize max heights
-                            normTs{ss} = maxS / maxT;
-                            normTs{ss} = maxS / maxT;
-                            normDs{ss} = maxS / maxD;
-                        else
-                            % find max of predictors
-                            maxS = max(max(iconcat(:, 1:npreds / 2)));
-                            maxT = max(max(iconcat(:, npreds / 2 + 1:npreds)));
-                            % compute scalars to normalize max heights
-                            normTs{ss} = maxS / maxT;
-                        end
+                        % find max of predictors
+                        maxS = max(max(iconcat(:, 1:npreds / 2)));
+                        maxT = max(max(iconcat(:, npreds / 2 + 1:npreds)));
+                        % compute scalars to normalize max heights
+                        normTs{ss} = maxS / maxT;
                     end
                     model.normT = mean([normTs{:}]);
-                    if strcmp(model.type, '3ch')
-                        model.normD = mean([normDs{:}]);
-                    end
                 end
             end
         end
@@ -243,24 +224,22 @@ classdef ModelTS
             switch model.type
                 case 'standard'
                     model = pred_runs_standard(model);
-                case 'cts'
-                    model = pred_runs_cts(model);
-                case 'cts-norm'
-                    model = pred_runs_cts_norm(model);
-                case 'dcts'
-                    model = pred_runs_dcts(model);
-                case '2ch'
-                    model = pred_runs_2ch(model);
-                case '2ch-lin'
-                    model = pred_runs_2ch_lin(model);
-                case '2ch-cts'
-                    model = pred_runs_2ch_cts(model);
-                case '2ch-dcts'
-                    model = pred_runs_2ch_dcts(model);
-                case '3ch'
-                    model = pred_runs_3ch(model);
                 case 'htd'
                     model = pred_runs_htd(model);
+                case '2ch'
+                    model = pred_runs_2ch(model);
+                case 'cts-pow'
+                    model = pred_runs_cts_pow(model);
+                case 'cts-div'
+                    model = pred_runs_cts_div(model);
+                case 'dcts'
+                    model = pred_runs_dcts(model);
+                case '2ch-pow'
+                    model = pred_runs_2ch_pow(model);
+                case '2ch-div'
+                    model = pred_runs_2ch_div(model);
+                case '2ch-dcts'
+                    model = pred_runs_2ch_dcts(model);
             end
         end
         
@@ -269,24 +248,22 @@ classdef ModelTS
             switch model.type
                 case 'standard'
                     model = pred_trials_standard(model);
-                case 'cts'
-                    model = pred_trials_cts(model);
-                case 'cts-norm'
-                    model = pred_trials_cts_norm(model);
-                case 'dcts'
-                    model = pred_trials_dcts(model);
-                case '2ch'
-                    model = pred_trials_2ch(model);
-                case '2ch-lin'
-                    model = pred_trials_2ch_lin(model);
-                case '2ch-cts'
-                    model = pred_trials_2ch_cts(model);
-                case '2ch-dcts'
-                    model = pred_trials_2ch_dcts(model);
-                case '3ch'
-                    model = pred_trials_3ch(model);
                 case 'htd'
                     model = pred_trials_htd(model);
+                case '2ch'
+                    model = pred_trials_2ch(model);
+                case 'cts-pow'
+                    model = pred_trials_cts_pow(model);
+                case 'cts-div'
+                    model = pred_trials_cts_div(model);
+                case 'dcts'
+                    model = pred_trials_dcts(model);
+                case '2ch-pow'
+                    model = pred_trials_2ch_pow(model);
+                case '2ch-div'
+                    model = pred_trials_2ch_div(model);
+                case '2ch-dcts'
+                    model = pred_trials_2ch_dcts(model);
             end
         end
         

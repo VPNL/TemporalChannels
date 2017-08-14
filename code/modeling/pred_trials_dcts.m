@@ -1,5 +1,6 @@
-function model = trial_preds_dcts(model)
-% Generates trial predictors using the dCTS model.
+function model = pred_trials_dcts(model)
+% Generates trial predictors using the dCTS model proposed by Zhou et al.
+% (2017). 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

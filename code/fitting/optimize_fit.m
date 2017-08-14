@@ -21,7 +21,7 @@ step_sizes_init = zeros(length(params_names), 1);
 for pp = 1:length(params_names)
     params_init(pp, :) = model_iter(1).params.(params_names{pp});
     switch params_names{pp}
-        case 'e'
+        case 'epsilon'
             step_sizes_init(pp) = .005;
         case 'tau1'
             step_sizes_init(pp) = 5;

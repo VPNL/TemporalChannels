@@ -24,7 +24,7 @@ params_lims = cell(length(param_names), 1);
 params_grid = cell(length(param_names), 1);
 for pp = 1:length(param_names)
     switch param_names{pp}
-        case 'e'
+        case 'epsilon'
             params_lims{pp} = [.01 .99];
         case 'tau1'
             params_lims{pp} = [10 1000];
@@ -63,7 +63,6 @@ if ~(exist(fpath, 'file') == 2)
     fprintf('Generating %s model grid for %s...\n', model_init.type, roi_init.session_ids{session_num});
     search_models = ModelTS(model_init.type, model_init.experiments, repmat({session}, 1, size(params_list, 1)));
     search_models.stim = repmat(ss_model.stim, 1, size(params_list, 1));
-    search_models.stimD = repmat(ss_model.stimD, 1, size(params_list, 1));
     search_models.onsets = repmat(ss_model.onsets, 1, size(params_list, 1));
     search_models.offsets = repmat(ss_model.offsets, 1, size(params_list, 1));
     search_models.conds = repmat(ss_model.conds, 1, size(params_list, 1));

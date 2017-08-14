@@ -1,10 +1,10 @@
-function model = run_preds_2ch_dcts(model)
-% Generates run predictors using the 2 temporal-channel model with dCTS. 
+function model = pred_runs_2ch_dcts(model)
+% Generates run predictors using the 2 temporal-channel model with dCTS on
+% sustained channel. 
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
-fs = model.fs; tr = model.tr; rd = model.run_durs;
-stim = model.stim;  stimD = model.stimD;
+fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
 cat_list = unique([model.cats{:}]); ncats = length(cat_list);
 [nruns_max, ~] = size(model.stimfiles);
 params_names = fieldnames(params_init); params = [];

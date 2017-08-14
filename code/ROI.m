@@ -314,7 +314,7 @@ classdef ROI
                 roi.model.varexp{ss} = 1 - (sum(mm.residual.^2) / sum((tc - mean(tc)).^2));
             end
             % optimize model parameters if applicable
-            omodels = {'cts' 'cts-norm' 'dcts' '2ch-cts' '2ch-dcts' '3ch'};
+            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
@@ -367,13 +367,10 @@ classdef ROI
             % preallocate predictor array for each trial type
             roi.pred = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
-            cmodels = {'2ch' '2ch-lin' '2ch-cts' '2ch-dcts' '3ch' 'htd'};
+            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts'};
             if sum(strcmp(model.type, cmodels))
                 roi.predS = cell(nconds, nsubs, nexps);
                 roi.predT = cell(nconds, nsubs, nexps);
-                if strcmp(model.type, '3ch')
-                    roi.predD = cell(nconds, nsubs, nexps);
-                end
             end
             % predict response for each session, experiment, and trial type
             for ss = 1:nsubs
@@ -392,18 +389,8 @@ classdef ROI
                             % store trial predictors in roi
                             roi.predS{cc, ss, ee} = fmriS;
                             roi.predT{cc, ss, ee} = fmriT;
-                            % add delay channel if using a 3ch model
-                            if strcmp(model.type, '3ch')
-                                ampD = roi.model.betas{ss}(2 * ncats + 1:3 * ncats);
-                                % scale trial predictors by betas
-                                predD = model.trial_preds.D{cc, ss, ee};
-                                fmriD = predD .* repmat(ampD, size(predD, 1), 1);
-                                roi.predD{cc, ss, ee} = fmriD;
-                                roi.pred{cc, ss, ee} = fmriS + fmriT + fmriD;
-                            else
-                                roi.pred{cc, ss, ee} = fmriS + fmriT;
-                            end
-                            % if using single-channel model
+                            roi.pred{cc, ss, ee} = fmriS + fmriT;
+                        % if using single-channel model
                         else
                             % find beta values
                             amp = roi.model.betas{ss}(1:ncats);
@@ -504,6 +491,8 @@ classdef ROI
             xlabs = label_preds(roi.model);
             amps = reshape([roi.model.betas{:}], npreds, [])';
             R2 = [roi.model.varexp{:}];
+            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts'};
+            smodels = {'standard' 'cts-pow' 'cts-div' 'dcts'};
             % setup figure
             fig_name = [roi.nickname ' - ' roi.model.type ' model'];
             fig_pos = [.1 .1 .8 .3 + nexps * .2];
@@ -549,18 +538,13 @@ classdef ROI
                     [pr, cymin, cymax] = lineTS(x, y_p, 2, [0 0 0]);
                     y_min = min([y_min cymin]); y_max = max([y_max cymax]);
                     % plot separate channel contributions if applicable
-                    if sum(strcmp(roi.model.type, {'2ch' '2ch-lin' '2ch-cts' '2ch-dcts' '3ch' 'htd'}))
+                    if sum(strcmp(roi.model.type, cmodels))
                         y_pS = [roi.predS_sum{cc, :, ee}]';
                         [sp, cymin, cymax] = lineTS(x, y_pS, 1, [0 0 1]);
                         y_min = min([y_min cymin]); y_max = max([y_max cymax]);
                         y_pT = [roi.predT_sum{cc, :, ee}]';
                         [tp, cymin, cymax] = lineTS(x, y_pT, 1, [1 0 0]);
                         y_min = min([y_min cymin]); y_max = max([y_max cymax]);
-                        if strcmp(roi.model.type, '3ch')
-                            y_pD = [roi.predD_sum{cc, :, ee}]';
-                            [dp, cymin, cymax] = lineTS(x, y_pD, 1, [0 1 0]);
-                            y_min = min([y_min cymin]); y_max = max([y_max cymax]);
-                        end
                     end
                     % plot stimulus
                     plot([xcnt + pre_dur - 1 xcnt + tl - post_dur], [-.5 -.5], 'k-', 'LineWidth', 4);
@@ -568,7 +552,7 @@ classdef ROI
                     xcnt = xcnt + tl + 3; zlc = xcnt;
                 end
                 % set legend and format plot
-                if sum(strcmp(roi.model.type, {'standard' 'cts' 'cts-norm' 'dcts'}))
+                if sum(strcmp(roi.model.type, smodels))
                     leg_str = {roi.nickname [roi.model.type ' model']};
                     legend([me pr], leg_str, 'Location', 'NorthWest');
                 else
@@ -576,12 +560,7 @@ classdef ROI
                     leg_str2 = [roi.model.type ' model'];
                     leg_str3 = {'S contribution' 'T contribution'};
                     leg_str = [leg_str1 leg_str2 leg_str3];
-                    if strcmp(roi.model.type, '3ch')
-                        leg_str = [leg_str 'D contribution'];
-                        legend([me pr sp tp dp], leg_str, 'Location', 'NorthWest');
-                    else
-                        legend([me pr sp tp], leg_str, 'Location', 'NorthWest');
-                    end
+                    legend([me pr sp tp], leg_str, 'Location', 'NorthWest');
                 end
                 legend boxoff;
                 title([roi.experiments{ee}], 'FontSize', 8);

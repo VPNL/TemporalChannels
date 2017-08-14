@@ -1,5 +1,6 @@
-function model = trial_preds_2ch(model)
-% Generates trial predictors using the 2 temporal-channel model.
+function model = pred_trials_2ch(model)
+% Generates trial predictors using the 2 temporal-channel model proposed by
+% Stigliani et al. (2017). 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
