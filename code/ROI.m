@@ -5,6 +5,7 @@
 % CONSTRUCTOR INPUTS
 %   1) name: name of ROI to model (e.g., 'V2')
 %   2) exps: list of experiments to model (e.g., {'Exp1' 'Exp2'})
+%   3) isessions: list of sessions to analyze (optional)
 %
 % METHODS
 %   tc_runs -- preprocesses and stores time series of all voxels in ROI
@@ -82,7 +83,7 @@ classdef ROI
                 roi.experiments = force_cell(exps);
                 roi.isessions = force_cell(isessions);
             else
-                error('incorrect input arguments');
+                error('Unexpected input arguments');
             end
         end
         
@@ -115,7 +116,7 @@ classdef ROI
             end
             % error if no sessions with ROI are found
             if scnt == 0
-                error(['No sessions found with: ' roi.name '.']);
+                error(['No sessions found with ' roi.name '.']);
             end
         end
         
@@ -318,26 +319,26 @@ classdef ROI
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
-                    % load grid search results if saved, otherwise compute
-                    fname = ['grid_search_results_' model.type '_fit' [model.experiments{:}] '.mat'];
-                    fpath = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname);
-                    if exist(fpath, 'file') == 2
+                    fname_grid = ['grid_search_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fpath_grid = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname_grid);
+                    fname_grad = ['grad_desc_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fpath_grad = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname_grad);
+                    % load optimization results if saved, otherwise compute
+                    if exist(fpath_grad, 'file') == 2
+                        fprintf('Loading gradient descent results. \n');
+                        load(fpath_grad);
+                    elseif exist(fpath_grid, 'file') == 2
                         fprintf('Loading grid search results. \n');
-                        load(fpath);
+                        load(fpath_grid);
+                        [rois, models] = optimize_fit(rois, models);
+                        save(fpath_grad, 'rois', 'models', '-v7.3');
                     else
                         [rois, models] = grid_search(roi, model, ss, 5);
-                        save(fpath, 'rois', 'models', '-v7.3');
-                    end
-                    % load grad desc results if saved, otherwise compute
-                    fname = ['grad_desc_results_' model.type '_fit' [model.experiments{:}] '.mat'];
-                    fpath = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname);
-                    if exist(fpath, 'file') == 2
-                        fprintf('Loading gradient descent results. \n');
-                        load(fpath);
-                    else
+                        save(fpath_grid, 'rois', 'models', '-v7.3');
                         [rois, models] = optimize_fit(rois, models);
-                        save(fpath, 'rois', 'models', '-v7.3');
+                        save(fpath_grad, 'rois', 'models', '-v7.3');
                     end
+                    % copy optimized parameters for session
                     for pp = 1:length(param_names)
                         model.params.(param_names{pp}){ss} = models.params.(param_names{pp}){1};
                         model = update_param(model, param_names{pp}, 0);
@@ -347,7 +348,7 @@ classdef ROI
                     [roi, model] = tc_fit(roi, model, 0);
                 end
             end
-            % carry over model parameters to roi model struct
+            % carry over model parameters for all sessions to roi.model
             roi.model.type = model.type;
             roi.model.cond_list = model.cond_list;
             roi.model.cat_list = unique([model.cats{:}]);

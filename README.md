@@ -86,11 +86,11 @@ There is no need to model the baseline explicitly. That is, the code assumes a b
 The `model_roi` wrapper function is used to fit and validate various temporal models to the mean time series of a region of interest in each session using the procedures described below:
  
 1. An object `roi` of the class `ROI` is generated that loads, preprocesses, and organizes the run time series for a set of experiments in each session. As explained in detail below `roi(1)` is an object containing model fits, and `roi(2)` is an object containing validation of those fits.
-    1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi(1).run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi(1).run_avgs(N, :)` contains all runs from the *N*-th session in the object).
+    1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi(1).run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi(1).run_avgs(:, N)` contains all runs from the *N*-th session in the object).
     2. Storing time series in a cell array allows the code to accommodate runs with different durations as well as sessions with different numbers of runs.
  
 2. An object `model` of the class `ModelTS` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
-    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(N, :)` contains all run predictors for the *N*-th session in the object). 
+    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(:, N)` contains all run predictors for the *N*-th session in the object). 
     2. Predictors are also generated for each trial type and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, N, K)` contains predictors for each trial type in the *K*-th experiment of the *N*-th session). Be aware that trial predictors will vary across sessions for models with session-specific hyperparameters such as the CTS model.
  
 3. Response amplitudes (*β* weights) for each predictor in the model are estimated separately for each session using a general linear model (GLM).
@@ -150,7 +150,7 @@ The `model_vox` wrapper function can be used to fit a model in each voxel using 
     2. Make note of the reshape parameters you used flatten the fMRI volumes in `~/TemporalChannels/data/*/Voxels` so you can perform the inverse transformation to reshape the model parameter vectors back to volume space for subsequent analyses. 
  
 2. An object `model` of the class `ModelTS` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
-    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(N, :)` contains all run predictors for the *N*-th session in the object). 
+    1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(:, N)` contains all run predictors for the *N*-th session in the object). 
     2. Predictors are also generated for each trial type and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, N, K)` contains predictors for each trial type in the *K*-th experiment of the *N*-th session). Be aware that trial predictors will vary across sessions for models with session-specific hyperparameters such as the CTS model.
    
 3. Response amplitudes (β weights) for each predictor are estimated in each voxel using a GLM.

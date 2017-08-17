@@ -16,7 +16,7 @@ function [rois, models] = grid_search(roi_init, model_init, session_num, nseeds)
 session = roi_init.sessions{session_num};
 param_names = fieldnames(model_init.params);
 if length(param_names) > 2
-    grid_size = 10;
+    grid_size = 8;
 else
     grid_size = 20;
 end

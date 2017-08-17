@@ -1,1 +1,3 @@
 *.mat
+data/*
+!data/readme_data.txt

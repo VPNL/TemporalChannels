@@ -23,7 +23,7 @@ for ee = 1:model.num_exps
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS_num = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs) .^ 2;
-            predS_den = predS_num + param.sigma{ss} .^ 2;
+            predS_den = predS_num + params.sigma{ss} .^ 2;
             predS = predS_num ./ predS_den;
             predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
             % convolve neural predictors with HRF
