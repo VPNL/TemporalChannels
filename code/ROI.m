@@ -171,9 +171,10 @@ classdef ROI
         
         % replace problematic characters in ROI name
         function nickname = get.nickname(roi)
-            nickname = strrep(roi.name, '_', '-');
-            nickname = strrep(roi.name, ' ', '-');
-            nickname = strrep(roi.name, '.', '-');
+            nickname = roi.name;
+            nickname = strrep(nickname, '_', '-');
+            nickname = strrep(nickname, ' ', '-');
+            nickname = strrep(nickname, '.', '-');
         end
         
         % label each session with an ID string
@@ -320,9 +321,9 @@ classdef ROI
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
                     fname_grid = ['grid_search_results_' model.type '_fit' [model.experiments{:}] '.mat'];
-                    fpath_grid = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname_grid);
+                    fpath_grid = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grid);
                     fname_grad = ['grad_desc_results_' model.type '_fit' [model.experiments{:}] '.mat'];
-                    fpath_grad = fullfile(sessions{ss}, 'ROIs', roi.nickname, fname_grad);
+                    fpath_grad = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grad);
                     % load optimization results if saved, otherwise compute
                     if exist(fpath_grad, 'file') == 2
                         fprintf('Loading gradient descent results. \n');
