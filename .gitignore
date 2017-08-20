@@ -1,3 +1,4 @@
 *.mat
+my_analysis.m
 data/*
 !data/readme_data.txt
