@@ -91,7 +91,7 @@ search_rois = ROI(roi_init.name, roi_init.experiments, repmat({session}, 1, size
 search_rois = select_sessions(search_rois);
 search_rois.runs = repmat(ss_roi.runs, 1, size(params_list, 1));
 search_rois.baseline = repmat(ss_roi.baseline, 1, size(params_list, 1));
-search_rois = (search_rois, search_models);
+search_rois = tc_fit(search_rois, search_models);
 [~, model_idxs] = sort([search_rois.model.varexp{:}], 2, 'descend');
 
 % initialize output objects with correct number of seed points
