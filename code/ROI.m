@@ -30,8 +30,9 @@
 classdef ROI
     
     properties
-        name        % name of data directories for this ROI
+        name        % name of data directories for this region
         experiments % array of experiments to model
+        sessions    % array of sessions that have data for this region
         model = []; % data structure of models fits for each session
         predS = {}; % predicted sustained contributions per trial type
         predT = {}; % predicted transient contributions per trial type
@@ -55,7 +56,6 @@ classdef ROI
     properties (Dependent)
         run_avgs   % average timecourse across voxels for each run
         trial_avgs % average timecourse across voxels for each trial type
-        sessions   % paths to sessions that have current ROI
     end
     
     properties (Dependent, Hidden)
@@ -93,30 +93,6 @@ classdef ROI
                 all_sessions = find_sessions(roi.project_dir);
             else
                 all_sessions = roi.isessions;
-            end
-        end
-        
-        % find set of all_sessions with current ROI
-        function sessions = get.sessions(roi)
-            sessions = {}; scnt = 0;
-            for ss = 1:length(roi.all_sessions)
-                [~, session_id] = fileparts(roi.all_sessions{ss});
-                spath = fullfile(roi.project_dir, 'data', session_id);
-                cpath = fullfile(spath, 'ROIs', roi.name);
-                ecnt = 0;
-                for ee = 1:length(roi.experiments)
-                    if exist(fullfile(cpath, roi.experiments{ee}), 'dir') == 7
-                        ecnt = ecnt + 1;
-                    end
-                end
-                if ecnt == length(roi.experiments)
-                    scnt = scnt + 1;
-                    sessions{scnt} = spath;
-                end
-            end
-            % error if no sessions with ROI are found
-            if scnt == 0
-                error(['No sessions found with ' roi.name '.']);
             end
         end
         
@@ -207,9 +183,36 @@ classdef ROI
             predD_sum = cellfun(@(X) sum(X, 2), roi.predD, 'uni', false);
         end
         
+        % find set of all_sessions with current ROI
+        function roi = select_sessions(roi)
+            sessions = {}; scnt = 0;
+            for ss = 1:length(roi.all_sessions)
+                [~, session_id] = fileparts(roi.all_sessions{ss});
+                spath = fullfile(roi.project_dir, 'data', session_id);
+                cpath = fullfile(spath, 'ROIs', roi.name);
+                ecnt = 0;
+                for ee = 1:length(roi.experiments)
+                    if exist(fullfile(cpath, roi.experiments{ee}), 'dir') == 7
+                        ecnt = ecnt + 1;
+                    end
+                end
+                if ecnt == length(roi.experiments)
+                    scnt = scnt + 1;
+                    sessions{scnt} = spath;
+                end
+            end
+            % error if no sessions with ROI are found
+            if scnt == 0
+                error(['No sessions found with ' roi.name '.']);
+            else
+                roi.sessions = sessions;
+            end
+        end
+        
         % preprocess and store run timeseries of each voxel
         function roi = tc_runs(roi)
-            fpaths = roi.filenames; % paths to data files
+            roi = select_sessions(roi); % select sessions with region
+            fpaths = roi.filenames;     % find paths to data files
             raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
             roi.runs = cellfun(@(X) psc(X), raw_runs, 'uni', false);
         end
@@ -296,16 +299,17 @@ classdef ROI
             sessions = roi.sessions;
             % concatenate data and preds across all runs in each session
             for ss = 1:length(sessions)
-                predictors = []; tc = [];
-                for rr = 1:nruns(ss)
-                    [nframes, npreds] = size(model.run_preds{rr, ss});
-                    pred = zeros(nframes, npreds + nruns(ss));
-                    pred(:, 1:npreds) = model.run_preds{rr, ss};
-                    pred(:, npreds + rr) = 1; % add nuisance run regressors
-                    predictors = [predictors; pred];
-                    tc = [tc; roi.run_avgs{rr, ss}(:) - roi.baseline{rr, ss}];
+                run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
+                run_durs = model.run_durs(:, ss); num_runs = sum(cell2mat(run_durs) > 0);
+                b0_cell = cellfun(@(X) zeros(X, num_runs), run_durs, 'uni', false);
+                for rr = 1:num_runs
+                    b0_cell{rr}(:, rr) = 1;
                 end
-                roi.model.run_tcs{ss} = tc;
+                b0 = cell2mat(b0_cell);
+                predictors = [run_preds b0];
+                run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
+                tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
+                tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
                 % fit GLM and store betas, SEMs, and variance explained
                 mm = glmTS(tc, predictors);
                 roi.model.run_preds{ss} = predictors * mm.betas';
@@ -313,7 +317,7 @@ classdef ROI
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
                 roi.model.rbetas{ss} = mm.betas(npreds + 1:npreds + nruns(ss)); % nuisance regressor betas
                 roi.model.rstdevs{ss} = mm.stdevs(npreds + 1:npreds + nruns(ss)); % nuisance regressor stdevs
-                roi.model.varexp{ss} = 1 - (sum(mm.residual.^2) / sum((tc - mean(tc)).^2));
+                roi.model.varexp{ss} = 1 - (sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2));
             end
             % optimize model parameters if applicable
             omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts'};
@@ -589,18 +593,16 @@ classdef ROI
             check_model(roi, model);
             [nruns, nsubs] = size(model.run_preds);
             for ss = 1:nsubs
-                run_preds = []; tc = [];
-                npreds = size(model.run_preds{1, ss}, 2);
-                nsruns = length(roi.model.rbetas{ss});
-                for rr = 1:nsruns
-                    nframes = size(model.run_preds{rr, ss}, 1);
-                    pm = zeros(nframes, npreds + nsruns);
-                    pm(:, 1:npreds) = model.run_preds{rr, ss};
-                    pm(:, npreds + rr) = 1;
-                    run_preds = [run_preds; pm];
-                    tc = [tc; roi.run_avgs{rr, ss} - roi.baseline{rr, ss}];
+                run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
+                run_durs = model.run_durs(:, ss); num_runs = sum(cell2mat(run_durs) > 0);
+                b0_cell = cellfun(@(X) zeros(X, num_runs), run_durs, 'uni', false);
+                for rr = 1:num_runs
+                    b0_cell{rr}(:, rr) = 1;
                 end
-                roi.model.run_tcs{ss} = tc;
+                b0 = cell2mat(b0_cell); predictors = [preds b0];
+                run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
+                tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
+                tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
                 beta_vec = zeros(1, npreds + nsruns);
                 beta_vec(1:npreds) = fit.betas{ss};
                 beta_vec(npreds + 1:npreds + nsruns) = roi.model.rbetas{ss};

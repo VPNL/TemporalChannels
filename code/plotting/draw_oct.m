@@ -16,6 +16,6 @@ function oct = draw_oct(x, y, w, h, fill_col, line_col)
 t = (1/16:1/8:1)' * 2 * pi;
 xx = w * sin(t) + x;
 yy = h * cos(t) + y;
-ff = fill(xx, yy, fill_col, 'EdgeColor', line_col);
+oct = fill(xx, yy, fill_col, 'EdgeColor', line_col);
 
 end

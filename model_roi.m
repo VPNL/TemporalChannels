@@ -51,7 +51,7 @@ end
 
 % setup ROI object for fitting ModelTS
 roi(1) = ROI(name, exps_fit);
-fprintf('\nExtracting run time series of %s...\n', roi(1).nickname)
+fprintf('\nExtracting run time series for %s...\n', roi(1).nickname)
 roi(1) = tc_runs(roi(1));
 
 % setup ModelTS object to applyt to ROI
@@ -65,7 +65,7 @@ model(1) = pred_trials(model(1));
 % fit ModelTS to ROI
 fprintf('Extracting trial time series...\n')
 roi(1) = tc_trials(roi(1), model(1));
-fprintf('Fitting the model...\n')
+fprintf('Fitting the %s model...\n', model(1).type)
 [roi(1), model(1)] = tc_fit(roi(1), model(1), 1);
 roi(1) = tc_pred(roi(1), model(1));
 

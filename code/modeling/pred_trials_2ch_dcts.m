@@ -22,12 +22,12 @@ for ee = 1:model.num_exps
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
-            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
-            predSn = predS.^2;
-            predSd = convolve_vecs(predS, irfs.lpf{ss}, fs ,fs);
-            predSd = params.sigma{ss} .^ 2 + predSd .^ 2;
+            predSl = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
+            predSn = predSl .^ 2;
+            predSf = convolve_vecs(predSl, irfs.lpf{ss}, fs ,fs);
+            predSd = params.sigma{ss} .^ 2 + predSf .^ 2;
             predS = predSn ./ predSd;
+            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predT, irfs.hrf{ss}, fs, 1 / tr);

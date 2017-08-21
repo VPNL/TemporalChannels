@@ -6,7 +6,7 @@ function model = pred_runs_2ch_dcts(model)
 params_init = model.params; irfs_init = model.irfs;
 fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
 cat_list = unique([model.cats{:}]); ncats = length(cat_list);
-[nruns_max, ~] = size(model.stimfiles);
+[nruns_max, ~] = size(model.run_durs);
 params_names = fieldnames(params_init); params = [];
 for pp = 1:length(params_names)
     params.(params_names{pp}) = repmat(params_init.(params_names{pp}), nruns_max, 1);
@@ -19,13 +19,15 @@ end
 % generate run predictors for each session
 run_preds = cellfun(@(X) zeros(X / model.tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
-predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, stim, irfs.nrfT, 'uni', false);
-predSn = cellfun(@(X) X .^ 2, predS, 'uni', false);
-predSd = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), predS, irfs.lpf, 'uni', false);
-predSd = cellfun(@(X, Y) X .^ 2 + Y .^ 2, predSd, params.sigma, 'uni', false);
+predSl = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
+predSn = cellfun(@(X) X .^ 2, predSl, 'uni', false);
+predSf = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), predSl, irfs.lpf, 'uni', false);
+predSd = cellfun(@(X, Y) X .^ 2 + Y .^ 2, predSf, params.sigma, 'uni', false);
 predS = cellfun(@(X, Y) X ./ Y, predSn, predSd, 'uni', false);
-predS(empty_cells) = {1}; predT(empty_cells) = {1};
+clear('predSl', 'predSn', 'predSf', 'predSd');
+predTl = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
+predS(empty_cells) = {1}; predTl(empty_cells) = {1};
+predT = cellfun(@(X) X .^ 2, predTl, 'uni', false);
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predT, irfs.hrf, 'uni', false);
 fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]};

@@ -20,25 +20,25 @@ function [on, off, c, ims, ton, toff, tc, rd, cl] = stimfileTS(stimfile)
 if ~exist(stimfile, 'file')
     [on, off, c, ims, ton, toff, tc, rd, cl] = deal([]);
 else
-    [fidPar, message] = fopen(stimfile, 'r');
+    [fid_par, message] = fopen(stimfile, 'r');
     % get experiment name and conditions
-    ln = fgetl(fidPar);
+    ln = fgetl(fid_par);
     prts = strsplit(ln, ' ');
     exp = prts(1);
     cl = prts(3:end);
     cl = strrep(cl, ',', '');
     cl(strcmp('', cl)) = [];
     % get run duration
-    ln = fgetl(fidPar);
+    ln = fgetl(fid_par);
     prts = strsplit(ln, ' ');
     prts(strcmp('', prts)) = [];
     rd = str2num(prts{end});
-    ln = fgetl(fidPar);
-    ln = fgetl(fidPar);
+    ln = fgetl(fid_par);
+    ln = fgetl(fid_par);
     % code parameters of each stimulus
     itrials = []; c = {}; on = []; off = []; ims = {}; fcnt = 0;
-    while ~feof(fidPar)
-        ln = fgetl(fidPar);
+    while ~feof(fid_par)
+        ln = fgetl(fid_par);
         if isempty(ln) || isempty(findstr(sprintf(' '), ln)), break; end
         ln(ln==sprintf('\n')) = '';
         prts = strsplit(ln, ' ');
@@ -49,7 +49,7 @@ else
         off(fcnt) = on(fcnt) + str2double(prts{4});
         ims{fcnt} = strtok(prts{5}, '-');
     end
-    fclose(fidPar);
+    fclose(fid_par);
     % code parameters of each trial
     ton = []; toff = []; tc = {}; bcnt = 0;
     for bb = 1:max(itrials)

@@ -1,14 +1,14 @@
-function [rois, models] = grid_search(roi_init, model_init, session_num, nseeds)
+function [rois, models] = grid_search(roi_init, model_init, session_num, num_seeds)
 % Performs a grid search to find seeds for model optimization. 
 % 
 % INPUTS
 %   1) roi_init: ROI object fitted with default model parameters
 %   2) model_init: ModelTS object with default parameters
 %   3) session_num: session number to perform grid search in
-%   4) nseeds: number of model seed points to return
+%   4) num_seeds: number of model seed points to return
 % 
 % OUTPUTS
-%   1) rois: updated ROI object fit with each of the top nseeds models
+%   1) rois: updated ROI object fit with each of the top num_seeds models
 %   2) models: updated ModelTS object storing model for each seed point
 % 
 % AS 5/2017
@@ -31,7 +31,7 @@ for pp = 1:length(param_names)
         case 'tau2'
             params_lims{pp} = [10 1000];
         case 'sigma'
-            params_lims{pp} = [.01 1];
+            params_lims{pp} = [.01 .99];
     end
     params_grid{pp} = linspace(params_lims{pp}(1), params_lims{pp}(2), grid_size);
 end
@@ -88,13 +88,14 @@ ss_roi = ROI(roi_init.name, roi_init.experiments, session);
 ss_roi = tc_runs(ss_roi);
 ss_roi = tc_trials(ss_roi, ss_model);
 search_rois = ROI(roi_init.name, roi_init.experiments, repmat({session}, 1, size(params_list, 1)));
+search_rois = select_sessions(search_rois);
 search_rois.runs = repmat(ss_roi.runs, 1, size(params_list, 1));
 search_rois.baseline = repmat(ss_roi.baseline, 1, size(params_list, 1));
-search_rois = tc_fit(search_rois, search_models);
+search_rois = (search_rois, search_models);
 [~, model_idxs] = sort([search_rois.model.varexp{:}], 2, 'descend');
 
 % initialize output objects with correct number of seed points
-for seed = 1:nseeds
+for seed = 1:num_seeds
     rois(seed) = ss_roi;
     models(seed) = ss_model;
     for pp = 1:length(param_names)
@@ -104,7 +105,7 @@ for seed = 1:nseeds
 end
 
 % update IRFs and output results and parameters of best models
-for seed = 1:nseeds
+for seed = 1:num_seeds
     for pp = 1:length(param_names)
         models(seed) = update_param(models(seed), param_names{pp}, 0);
     end

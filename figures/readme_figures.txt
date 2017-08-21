@@ -1,0 +1,1 @@
+Directory for storing figures illustrating model fit and performance. 
