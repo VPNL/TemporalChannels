@@ -7,7 +7,7 @@ function [params, irfs] = init_params(model_type, nsess, fs)
 %     'htd'      -- irfs = hrf, dhrf
 %     'cts-pow'  -- params = tau1, epsilon; irfs = nrfS, hrf
 %     'cts-div'  -- params = tau1, sigma; irfs = nrfS, hrf
-%     'dcts'     -- params = tau2, sigma; irfs = lpf, nrfS, hrf
+%     'dcts'     -- params = tau1, tau2, sigma; irfs = lpf, nrfS, hrf
 %     '2ch'      -- irfs = nrfS, nrfT, hrf
 %     '2ch-pow'  -- params = epsilon; irfs = nrfS, nrfT, hrf
 %     '2ch-div'  -- params = sigma; irfs = lpf, nrfS, nrfT, hrf
@@ -50,6 +50,7 @@ switch model_type
         irfs.nrfS = repmat({nrfS}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case 'dcts'
+        params.tau1 = repmat({tau1}, 1, nsess);
         params.tau2 = repmat({tau2}, 1, nsess);
         params.sigma = repmat({sigma}, 1, nsess);
         lpf = exp(-(0:999) / tau2);

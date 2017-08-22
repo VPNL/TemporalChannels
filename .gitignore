@@ -1,5 +1,6 @@
 *.mat
 my_analysis.m
 my_figures.m
+make_model_grids.m
 data/*
 !data/readme_data.txt

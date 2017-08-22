@@ -414,6 +414,7 @@ classdef ROI
         % plot measurement vs. prediction for runs in each session
         function plot_runs(roi)
             % get design parameters
+            roi = select_sessions(roi);
             sessions = roi.sessions; nsess = length(sessions);
             % setup figure
             fig_name = [roi.nickname ' run timecourses'];
@@ -492,6 +493,7 @@ classdef ROI
             end
             % get design parameters and label data
             nexps = length(roi.experiments);
+            roi = select_sessions(roi);
             sessions = roi.sessions; nsess = length(sessions);
             npreds = length(roi.model.betas{1});
             xlabs = label_preds(roi.model);
@@ -599,15 +601,15 @@ classdef ROI
                 for rr = 1:num_runs
                     b0_cell{rr}(:, rr) = 1;
                 end
-                b0 = cell2mat(b0_cell); predictors = [preds b0];
+                b0 = cell2mat(b0_cell); predictors = [run_preds b0];
                 run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
                 tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
                 tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
-                beta_vec = zeros(1, npreds + nsruns);
+                beta_vec = zeros(1, npreds + num_runs);
                 beta_vec(1:npreds) = fit.betas{ss};
-                beta_vec(npreds + 1:npreds + nsruns) = roi.model.rbetas{ss};
+                beta_vec(npreds + 1:npreds + num_runs) = roi.model.rbetas{ss};
                 % predict predict fMRI responses for each run
-                run_pred = run_preds * beta_vec';
+                run_pred = predictors * beta_vec';
                 roi.model.run_preds{ss} = run_pred;
                 res = tc - run_pred;
                 % calculate model performance

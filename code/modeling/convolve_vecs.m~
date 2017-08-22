@@ -16,6 +16,8 @@ function cpred = convolve_vecs(pred, irf, fs_in, fs_out)
 
 [nframes, npreds] = size(pred);
 cpred = zeros(ceil(nframes / (fs_in * (1 / fs_out))), npreds);
+if fs_in == fs_out
+    rs_flag = 1
 for pp = 1:npreds
     cs = conv(irf, pred(:, pp));
     cpred(:, pp) = resample(cs(1:nframes), fs_out, fs_in);

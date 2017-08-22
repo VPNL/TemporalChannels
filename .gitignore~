@@ -1,0 +1,5 @@
+*.mat
+my_analysis.m
+my_figures.m
+data/*
+!data/readme_data.txt
