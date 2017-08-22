@@ -1,4 +1,5 @@
 *.mat
+*.fig
 my_analysis.m
 my_figures.m
 make_model_grids.m
