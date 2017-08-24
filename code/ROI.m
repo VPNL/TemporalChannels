@@ -104,11 +104,8 @@ classdef ROI
                 spath = fullfile(sessions{ss}, 'ROIs', roi.name);
                 % find paths to data files for each experiment
                 for ee = 1:length(roi.experiments)
-                    ecnt = 1;
-                    while exist(fullfile(spath, roi.experiments{ee}, ['Run' num2str(ecnt) '.mat']), 'file') == 2
-                        num_runs(ee, ss) = num_runs(ee, ss) + 1;
-                        ecnt = ecnt + 1;
-                    end
+                    d = dir(fullfile(spath, roi.experiments{ee}, 'Run*.mat'));
+                    fnames = {d.name}; num_runs(ee, ss) = length(fnames);
                 end
             end
         end
@@ -116,8 +113,7 @@ classdef ROI
         % find the paths to the data files for each session
         function filenames = get.filenames(roi)
             sessions = roi.sessions; nsess = length(sessions);
-            nruns = roi.num_runs;
-            filenames = {};
+            nruns = roi.num_runs; filenames = {};
             % for each session
             for ss = 1:nsess
                 rcnt = 0;
@@ -210,11 +206,14 @@ classdef ROI
         end
         
         % preprocess and store run timeseries of each voxel
-        function roi = tc_runs(roi)
+        function roi = tc_runs(roi, detrend_option)
+            if nargin == 1
+                detrend_option = 3;
+            end
             roi = select_sessions(roi); % select sessions with region
             fpaths = roi.filenames;     % find paths to data files
             raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
-            roi.runs = cellfun(@(X) psc(X), raw_runs, 'uni', false);
+            roi.runs = cellfun(@(X) psc(X, detrend_option), raw_runs, 'uni', false);
         end
         
         % check dimensionality of roi time series and model predictions
@@ -488,8 +487,6 @@ classdef ROI
         function plot_model(roi, save_flag)
             if nargin == 1
                 save_flag = 0;
-            elseif nargin > 2 || nargin < 1
-                error('unexpected input arguements');
             end
             % get design parameters and label data
             nexps = length(roi.experiments);

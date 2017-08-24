@@ -55,7 +55,7 @@ else
     
     % remove low frequency baseline drifts
     if detrend_option >= 4
-        frame_win = 30; k = ones(frame_win, 1) / frame_win;
+        frame_win = 20; k = ones(frame_win, 1) / frame_win;
         pad_frames = num_frames + 2 * frame_win;  niter = 2;
         % initialize baseline array for single period
         baseline = zeros(pad_frames, num_vox);
