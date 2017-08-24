@@ -27,13 +27,13 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
  
 To work with the example dataset, download the [archive](http://vpnl.stanford.edu/TemporalChannels/TemporalChannels_data.tar.gz) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
  
-To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant typically comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.) such that a participant can have multiple scan sessions (e.g., on different days). 
+To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.). Therefore, a single participant can have multiple session directories (e.g., from experiments on different days). 
  
 Each session directory should contain the following subdirectories: 
  
 1. *ROIs* – contains `.mat` files sorted by region name/experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/ROIs/V1/Exp1/Run1.mat`). Each file contains the raw fMRI time series of each voxel in a predefined region of interest for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing voxels (sorted in arbitrary order). This data is used for fitting models to the mean response of all voxels in a region and performing group analysis across all sessions with that region. To calcualte group statistics, it is necessary for region and experiment directory names to match across sessions. 
  
-2. *Voxels* – contains `.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a scan session for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing a voxels (sorted in arbitrary order). This data is used for fitting models to the response of each voxel in a fMRI session. The results of this voxel-level analysis can be adapted for various subsequent analyses (e.g., generating model parameter maps or performing multi-voxel pattern analysis).
+2. *Voxels* – contains `.mat` files sorted by experiment and labeled by run number (e.g., `~/TemporalChannels/data/*/Voxels/Exp1/Run1.mat`) that contain the raw fMRI time series of each voxel in a scan session for a single run. Each run of data is formatted as a matrix `tSeries` with rows indexing TRs (sorted in ascending order) and columns indexing voxels (sorted in arbitrary order). This data is used for fitting models to the response of each voxel in a fMRI session. The results of voxel-level analysis can be used for various subsequent analyses (e.g., generating model parameter maps or performing multi-voxel pattern analysis).
  
 3. *Stimuli* – contains `.txt` files labeled by experiment and run number that list information about the timing of each stimulus in a single run of an experiment. The names of experiments in the filenames must match the names of folders in the session *ROIs* and *Voxels* directories and are delimited from run numbers by an underscore (e.g., `~/TemporalChannels/data/*/Stimuli/Exp1_Run1.txt`).
  
@@ -52,17 +52,17 @@ Line 1 contains the name of the experiment followed by a list of all conditions 
 Exp1 conditions: TrialA, TrialB, TrialC, TrialD
 ```
  
+Here, *experiments* and *trials* define specific groupings or segments of data from a fMRI session:
+ 
+- *Experiments* are collections of runs composed of the same set of trial types that are repeated across sessions. To assess the test-retest reliability of the data, different "experiments" could also contain different runs composed of the same stimulus conditions. 
+ 
+- *Trials* are structured periods of stimulus presentation within a run that are separated by baseline periods (ideally ≥ 12 s). Baseline conditions mark transitions between different trials that repeat throughout the experiment and across sessions.
+ 
 Line 2 contains the total duration of the run in seconds. For example: 
 ```
 Run duration (s): 300
 ```
- 
-Here, experiments and trials are used to refer to specific groupings or segments of data from a fMRI session:
- 
-- *Experiments* are collections of runs composed of the same set of trial types that are repeated across sessions. To assess the test-retest reliability of the data, different "experiments" could also contain different splits of the data from a common set of stimulus conditions. 
- 
-- *Trials* are structured periods of stimulus presentation within a run that are separated by baseline periods (ideally ≥ 12 s). Baseline conditions mark transitions between different trials that repeat throughout the experiment and across sessions.
- 
+  
 The overall duration and number of stimuli in a trial can vary across trial types, but the timing and sequence of stimulus presentations must be identical across trials of the same type. Critically, trial segmentation does not affect the fit of the model but does affect noise ceiling estimation and visualization methods.
  
 #### Stimulus information
@@ -71,15 +71,15 @@ Lines 5 and below contain the following information about each stimulus delimite
  
 1. *Trial* — trial **number** incrementing from 1 to the total number of trials in the run.
  
-2. *Condition* — label indicating the **type** of trial to which the stimulus belongs (same as in line 1).
+2. *Condition* — label indicating the **type** of trial to which the stimulus belongs (matching a condition in line 1).
  
 3. *Onset* — stimulus onset time in **seconds** relative to the beginning of the run.
  
 4. *Duration* — stimulus presentation duration in **seconds**.
  
-5. *Filename* — stimulus descriptor composed of a **label** and stimulus-specific **identifier** delimited by a dash (e.g., `face-1.jpg`). Note that a separate array of predictors is coded for each unique label.
+5. *Filename* — stimulus descriptor composed of a category **label** and stimulus-specific **identifier** delimited by a dash (e.g., `face-1.jpg` or `body-144.jpg`). Note that a separate array of predictors is coded for each unique label.
  
-There is no need to model the baseline explicitly. That is, the code assumes a baseline condition for all times in which a stimulus is not shown. We recommend including a prolonged (≥ 12 s) baseline period immediately before each trial to use the trial averaging code and associated plotting functions.
+There is no need to model the baseline explicitly. That is, the code assumes a baseline condition for all times in which a stimulus is not shown. We recommend including a prolonged (≥ 12 s) baseline period immediately before each trial to enable use of trial averaging methods and associated plotting functions.
  
 ### Modeling a region of interest using model_roi
  
@@ -120,21 +120,21 @@ Fitting a model using the `model_roi` function requires passing at least three i
  
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
-4. *val_exps* — optional argument specifying which experiment/s to use for validating the model (e.g., `'Exp3'`).
+4. *val_exps* — optional argument specifying which experiment/s to use for validating the model (e.g., `{'Exp3' 'Exp4'}`). To assess validation accuracy independently for multiple experiments or sets of experiments, you can also pass a 2D cell array with different validation sets in different rows (e.g., passing `{'Exp3'; 'Exp4'}` calculates validation accuracy for each experiment individually). 
  
 #### Outputs
  
 After fitting a model to data from each session, the function plots the session-averaged measured vs. predicted fMRI responses for each trial type and returns two outputs:
  
 1. *roi* — object of the class `ROI` that stores fMRI data and model predictions for a given region of interest.
-    1. `roi(1).run_avgs` — contains average time series for each run in *fit_exps* (see `roi(2).run_avgs` for *val_exps* if applicable)
-    2. `roi(1).trial_avgs` —  contains average time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for *val_exps*)
-    3. `roi(1).model` — contains model fits and *R*^2 (see `roi(2).model` for *val_exps*)
+    1. `roi(1).run_avgs` — contains average time series for each run in *fit_exps* (see `roi(2).run_avgs` for the first set of *val_exps* if applicable)
+    2. `roi(1).trial_avgs` —  contains average time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for the first set of *val_exps*)
+    3. `roi(1).model` — contains model fits and *R*^2 (see `roi(2).model` for the first set of *val_exps*)
     4. See properties in `ROI` class file for more details ([`~/TemporalChannels/functions/ROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ROI.m))
  
 2. *model* — object of the class `ModelTS` that stores channel predictors for each session.
-    1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
-    2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for *val_exps*)
+    1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for the first set of *val_exps* if applicable)
+    2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for the first set of *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
     4. `model(1).params` — stores model hyperparameters
     5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))

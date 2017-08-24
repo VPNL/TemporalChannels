@@ -21,39 +21,66 @@ end
 if isempty(tc)
     tc = [];
 else
-    nFrames = size(tc,1);
-
+    [num_frames, num_vox] = size(tc);
+    
     % divide by mean of each voxel
     if detrend_option >= 1
         dc = nanmean(tc);
         dc(dc == 0 | isnan(dc)) = Inf;
         if sum(dc ~= Inf) > 0
-            tc = tc ./ (ones(nFrames, 1) * dc);
+            tc = tc ./ (ones(num_frames, 1) * dc);
         else
             tc = zeros(size(tc));
         end
     end
     
-    % remove linear trend
+    % remove linear trends
     if detrend_option >= 2
-        model = [(1:nFrames); ones(1,nFrames)]';
-        model = bsxfun(@rdivide ,model, max(model));
+        model = [(1:num_frames); ones(1, num_frames)]';
+        model = bsxfun(@rdivide, model, max(model));
         w = model \ tc;
         b = model * w;
         tc = tc - b;
     end
     
-    % remove quadratic trend
+    % remove quadratic trends
     if detrend_option >= 3
-        model = [(1:nFrames) .* (1:nFrames); (1:nFrames); ones(1, nFrames)]';
-        model = bsxfun(@rdivide,model,max(model));
+        fl = 1:num_frames;
+        model = [fl .* fl; fl; ones(1, num_frames)]';
+        model = bsxfun(@rdivide, model, max(model));
         w = model \ tc;
         b = model * w;
         tc = tc - b;
+    end
+    
+    % remove low frequency baseline drifts
+    if detrend_option >= 4
+        frame_win = 30; k = ones(frame_win, 1) / frame_win;
+        pad_frames = num_frames + 2 * frame_win;  niter = 2;
+        % initialize baseline array for single period
+        baseline = zeros(pad_frames, num_vox);
+        fwm  = mean(tc(1:frame_win, :));
+        for ff = 1:frame_win
+            baseline(ff, :) = fwm;
+        end
+        baseline(frame_win + 1:frame_win + num_frames, :) = tc;
+        lwm = mean(tc(num_frames - frame_win + 1:num_frames, :));
+        for ff = frame_win + num_frames + 1:pad_frames
+            baseline(ff, :) = lwm;
+        end
+        % find all window indices and smooth with boxcar to remove drifts
+        idxs  = niter * (frame_win - 1);
+        start = floor(idxs / 2) + 1; stop = pad_frames + floor(idxs/2);
+        for ii = 1:niter
+            baseline = conv2(baseline, k);
+        end
+        baseline = baseline(start:stop, :);
+        baseline = baseline(frame_win + 1:frame_win + num_frames, :);
+        tc = tc - baseline;
     end
     
     % subtract mean and convert to percent signal change
-    tc = tc - ones(nFrames, 1) * mean(tc);
+    tc = tc - ones(num_frames, 1) * mean(tc);
     tc = tc * 100;
     
     % remove spikes

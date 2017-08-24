@@ -2,8 +2,7 @@ function [roi, model] = model_roi(name, type, exps_fit, exps_val)
 % Wrapper function that fits a temporal model object (ModelTS) to a region
 % time series object (ROI) and plots the fit and predictions of the 
 % model. To validate the solution, include the optional fourth input
-% to predict data from 'exps_val' using a model fit to 'exps_fit'.
-% 
+% to predict data from 'exps_val' using a model fit to 'exps_fit'. 
 % Validation performance is computed separately for each row of experiment
 % names in 'val_exps' such that {'Exp1' 'Exp2'; 'Exp3' 'Exp4'}
 % 
