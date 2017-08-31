@@ -1,3 +1,4 @@
+
 % ModelTS: Code for modeling fMRI responses to time-varying visual stimuli.
 % 
 % CONSTRUCTOR INPUTS
@@ -6,14 +7,15 @@
 %        'standard' -- standard general linear model
 %        'htd'      -- hemodynamic temporal derivative (HTD; Henson 2002)
 %      Simple nonlinear models:
-%        '2ch'      -- 2 temporal-channel model (Stigliani et al., 2017)
 %        'cts-pow'  -- CTS with power law (Zhou et al., 2017)
 %        'cts-div'  -- CTS with divisive normalization (Zhou et al., 2017)
 %        'dcts'     -- dynamic CTS (Zhou et al., 2017)
+%        '2ch'      -- 2 temporal-channel model (Stigliani et al., 2017)
 %      Multi-channel nonlinear models:
 %        '2ch-div'  -- 2 temporal-channel model with CTS-div on sustained
 %        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on sustained
 %        '2ch-dcts' -- 2 temporal-channel model with dCTS on sustained
+%        '2ch-opt'  -- 2 temporal-channel model with dCTS on sustained
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of paths to session data directories
 %
@@ -64,7 +66,7 @@ classdef ModelTS
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         % descriptors for each model implemented
         types = {'standard' 'htd' '2ch' 'cts-pow' 'cts-div' 'dcts' ...
-                 '2ch-pow' '2ch-div' '2ch-dcts'};
+                 '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -105,20 +107,16 @@ classdef ModelTS
             model.num_exps = length(model.experiments);
         end
         
-        % Get number of runs per experiment for each session.
+        % find the number of runs per experiment for each session
         function num_runs = get.num_runs(model)
             sessions = model.sessions; nsess = length(sessions);
-            num_runs = zeros(model.num_exps, nsess);
+            num_runs = zeros(length(model.experiments), nsess);
             for ss = 1:nsess
-                for ee = 1:model.num_exps
-                    ecnt = 1;
-                    fstem = fullfile(sessions{ss}, 'Stimuli');
-                    fname = [model.experiments{ee} '_Run'];
-                    % look for paths to stimfiles and count number of runs
-                    while exist(fullfile(fstem, [fname num2str(ecnt) '.txt']), 'file') == 2
-                        num_runs(ee, ss) = num_runs(ee, ss) + 1;
-                        ecnt = ecnt + 1;
-                    end
+                spath = fullfile(sessions{ss}, 'Stimuli');
+                % find paths to data files for each experiment
+                for ee = 1:length(model.experiments)
+                    d = dir(fullfile(spath, [model.experiments{ee} '_Run*.txt']));
+                    fnames = {d.name}; num_runs(ee, ss) = length(fnames);
                 end
             end
         end
@@ -240,6 +238,8 @@ classdef ModelTS
                     model = pred_runs_2ch_div(model);
                 case '2ch-dcts'
                     model = pred_runs_2ch_dcts(model);
+                case '2ch-opt'
+                    model = pred_runs_2ch_opt(model);
             end
         end
         
@@ -264,6 +264,8 @@ classdef ModelTS
                     model = pred_trials_2ch_div(model);
                 case '2ch-dcts'
                     model = pred_trials_2ch_dcts(model);
+                case '2ch-opt'
+                    model = pred_trials_2ch_opt(model);
             end
         end
         

@@ -50,6 +50,13 @@ switch model.type
         lpf = cellfun(@(X) exp(-(0:999) / X), model.params.tau2, 'uni', false);
         lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
         model.irfs.lpf = lpf;
+    case '2ch-opt'
+        nrfS = cellfun(@(X) (0:999) .* exp(-(0:999) / X), model.params.tau1, 'uni', false);
+        nrfS = cellfun(@(X) resample(X/sum(X), 1, 1000/model.fs)', nrfS, 'uni', false);
+        model.irfs.nrfS = nrfS;
+        lpf = cellfun(@(X) exp(-(0:999) / X), model.params.tau2, 'uni', false);
+        lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
+        model.irfs.lpf = lpf;
 end
 
 end

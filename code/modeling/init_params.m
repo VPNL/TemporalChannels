@@ -12,6 +12,7 @@ function [params, irfs] = init_params(model_type, nsess, fs)
 %     '2ch-pow'  -- params = epsilon; irfs = nrfS, nrfT, hrf
 %     '2ch-div'  -- params = sigma; irfs = lpf, nrfS, nrfT, hrf
 %     '2ch-dcts' -- params = tau2, sigma; irfs = lpf, nrfS, nrfT, hrf
+%     '2ch-opt' -- params = tau1, tau2, sigma; irfs = lpf, nrfS, nrfT, hrf
 %   2) nsess: number of sessions to setup parameters for 
 %   3) fs: sampling rate for impulse response functions (Hz)
 % 
@@ -81,12 +82,25 @@ switch model_type
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-dcts'
-        params.tau2 = repmat({150}, 1, nsess);
+        params.tau2 = repmat({tau2}, 1, nsess);
         params.sigma = repmat({0.1}, 1, nsess);
         lpf = exp(-(0:999) / tau2);
         lpf = lpf / sum(lpf);
         irfs.lpf = repmat({lpf}, 1, nsess);
         nrfS = watson_irfs('S', fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsess);
+        nrfT = watson_irfs('T', fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsess);
+        irfs.hrf = repmat({hrf}, 1, nsess);
+    case '2ch-opt'
+        params.tau1 = repmat({tau1}, 1, nsess);
+        params.tau2 = repmat({tau2}, 1, nsess);
+        params.sigma = repmat({0.1}, 1, nsess);
+        lpf = exp(-(0:999) / tau2);
+        lpf = lpf / sum(lpf);
+        irfs.lpf = repmat({lpf}, 1, nsess);
+        nrfS = (0:999) .* exp(-(0:999) / tau1);
+        nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
         irfs.nrfS = repmat({nrfS}, 1, nsess);
         nrfT = watson_irfs('T', fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);

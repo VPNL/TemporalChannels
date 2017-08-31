@@ -99,7 +99,7 @@ classdef ROI
         % find the number of runs per experiment for each session
         function num_runs = get.num_runs(roi)
             sessions = roi.sessions; nsess = length(sessions);
-            num_runs = zeros(length(roi.experiments), length(roi.sessions));
+            num_runs = zeros(length(roi.experiments), nsess);
             for ss = 1:nsess
                 spath = fullfile(sessions{ss}, 'ROIs', roi.name);
                 % find paths to data files for each experiment
@@ -123,7 +123,9 @@ classdef ROI
                     % store paths to data file for each run
                     for rr = 1:nruns(ee, ss)
                         rcnt = rcnt + 1;
-                        filenames{rcnt, ss} = fullfile(spath, roi.experiments{ee}, ['Run' num2str(rr) '.mat']);
+                        edir = fullfile(spath, roi.experiments{ee});
+                        fname = ['Run' num2str(rr) '.mat'];
+                        filenames{rcnt, ss} = fullfile(edir, fname);
                     end
                 end
             end
@@ -206,14 +208,14 @@ classdef ROI
         end
         
         % preprocess and store run timeseries of each voxel
-        function roi = tc_runs(roi, detrend_option)
+        function roi = tc_runs(roi, detrend)
             if nargin == 1
-                detrend_option = 3;
+                detrend = 4;
             end
             roi = select_sessions(roi); % select sessions with region
             fpaths = roi.filenames;     % find paths to data files
             raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
-            roi.runs = cellfun(@(X) psc(X, detrend_option), raw_runs, 'uni', false);
+            roi.runs = cellfun(@(X) psc(X, detrend), raw_runs, 'uni', false);
         end
         
         % check dimensionality of roi time series and model predictions
@@ -233,14 +235,10 @@ classdef ROI
             sessions = roi.sessions; nsess = length(sessions);
             nconds = max(cellfun(@length, model.cond_list));
             nexps = length(roi.experiments);
-            nruns_max = size(model.run_preds, 1);
-            nruns = model.num_runs;
-            % get onsets, offsets, and trial orders
-            onsets = model.tonsets;
-            offsets = model.toffsets;
-            conds = model.tconds;
+            nruns_max = size(model.run_preds, 1); nruns = model.num_runs;
             % compile all trial time series for each session and experiment
-            trials = cell(nconds, nsess, nexps);
+            onsets = model.tonsets; offsets = model.toffsets;
+            trials = cell(nconds, nsess, nexps); conds = model.tconds;
             for ss = 1:nsess
                 rcnt = 0;
                 for ee = 1:nexps
@@ -249,8 +247,8 @@ classdef ROI
                         rcnt = rcnt + 1;
                         % estimate prestimulus baseline response for run
                         oframes = repmat(onsets{rcnt, ss}, model.pre_dur, 1);
-                        psf = oframes - repmat([1:model.pre_dur]', 1, length(oframes));
-                        bf = psf(:);
+                        b = repmat([1:model.pre_dur]', 1, length(oframes));
+                        psf = oframes - b; bf = psf(:);
                         % calculate mean baseline response to subtract
                         bs = mean(roi.run_avgs{rcnt, ss}(bf));
                         roi.baseline{rcnt, ss} = bs;
@@ -261,10 +259,13 @@ classdef ROI
                             cond_idx = find(strcmp(cond, model.cond_list{ee}));
                             cnts(cond_idx) = cnts(cond_idx) + 1;
                             % get TR corresponding to onset of pre_dur
-                            onset = (onsets{rcnt, ss}(tt) - model.pre_dur) / roi.tr + 1;
-                            offset = (floor(offsets{rcnt, ss}(tt) - model.gap_dur / 2) + model.post_dur) / roi.tr + 1;
+                            on_idxs = onsets{rcnt, ss}(tt) - model.pre_dur;
+                            onset = on_idxs / roi.tr + 1;
+                            off_idxs = offsets{rcnt, ss}(tt) - model.gap_dur / 2;
+                            offset = (floor(off_idxs) + model.post_dur) / roi.tr + 1;
                             % extract the peri-stimulus time window
-                            trials{cond_idx, ss, ee}(:, cnts(cond_idx)) = roi.run_avgs{rcnt, ss}(onset:offset) - bs;
+                            trial_avg = roi.run_avgs{rcnt, ss}(onset:offset) - bs;
+                            trials{cond_idx, ss, ee}(:, cnts(cond_idx)) = trial_avg;
                         end
                     end
                 end
@@ -281,17 +282,17 @@ classdef ROI
             total_err = []; total_var = []; ceils = [];
             for ss = 1:size(trials, 2)
                 total_err(ss) = sum([trials_err{:, ss}]);
-                trials_var = vertcat(trials{:, ss}) - mean(mean(vertcat(trials{:, ss})));
+                trial_mean = mean(mean(vertcat(trials{:, ss})));
+                trials_var = vertcat(trials{:, ss}) - trial_mean;
                 total_var(ss) = sum(sum(trials_var .^ 2));
                 roi.noise_ceils{ss} = 1 - (total_err / total_var);
             end
         end
         
         % use GLM to fit weights for each predictor in model
-        function [roi, model] = tc_fit(roi, model, optimize_flag)
-            if nargin < 3
-                optimize_flag = 0;
-            end
+        function [roi, model] = tc_fit(roi, model, optimize_flag, fit_exps)
+            if nargin < 3; optimize_flag = 0; end
+            if nargin < 4; fit_exps = model.experiments; end
             check_model(roi, model);
             nruns_max = size(model.run_preds, 1); % max number of runs
             nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
@@ -314,18 +315,24 @@ classdef ROI
                 roi.model.run_preds{ss} = predictors * mm.betas';
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
-                roi.model.rbetas{ss} = mm.betas(npreds + 1:npreds + nruns(ss)); % nuisance regressor betas
-                roi.model.rstdevs{ss} = mm.stdevs(npreds + 1:npreds + nruns(ss)); % nuisance regressor stdevs
-                roi.model.varexp{ss} = 1 - (sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2));
+                rbetas = mm.betas(npreds + 1:npreds + nruns(ss));
+                % store paramters of nuisance regressors
+                roi.model.rbetas{ss} = rbetas;
+                rstdevs = mm.stdevs(npreds + 1:npreds + nruns(ss));
+                roi.model.rstdevs{ss} = rstdevs;
+                ve = 1 - (sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2));
+                roi.model.varexp{ss} = ve;
             end
             % optimize model parameters if applicable
-            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts'};
+            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
-                    fname_grid = ['grid_search_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fname_grid = ['grid_search_results_' model.type ...
+                        '_fit' [fit_exps{:}] '.mat'];
                     fpath_grid = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grid);
-                    fname_grad = ['grad_desc_results_' model.type '_fit' [model.experiments{:}] '.mat'];
+                    fname_grad = ['grad_desc_results_' model.type ...
+                        '_fit' [fit_exps{:}] '.mat'];
                     fpath_grad = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grad);
                     % load optimization results if saved, otherwise compute
                     if exist(fpath_grad, 'file') == 2
@@ -344,7 +351,8 @@ classdef ROI
                     end
                     % copy optimized parameters for session
                     for pp = 1:length(param_names)
-                        model.params.(param_names{pp}){ss} = models.params.(param_names{pp}){1};
+                        opt_params = models.params.(param_names{pp}){1};
+                        model.params.(param_names{pp}){ss} = opt_params;
                         model = update_param(model, param_names{pp}, 0);
                     end
                     model = pred_runs(model);
@@ -372,7 +380,7 @@ classdef ROI
             % preallocate predictor array for each trial type
             roi.pred = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
-            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts'};
+            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             if sum(strcmp(model.type, cmodels))
                 roi.predS = cell(nconds, nsubs, nexps);
                 roi.predT = cell(nconds, nsubs, nexps);
@@ -381,9 +389,8 @@ classdef ROI
             for ss = 1:nsubs
                 for ee = 1:nexps
                     for cc = 1:length(model.cond_list{ee})
-                        % if using multi-channel model
-                        if sum(strcmp(model.type, cmodels))
-                            % find beta values for each channel
+                        mc_flag = sum(strcmp(model.type, cmodels));
+                        if mc_flag % if using a multi-channel model
                             ampS = roi.model.betas{ss}(1:ncats);
                             ampT = roi.model.betas{ss}(ncats + 1:2 * ncats);
                             % scale trial predictors by betas
@@ -395,9 +402,7 @@ classdef ROI
                             roi.predS{cc, ss, ee} = fmriS;
                             roi.predT{cc, ss, ee} = fmriT;
                             roi.pred{cc, ss, ee} = fmriS + fmriT;
-                        % if using single-channel model
-                        else
-                            % find beta values
+                        else % if using a single channel model
                             amp = roi.model.betas{ss}(1:ncats);
                             % scale trial predictors by betas
                             pred = model.trial_preds.pred{cc, ss, ee};
@@ -428,10 +433,11 @@ classdef ROI
                     ylabel('% signal');
                 end
                 [~, session_id] = fileparts(sessions{ss});
-                leg_str = {[session_id ': ' num2str(100 * roi.model.varexp{ss}, 2) '%'] 'pred'};
-                legend(leg_str, 'Location', 'NorthEastOutside'); legend boxoff;
-                axis tight; ylims = get(gca, 'ylim'); ylim([ylims(1) ceil(ylims(2))]);
-                set(gca, 'XColor', 'w', 'TickDir', 'out', 'YTick', [0 ceil(ylims(2))], 'FontSize', 8);
+                leg = {[session_id ': ' num2str(roi.model.varexp{ss}, 2) '%'] 'pred'};
+                legend(leg); legend boxoff; axis tight;
+                ylims = get(gca, 'ylim'); ylim([ylims(1) ceil(ylims(2))]);
+                set(gca, 'XColor', 'w', 'FontSize', 8, ...
+                    'TickDir', 'out', 'YTick', [0 ceil(ylims(2))]);
             end
         end
         
@@ -476,9 +482,8 @@ classdef ROI
                 xcnt = xcnt + tl + 3; zlc = xcnt;
             end
             % format plot
-            ylabel('fMRI (% signal)');
-            ylim([floor(y_min) ceil(y_max)]);
-            legend(me(:), roi.experiments, 'Location', 'NorthWest'); legend boxoff;
+            ylabel('fMRI (% signal)'); ylim([floor(y_min) ceil(y_max)]);
+            legend(me(:), roi.experiments); legend boxoff;
             title(roi.nickname, 'Interpreter', 'none');
             set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8);
         end
@@ -496,36 +501,43 @@ classdef ROI
             xlabs = label_preds(roi.model);
             amps = reshape([roi.model.betas{:}], npreds, [])';
             R2 = [roi.model.varexp{:}];
-            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts'};
+            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             smodels = {'standard' 'cts-pow' 'cts-div' 'dcts'};
             % setup figure
             fig_name = [roi.nickname ' - ' roi.model.type ' model'];
             fig_pos = [.1 .1 .8 .3 + nexps * .2];
             fig = figTS(fig_name, fig_pos);
             % plot model solution
-            subplot(1 + nexps, 2, 1); hold on; barTS(amps, [0 0 0]);
+            subplot(1 + nexps, 2, 1); hold on;
+            [ymin, ymax] = barTS(amps, [0 0 0]);
+            xlim([0 size(amps, 2) + 1]); ylim([ymin ymax]);
             xlabel('Predictor'); ylabel('Beta (% signal)');
-            tstr1 = roi.nickname;
-            tstr2 = [roi.model.type ' model fit to ' strjoin(roi.model.fit_exps, '/')];
-            tstr3 = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' num2str(mean(R2), 3)];
-            title({tstr1; tstr2; tstr3});
-            set(gca, 'XTickLabel', xlabs);
+            t1 = roi.nickname; R2_str = num2str(mean(R2), 3);
+            t2 = [roi.model.type ' fit to ' strjoin(roi.model.fit_exps, '/')];
+            t3 = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' R2_str];
+            title({t1; t2; t3});
+            set(gca, 'TickDir', 'out', 'FontSize', 8, ...
+                'XTick', 1:size(amps, 2) + 1, 'XTickLabel', xlabs);
             % plot variance explained for each session
             varexp = [roi.model.varexp{:}];
-            subplot(1 + nexps, 2, 2); hold on; barTS(R2, [0 0 0]); xcnt = 1;
+            subplot(1 + nexps, 2, 2); hold on;
+            [ymin, ymax] = barTS(R2, [0 0 0]); xcnt = 1;
+            xlim([0 size(R2, 2) + 1]); ylim([ymin ymax]);
             for ss = 1:nsess
                 ypos = max([0 varexp(ss)]) + .1;
                 lab = num2str(varexp(ss), 2);
-                text(xcnt, ypos, lab, 'HorizontalAlignment', 'center', 'FontSize', 6);
+                text(xcnt, ypos, lab, 'FontSize', 6, ...
+                    'HorizontalAlignment', 'center');
                 xcnt = xcnt + 1;
             end
-            xlabel('Session'); ylabel('R^2'); ylim([0 1]);
-            title('Individual Subjects');
-            set(gca, 'XTickLabel', strrep(roi.session_ids, '_', '-'));
+            title('Individual Subjects');  ylim([0 1]);
+            xlabel('Session'); ylabel('R^2');
+            set(gca, 'TickDir', 'out', 'FontSize', 8, ...
+                'XTick', 1:nsess, 'XTickLabel', roi.session_ids);
             % plot measurement vs prediction for each trial type
             pre_dur = roi.model.pre_dur;
             post_dur = roi.model.post_dur;
-            y_max = 0; y_min = -2;
+            y_max = 0; y_min = -1;
             for ee = 1:nexps
                 ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on;
                 xcnt = 3; zlc = xcnt;
@@ -536,36 +548,39 @@ classdef ROI
                     % plot measured response for peristimulus time window
                     x = xcnt:xcnt + tl - 1;
                     y_m = [roi.trial_avgs{cc, :, ee}]';
-                    [me, cymin, cymax] = lineTS(x, y_m, 1, [.9 .9 .9], [.7 .7 .7], 'std');
-                    y_min = min([y_min cymin]); y_max = max([y_max cymax]);
+                    lcol = [.9 .9 .9]; ecol = [.7 .7 .7];
+                    [me, c_min, c_max] = lineTS(x, y_m, 1, lcol, ecol, 'std');
+                    y_min = min([y_min c_min]); y_max = max([y_max c_max]);
                     % plot model prediction for peristimulus time window
                     y_p = [roi.pred_sum{cc, :, ee}]';
-                    [pr, cymin, cymax] = lineTS(x, y_p, 2, [0 0 0]);
-                    y_min = min([y_min cymin]); y_max = max([y_max cymax]);
+                    [pr, c_min, c_max] = lineTS(x, y_p, 2, [0 0 0]);
+                    y_min = min([y_min c_min]); y_max = max([y_max c_max]);
                     % plot separate channel contributions if applicable
                     if sum(strcmp(roi.model.type, cmodels))
                         y_pS = [roi.predS_sum{cc, :, ee}]';
-                        [sp, cymin, cymax] = lineTS(x, y_pS, 1, [0 0 1]);
-                        y_min = min([y_min cymin]); y_max = max([y_max cymax]);
+                        [sp, c_min, c_max] = lineTS(x, y_pS, 1, [0 0 1]);
+                        y_min = min([y_min c_min]); y_max = max([y_max c_max]);
                         y_pT = [roi.predT_sum{cc, :, ee}]';
-                        [tp, cymin, cymax] = lineTS(x, y_pT, 1, [1 0 0]);
-                        y_min = min([y_min cymin]); y_max = max([y_max cymax]);
+                        [tp, c_min, c_max] = lineTS(x, y_pT, 1, [1 0 0]);
+                        y_min = min([y_min c_min]); y_max = max([y_max c_max]);
                     end
                     % plot stimulus
-                    plot([xcnt + pre_dur - 1 xcnt + tl - post_dur], [-.5 -.5], 'k-', 'LineWidth', 4);
-                    text(xcnt + pre_dur - 1, -1, roi.model.cond_list{ee}(cc), 'FontSize', 8);
+                    x_s = [xcnt + pre_dur - 1 xcnt + tl - post_dur];
+                    x_t = roi.model.cond_list{ee}(cc);
+                    plot(x_s, [-.5 -.5], 'k-', 'LineWidth', 4);
+                    text(xcnt + pre_dur - 1, -1, x_t, 'FontSize', 8);
                     xcnt = xcnt + tl + 3; zlc = xcnt;
                 end
                 % set legend and format plot
                 if sum(strcmp(roi.model.type, smodels))
-                    leg_str = {roi.nickname [roi.model.type ' model']};
-                    legend([me pr], leg_str, 'Location', 'NorthWest');
+                    leg = {roi.nickname [roi.model.type ' model']};
+                    legend([me pr], leg, 'Location', 'NorthWest');
                 else
-                    leg_str1 = [roi.nickname ' (N = ' num2str(nsess) ')'];
-                    leg_str2 = [roi.model.type ' model'];
-                    leg_str3 = {'S contribution' 'T contribution'};
-                    leg_str = [leg_str1 leg_str2 leg_str3];
-                    legend([me pr sp tp], leg_str, 'Location', 'NorthWest');
+                    l1 = [roi.nickname ' (N = ' num2str(nsess) ')'];
+                    l2 = [roi.model.type ' model'];
+                    l3 = {'S contribution' 'T contribution'};
+                    leg = [l1 l2 l3];
+                    legend([me pr sp tp], leg, 'Location', 'NorthWest');
                 end
                 legend boxoff;
                 title([roi.experiments{ee}], 'FontSize', 8);
@@ -574,7 +589,9 @@ classdef ROI
             end
             % norm y-axis limit across experiments
             for ee = 1:nexps
-                set(ax(ee), 'YLim', [floor(y_min) ceil(y_max)], 'YTick', floor(y_min):ceil(y_max));
+                set(ax(ee), ...
+                    'YLim', [floor(y_min) ceil(y_max)], ...
+                    'YTick', floor(y_min):ceil(y_max));
             end
             % save to results directory if applicable
             if save_flag

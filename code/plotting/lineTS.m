@@ -2,7 +2,7 @@ function [h, ymin, ymax] = lineTS(x, y, lw, lcol, ecol, err_type)
 % Generates clean version of a simple line plot with error region
 % 
 % INPUTS
-%   1) x: vector of x-axis valus
+%   1) x: vector of x-axis values
 %   2) y: matrix of data (N x P)
 %   3) lw: line width (default = 1)
 %   4) lcol: plotting color for line

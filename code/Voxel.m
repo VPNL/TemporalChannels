@@ -263,7 +263,7 @@ classdef Voxel
                 vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(mm.residual .^ 2, 1) ./ sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
             end
             % optimize model parameters if applicable
-            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts'};
+            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 % load grid search results if saved, otherwise compute
                 fname = ['grid_search_' vox.nickname '_' model.type '.mat'];

@@ -1,7 +1,7 @@
 *.mat
 *.fig
 my_analysis.m
-my_figures.m
 make_model_grids.m
+figures/*.m
 data/*
 !data/readme_data.txt

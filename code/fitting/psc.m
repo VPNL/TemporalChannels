@@ -1,12 +1,13 @@
-function tc = psc(tc, detrend_option)
+function tc = psc(tc, detrend)
 % Preprocess voxel time series and convert to precent signal change
 %
 % INPUTS
 % tc: TR by voxel matrix of fMRI time series data
-% detrend_option:
+% detrend:
 %   1 = normaliztion without trend removal
 %   2 = normalization with linear trend removal
 %   3 = normalization with linear + quadratic trend removal
+%   4 = normalization with low frequency baseline drift removal
 %
 % OUTPUT
 % tc: preprocessed TR by voxel data matrix
@@ -15,7 +16,7 @@ function tc = psc(tc, detrend_option)
 % AS 2/2017
 
 if nargin == 1
-    detrend_option = 3;
+    detrend = 3;
 end
 
 if isempty(tc)
@@ -24,7 +25,7 @@ else
     [num_frames, num_vox] = size(tc);
     
     % divide by mean of each voxel
-    if detrend_option >= 1
+    if detrend >= 1
         dc = nanmean(tc);
         dc(dc == 0 | isnan(dc)) = Inf;
         if sum(dc ~= Inf) > 0
@@ -35,7 +36,7 @@ else
     end
     
     % remove linear trends
-    if detrend_option >= 2
+    if detrend >= 2
         model = [(1:num_frames); ones(1, num_frames)]';
         model = bsxfun(@rdivide, model, max(model));
         w = model \ tc;
@@ -44,7 +45,7 @@ else
     end
     
     % remove quadratic trends
-    if detrend_option >= 3
+    if detrend >= 3
         fl = 1:num_frames;
         model = [fl .* fl; fl; ones(1, num_frames)]';
         model = bsxfun(@rdivide, model, max(model));
@@ -54,7 +55,7 @@ else
     end
     
     % remove low frequency baseline drifts
-    if detrend_option >= 4
+    if detrend >= 4
         frame_win = 20; k = ones(frame_win, 1) / frame_win;
         pad_frames = num_frames + 2 * frame_win;  niter = 2;
         % initialize baseline array for single period

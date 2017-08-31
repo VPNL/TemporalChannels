@@ -1,16 +1,16 @@
-function [roi, model] = model_roi(name, type, exps_fit, exps_val)
+function [roi, model] = model_roi(name, type, fit_exps, val_exps)
 % Wrapper function that fits a temporal model object (ModelTS) to a region
 % time series object (ROI) and plots the fit and predictions of the 
 % model. To validate the solution, include the optional fourth input
-% to predict data from 'exps_val' using a model fit to 'exps_fit'. 
+% to predict data from 'val_exps' using a model fit to 'fit_exps'. 
 % Validation performance is computed separately for each row of experiment
 % names in 'val_exps' such that {'Exp1' 'Exp2'; 'Exp3' 'Exp4'}
 % 
 % INPUTS
 %   1) name: directory name of ROI to model (e.g., 'V1')
 %   2) type: which type of model to use
-%   3) exps_fit: list of experiments for fitting the model (e.g., {'Exp1' 'Exp2'})
-%   4) exps_val: list/s of experiments for validating the fit (optional)
+%   3) fit_exps: set of experiments for fitting the model (e.g., {'Exp1' 'Exp2'})
+%   4) val_exps: set/s of experiments for validating the fit (optional)
 % 
 % OUTPUTS
 %   1) roi: fitted ROI object containing measured and predicted responses
@@ -31,8 +31,6 @@ function [roi, model] = model_roi(name, type, exps_fit, exps_val)
 
 
 %% Setup paths and check inputs
-
-% add paths to class objects and helper functions
 mpath = fileparts(mfilename('fullpath'));
 addpath(genpath(mpath));
 
@@ -49,12 +47,12 @@ end
 %% Fit the model to fit_exps
 
 % setup ROI object for fitting ModelTS
-roi(1) = ROI(name, exps_fit);
+roi(1) = ROI(name, fit_exps);
 fprintf('\nExtracting run time series for %s...\n', roi(1).nickname)
 roi(1) = tc_runs(roi(1));
 
 % setup ModelTS object to applyt to ROI
-model(1) = ModelTS(type, exps_fit, roi(1).sessions);
+model(1) = ModelTS(type, fit_exps, roi(1).sessions);
 fprintf('Coding the stimulus...\n')
 model(1) = code_stim(model(1));
 fprintf('Generating predictors...\n')
@@ -72,35 +70,35 @@ roi(1) = tc_pred(roi(1), model(1));
 %% validation the model on test_exps if applicable
 
 if cv_flag
-    num_vals = size(exps_val, 1);
+    num_vals = size(val_exps, 1);
     for vv = 1:num_vals
         fprintf('Performing validation...\n')
         vn = 1 + vv;
         % setup ROI and ModelTS objects for validation
-        roi(vn) = ROI(name, exps_val(vv, :), roi(1).sessions);
+        roi(vn) = ROI(name, val_exps(vv, :), roi(1).sessions);
         roi(vn) = tc_runs(roi(vn));
-        model(vn) = ModelTS(type, exps_val(vv, :), roi(vn).sessions);
+        model(vn) = ModelTS(type, val_exps(vv, :), roi(vn).sessions);
         model(vn) = code_stim(model(vn));
         model(vn) = pred_runs(model(vn));
         model(vn) = pred_trials(model(vn));
         % setup model struct by fitting model directly to data
         roi(vn) = tc_trials(roi(vn), model(vn));
-        [roi(vn), model(vn)] = tc_fit(roi(vn), model(vn));
+        [roi(vn), model(vn)] = tc_fit(roi(vn), model(vn), 1, fit_exps);
         roi(vn) = tc_pred(roi(vn), model(vn));
-        % use model fit to data from exps_fit to predict data in exps_val
+        % use model fit to data from fit_exps to predict data in val_exps
         roi(vn) = recompute(roi(vn), model(vn), roi(1).model);
     end
 end
 
 
-%% Plot results
+%% Plot model predictions
 
 % plot model fit and predictions for fit_exps and val_exps
 for rr = 1:length(roi)
     plot_model(roi(rr));
 end
 
-%% Save results
+%% Save output in results
 fname = [roi(1).nickname '_' roi(1).model.type '_fit' [roi(1).experiments{:}]];
 if cv_flag
     for vv = 1:num_vals
