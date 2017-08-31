@@ -41,7 +41,7 @@ classdef Voxel
     end
     
     properties (Dependent)
-        sessions   % paths to sessions that have current ROI
+        sessions   % paths to sessions that have all experiments
     end
     
     properties (Dependent, Hidden)
@@ -78,44 +78,17 @@ classdef Voxel
                 all_sessions = vox.isessions;
             end
         end
-        
-        % find set of all_sessions with voxel data
-        function sessions = get.sessions(vox)
-            sessions = {}; scnt = 0;
-            for ss = 1:length(vox.all_sessions)
-                [~, session_id] = fileparts(vox.all_sessions{ss});
-                spath = fullfile(vox.project_dir, 'data', session_id);
-                cpath = fullfile(spath, 'Voxels');
-                ecnt = 0;
-                for ee = 1:length(vox.experiments)
-                    if exist(fullfile(cpath, vox.experiments{ee}), 'dir') == 7
-                        ecnt = ecnt + 1;
-                    end
-                end
-                if ecnt == length(vox.experiments)
-                    scnt = scnt + 1;
-                    sessions{scnt} = spath;
-                end
-            end
-            % error if no sessions with voxel data are found
-            if scnt == 0
-                error('No sessions found with voxel data.');
-            end
-        end
-        
+                
         % find the number of runs per experiment for each session
         function num_runs = get.num_runs(vox)
             sessions = vox.sessions; nsess = length(sessions);
-            num_runs = zeros(length(vox.experiments), length(vox.sessions));
+            num_runs = zeros(length(vox.experiments), nsess);
             for ss = 1:nsess
                 spath = fullfile(sessions{ss}, 'Voxels');
                 % find paths to data files for each experiment
                 for ee = 1:length(vox.experiments)
-                    ecnt = 1;
-                    while exist(fullfile(spath, vox.experiments{ee}, ['Run' num2str(ecnt) '.mat']), 'file') == 2
-                        num_runs(ee, ss) = num_runs(ee, ss) + 1;
-                        ecnt = ecnt + 1;
-                    end
+                    d = dir(fullfile(spath, [vox.experiments{ee} '_' 'Run*.mat']));
+                    fnames = {d.name}; num_runs(ee, ss) = length(fnames);
                 end
             end
         end
@@ -170,9 +143,36 @@ classdef Voxel
             predD_sum = cellfun(@(X) sum(X, 2), vox.predD, 'uni', false);
         end
         
+        % find set of all_sessions with experiments
+        function vox = select_sessions(vox)
+            sessions = {}; scnt = 0;
+            for ss = 1:length(vox.all_sessions)
+                [~, session_id] = fileparts(vox.all_sessions{ss});
+                spath = fullfile(vox.project_dir, 'data', session_id);
+                cpath = fullfile(spath, 'Voxels');
+                ecnt = 0;
+                for ee = 1:length(vox.experiments)
+                    if exist(fullfile(cpath, vox.experiments{ee}), 'dir') == 7
+                        ecnt = ecnt + 1;
+                    end
+                end
+                if ecnt == length(vox.experiments)
+                    scnt = scnt + 1;
+                    sessions{scnt} = spath;
+                end
+            end
+            % error if no sessions with ROI are found
+            if scnt == 0
+                error('No sessions found with all experiments');
+            else
+                vox.sessions = sessions;
+            end
+        end
+        
         % preprocess and store run timeseries of each voxel
         function vox = tc_runs(vox)
-            fpaths = vox.filenames; % paths to data files
+            vox = select_sessions(vox); % sessions with all experiments
+            fpaths = vox.filenames;     % paths to data files
             raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
             vox.runs = cellfun(@(X) psc(X), raw_runs, 'uni', false);
         end
@@ -234,15 +234,14 @@ classdef Voxel
         end
         
         % use GLM to fit weights for each predictor in model
-        function [vox, model] = tc_fit(vox, model, optimize_flag)
-            if nargin < 3
-                optimize_flag = 0;
-            end
-            check_model(vox, model);
-            nruns_max = size(model.run_preds, 1); % max number of runs
+        function [vox, model] = tc_fit(vox, model, optimize_flag, fit_exps)
+            if nargin < 3; optimize_flag = 0; end
+            if nargin < 4; fit_exps = model.experiments; end
+            check_model(vox, model); sessions = vox.sessions;
+            nruns_max = size(model.run_preds, 1);
             nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
             % concatenate data and preds across all runs in each session
-            for ss = 1:length(vox.sessions)
+            for ss = 1:length(sessions)
                 predictors = []; tc = [];
                 for rr = 1:nruns(ss)
                     [nframes, npreds] = size(model.run_preds{rr, ss});
@@ -265,31 +264,39 @@ classdef Voxel
             % optimize model parameters if applicable
             omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             if optimize_flag && sum(strcmp(model.type, omodels))
-                % load grid search results if saved, otherwise compute
-                fname = ['grid_search_' vox.nickname '_' model.type '.mat'];
-                fpath = fullfile(vox.project_dir, 'tmp', fname);
-                if exist(fpath, 'file') == 2
-                    fprintf('Loading grid search results. \n');
-                    load(fpath);
-                else
-                    [voxs, models] = grid_search(vox, model, 3);
-                    save(fpath, 'voxs', 'models', '-v7.3');
+                param_names = fieldnames(model.params);
+                for ss = 1:length(sessions)
+                    fname_grid = ['grid_search_results_' model.type ...
+                        '_fit' [fit_exps{:}] '.mat'];
+                    fpath_grid = fullfile(sessions{ss}, 'Voxels', fname_grid);
+                    fname_grad = ['grad_desc_results_' model.type ...
+                        '_fit' [fit_exps{:}] '.mat'];
+                    fpath_grad = fullfile(sessions{ss}, 'Voxels', fname_grad);
+                    % load optimization results if saved, otherwise compute
+                    if exist(fpath_grad, 'file') == 2
+                        fprintf('Loading gradient descent results. \n');
+                        load(fpath_grad);
+                    elseif exist(fpath_grid, 'file') == 2
+                        fprintf('Loading grid search results. \n');
+                        load(fpath_grid);
+                        [voxels, models] = optimize_fit(voxels, models);
+                        save(fpath_grad, 'voxels', 'models', '-v7.3');
+                    else
+                        [voxels, models] = grid_search(vox, model, ss, 5);
+                        save(fpath_grid, 'voxels', 'models', '-v7.3');
+                        [rois, models] = optimize_fit(rois, models);
+                        save(fpath_grad, 'voxels', 'models', '-v7.3');
+                    end
+                    % copy optimized parameters for session
+                    for pp = 1:length(param_names)
+                        opt_params = models.params.(param_names{pp}){1};
+                        model.params.(param_names{pp}){ss} = opt_params;
+                        model = update_param(model, param_names{pp}, 0);
+                    end
+                    model = pred_runs(model);
+                    model = pred_trials(model);
+                    [vox, model] = tc_fit(vox, model, 0);
                 end
-                % load grad desc results if saved, otherwise compute
-                fname = ['grad_desc_' vox.nickname '_' model.type '.mat'];
-                fpath = fullfile(vox.project_dir, 'tmp', fname);
-                if exist(fpath, 'file') == 2
-                    fprintf('Loading gradient descent results. \n');
-                    load(fpath);
-                else
-                    [voxs, models] = optimize_fit(voxs, models);
-                    save(fpath, 'voxs', 'models', '-v7.3');
-                end
-                model.params = models.params;
-                model.irfs = models.irfs;
-                model = pred_runs(model);
-                model = pred_trials(model);
-                [vox, model] = tc_fit(vox, model, 0);
             end
             % carry over model parameters to vox model struct
             vox.model.type = model.type;

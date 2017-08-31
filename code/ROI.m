@@ -293,10 +293,9 @@ classdef ROI
         function [roi, model] = tc_fit(roi, model, optimize_flag, fit_exps)
             if nargin < 3; optimize_flag = 0; end
             if nargin < 4; fit_exps = model.experiments; end
-            check_model(roi, model);
+            check_model(roi, model); sessions = roi.sessions;
             nruns_max = size(model.run_preds, 1); % max number of runs
             nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
-            sessions = roi.sessions;
             % concatenate data and preds across all runs in each session
             for ss = 1:length(sessions)
                 run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
