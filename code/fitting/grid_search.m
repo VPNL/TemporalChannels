@@ -78,23 +78,6 @@ if ~(exist(fpath, 'file') == 2)
     end
     fprintf('\n')
     save(fpath, 'ii_model', 'run_preds', 'params_list', '-v7.3');
-    % search_models = ModelTS(model_init.type, model_init.experiments, repmat({session}, 1, niters));
-    % search_models.stim = repmat(ss_model.stim, 1, niters);
-    % search_models.onsets = repmat(ss_model.onsets, 1, niters);
-    % search_models.offsets = repmat(ss_model.offsets, 1, niters);
-    % search_models.conds = repmat(ss_model.conds, 1, niters);
-    % search_models.cats = repmat(ss_model.cats, 1, niters);
-    % search_models.tonsets = repmat(ss_model.tonsets, 1, niters);
-    % search_models.toffsets = repmat(ss_model.toffsets, 1, niters);
-    % search_models.tconds = repmat(ss_model.tconds, 1, niters);
-    % search_models.run_durs = repmat(ss_model.run_durs, 1, niters);
-    % search_models.cond_list = ss_model.cond_list;
-    % for pp = 1:length(param_names)
-    %     search_models.params.(param_names{pp}) = num2cell(params_list(:, pp)');
-    %     search_models = update_param(search_models, param_names{pp}, 0);
-    % end
-    % search_models = pred_runs(search_models);
-    % save(fpath, 'search_models', '-v7.3');
 else
     load(fpath);
 end

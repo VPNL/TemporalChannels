@@ -13,7 +13,7 @@ function [ymin, ymax] = barTS(y, col, x1)
 % AS 5/2017
 
 % set plotting color for each bar
-if nargin < 2
+if nargin < 2 || isempty(col)
     col = [0 0 0];
 end
 if size(col, 1) == 1

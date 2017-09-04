@@ -379,7 +379,7 @@ classdef ROI
             % preallocate predictor array for each trial type
             roi.pred = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
-            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+            cmodels = {'htd' '2ch-lin' '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
             if sum(strcmp(model.type, cmodels))
                 roi.predS = cell(nconds, nsubs, nexps);
                 roi.predT = cell(nconds, nsubs, nexps);
@@ -500,8 +500,8 @@ classdef ROI
             xlabs = label_preds(roi.model);
             amps = reshape([roi.model.betas{:}], npreds, [])';
             R2 = [roi.model.varexp{:}];
-            cmodels = {'htd' '2ch' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
-            smodels = {'standard' 'cts-pow' 'cts-div' 'dcts'};
+            cmodels = {'htd' '2ch-lin' '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+            smodels = {'standard' 'cts-pow' 'cts-div' 'dcts' 'balloon'};
             % setup figure
             fig_name = [roi.nickname ' - ' roi.model.type ' model'];
             fig_pos = [.1 .1 .8 .3 + nexps * .2];

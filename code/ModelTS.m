@@ -6,12 +6,15 @@
 %      Linear models:
 %        'standard' -- standard general linear model
 %        'htd'      -- hemodynamic temporal derivative (HTD; Henson 2002)
-%      Simple nonlinear models:
+%        '2ch-lin'  -- linear version of 2 temporal-channel model
+%      Nonlinear single-channel models:
 %        'cts-pow'  -- CTS with power law (Zhou et al., 2017)
 %        'cts-div'  -- CTS with divisive normalization (Zhou et al., 2017)
 %        'dcts'     -- dynamic CTS (Zhou et al., 2017)
+%        'balloon'  -- hemodynamic balloon model (Buxton et al., 1998)
+%      Multi-channel models:
 %        '2ch'      -- 2 temporal-channel model (Stigliani et al., 2017)
-%      Multi-channel nonlinear models:
+%        '2ch-rect' -- 2 temporal-channel model without offset responses
 %        '2ch-div'  -- 2 temporal-channel model with CTS-div on sustained
 %        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on sustained
 %        '2ch-dcts' -- 2 temporal-channel model with dCTS on sustained
@@ -65,8 +68,9 @@ classdef ModelTS
         % path to project directory
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         % descriptors for each model implemented
-        types = {'standard' 'htd' '2ch' 'cts-pow' 'cts-div' 'dcts' ...
-                 '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+        types = {'standard' 'htd' '2ch-lin' ...
+            'cts-pow' 'cts-div' 'dcts' 'balloon'...
+            '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -224,14 +228,20 @@ classdef ModelTS
                     model = pred_runs_standard(model);
                 case 'htd'
                     model = pred_runs_htd(model);
-                case '2ch'
-                    model = pred_runs_2ch(model);
+                case '2ch-lin'
+                    model = pred_runs_2ch_lin(model);
                 case 'cts-pow'
                     model = pred_runs_cts_pow(model);
                 case 'cts-div'
                     model = pred_runs_cts_div(model);
                 case 'dcts'
                     model = pred_runs_dcts(model);
+                case 'balloon'
+                    model = pred_runs_balloon(model);
+                case '2ch'
+                    model = pred_runs_2ch(model);
+                case '2ch-rect'
+                    model = pred_runs_2ch_rect(model);
                 case '2ch-pow'
                     model = pred_runs_2ch_pow(model);
                 case '2ch-div'
@@ -250,8 +260,8 @@ classdef ModelTS
                     model = pred_trials_standard(model);
                 case 'htd'
                     model = pred_trials_htd(model);
-                case '2ch'
-                    model = pred_trials_2ch(model);
+                case '2ch-lin'
+                    model = pred_trials_2ch_lin(model);
                 case 'cts-pow'
                     model = pred_trials_cts_pow(model);
                 case 'cts-div'
@@ -260,6 +270,10 @@ classdef ModelTS
                     model = pred_trials_dcts(model);
                 case '2ch-pow'
                     model = pred_trials_2ch_pow(model);
+                case '2ch'
+                    model = pred_trials_2ch(model);
+                case '2ch-rect'
+                    model = pred_trials_2ch_rect(model);
                 case '2ch-div'
                     model = pred_trials_2ch_div(model);
                 case '2ch-dcts'

@@ -17,7 +17,6 @@
 %   vox = tc_runs(vox)
 %   vox = tc_trials(vox, model)
 %   vox = tc_fit(vox, model)
-%   vox = tc_pred(vox, model)
 % 
 % AS 7/2017
 

@@ -1,0 +1,84 @@
+function param_comparison(rois, models, fit_exps)
+% Generates separate parameter comparison figure for each model by plotting 
+% the means and SEMs of beta weights for transient vs. sustained channels. 
+% 
+% Inputs
+%   1) rois: cell array of ROI names (e.g., {'IOG-faces' 'pFus-faces'})
+%   2) models: cell array of model names (e.g., {'standard' '2ch-dcts'})
+%   3) fit_exps: cell array of experiments used to fit the model
+% 
+% AS 8/2017
+
+%% check inputs
+if nargin < 1 || isempty(rois)
+    rois = {'LOS-bodies' 'IOG-faces' 'IOS-characters'};
+else
+    rois = force_cell(strrep(rois, '_', '-'));
+end
+
+if nargin < 2 || isempty(models)
+    models = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+else
+    models = force_cell(models);
+end
+
+if nargin < 3 || isempty(fit_exps)
+    fit_exps = {'ExpAo' 'ExpBo' 'ExpCo'; 'ExpAe' 'ExpBe' 'ExpCe'};
+else
+    fit_exps = force_cell(fit_exps);
+end
+
+%% specify paths to results/figures directories and plotting colors
+model_dir = fullfile(RAID, 'projects', 'CategoryChannels', 'model', 'TemporalChannels');
+res_dir = fullfile(model_dir, 'results');
+fig_dir = fullfile(model_dir, 'figures');
+
+%% load the data
+params = {}; param_names = {};
+for rr = 1:length(rois)
+    for mm = 1:length(models)
+        ps = [];
+        for ff = 1:size(fit_exps, 1)
+            fstem = [rois{rr} '_' models{mm} '_fit' [fit_exps{ff, :}] '_*.mat'];
+            d = dir(fullfile(res_dir, fstem));
+            load(fullfile(d.folder, d(1).name)); roi = roi(1);
+            pn = fieldnames(roi.model.params);
+            if rr == 1; param_names{mm} = pn; end
+            for pp = 1:length(pn)
+                ps(:, pp, ff) = cell2mat(roi.model.params.(pn{pp})');
+            end
+        end
+        params{rr, mm} = mean(ps, 3);
+    end
+end
+
+%% plot parameter comparison for each model
+for mm = 1:length(models)
+    fig = figTS([models{mm} ' parameter comparison'], [.1 .1 .7 .4]);
+    for rr = 1:length(rois)
+        subplot(1, length(rois), rr); hold on;
+        means = mean(params{rr, mm}); 
+        sems = std(params{rr, mm}) / sqrt(size(params{rr, mm}, 1) - 1);
+        x_avg = means(:, ncats + 1:ncats * 2); y_avg = means(:, 1:ncats);
+        x_sem = sems(:, ncats + 1:ncats * 2); y_sem = sems(:, 1:ncats);
+        x_max = max(x_avg + x_sem); ymax = max(y_avg + y_sem);
+        x_min = min(x_avg - x_sem); ymin = min(y_avg - y_sem);
+        lims = [min([0 x_min ymin]) max([ceil(x_max) ceil(ymax)])];
+        bl = axesTS(rois{rr}, 'Transient \beta_T', 'Sustained \beta_S', lims);
+        br = range(bl); lcnt = bl(2) - br * 0.05; xl = br * 0.05;
+        for cc = 1:ncats
+            draw_cross(x_avg(cc), y_avg(cc), x_sem(cc), y_sem(cc), edge_cols(cc, :));
+            draw_cross(xl, lcnt, br * 0.02, br * 0.02, edge_cols(cc, :), 2);
+            text(xl + br * 0.03, lcnt, roi.model.cat_list{cc}, ...
+                'FontSize', 6, 'FontName', 'Helvetica', ...
+                'HorizontalAlignment', 'left', ...
+                'VerticalAlignment', 'middle');
+            lcnt = lcnt - br * 0.06;
+        end
+    end
+    fname = ['channel_comparison_' models{mm} '_' strjoin(rois, '_')];
+    fname = [fname '_fit' [fit_exps{:}] '.fig'];
+    saveas(fig, fullfile(fig_dir, fname), 'fig'); close all;
+end
+
+end
