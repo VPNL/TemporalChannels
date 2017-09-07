@@ -20,7 +20,7 @@ for ee = 1:model.num_exps
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         for ss = 1:length(sessions)
-            fmri = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / model.tr);
+            fmri = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / tr);
             model.trial_preds.pred{cc, ss, ee} = fmri;
         end
     end

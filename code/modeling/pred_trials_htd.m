@@ -22,8 +22,8 @@ for ee = 1:model.num_exps
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         for ss = 1:length(sessions)
             % convolve stimulus with hrf and dhrf
-            fmri_c = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / model.tr);
-            fmri_d = convolve_vecs(cstim,  irfs.dhrf{ss}, fs, 1 / model.tr);
+            fmri_c = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / tr);
+            fmri_d = convolve_vecs(cstim,  irfs.dhrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmri_c;
             model.trial_preds.T{cc, ss, ee} = fmri_d;

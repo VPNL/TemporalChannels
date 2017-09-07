@@ -5,6 +5,7 @@ function [params, irfs] = init_params(model_type, nsess, fs)
 %   1) model_type: descriptor for type of model initialize
 %     'standard' -- irfs = hrf
 %     'htd'      -- irfs = hrf, dhrf
+%     'balloon'  -- params = tau_m, tau_n, tau_p, tau, lag, exponent
 %     '2ch-lin'  -- irfs = nrfS, nrfT, hrf
 %     'cts-pow'  -- params = tau1, epsilon; irfs = nrfS, hrf
 %     'cts-div'  -- params = tau1, sigma; irfs = nrfS, hrf
@@ -29,7 +30,12 @@ if nargin ~= 3
 end
 hrf = canonical_hrf(1 / fs, [5 14 28]);
 dhrf = [diff(hrf); 0]; dhrf = dhrf * (max(hrf) / max(dhrf));
+% default paramters for CTS family of moddels
 epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
+% default paramters for balloon model
+tau_p = 20; tau_n = 20; tau_i = 0.24; lag = 1; exponent = 2;
+E0 = 0.4; V0 = 0.04; tauMTT = 3; alpha = 0.4;
+% setup structs
 params = struct; irfs = struct;
 
 switch model_type
@@ -38,6 +44,22 @@ switch model_type
     case 'htd'
         irfs.hrf = repmat({hrf}, 1, nsess);
         irfs.dhrf = repmat({dhrf}, 1, nsess);
+    case 'balloon'
+        params.tau_p = tau_p;   % tau for the positive volume to outflow
+        params.tau_n = tau_n;   % tau for the negative volume to outflow
+        params.tau_i = tau_i;   % initial value for tau
+        params.E0 = E0;         % resting oxygen extraction rate
+        params.V0 = V0;         % venous blood volume fraction
+        params.tauMTT = tauMTT; % lag time of the volume/deoxyhemoglobin
+        params.alpha = alpha;   % stiffness parameter
+        % time constants for gamma function
+        params.lag = lag; params.exponent = exponent;
+        params.delta_t = 1 / fs; t_lag = (0:1 / fs:40) - lag;
+        gamma_n = ((t_lag / tau_i) .^ (exponent - 1) .* exp(-t_lag / tau_i));
+        gamma_d = (tau_i * factorial(exponent - 1));
+        irfs.gamma = repmat({rectify(gamma_n ./ gamma_d)}, 1, nsess);
+        % constants for determining signal strength
+        params.k1 = 7 * E0; params.k2 = 2; params.k3 = 2 * E0 - 0.2;
     case '2ch-lin'
         nrfS = watson_irfs('S', fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
