@@ -32,6 +32,7 @@ for ss = 1:nsess
     if exist(fpath, 'file') == 2
         load(fpath);
         run_preds(:, ss) = session_run_preds;
+        fprintf('\n');
     else
         for rr = 1:nruns_max
             fprintf('.');
