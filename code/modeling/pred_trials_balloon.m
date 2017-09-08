@@ -21,19 +21,19 @@ for ee = 1:model.num_exps
         ion = ton(ii); ioff = ceil(toff(ii) - .001); td = ioff - ion;
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
-        t = 0:params.delta_t:td;
+        t = 0:params.delta_t:model.pre_dur + td + model.post_dur;
         for ss = 1:length(sessions)
             in_flow = convolve_vecs(cstim, irfs.gamma{ss}, fs, fs);
             in_flow = 0.7 * (in_flow / sum(irfs.gamma{ss})) + 1;
             for pp = 1:size(cstim, 2)
                 % initialize variables
                 [v, q, IN_FLOW, OUT_FLOW, CMRO2] = deal(1);
-                S = 0; OEF = params.E0; t = time_vecs{rr, ss}; 
+                S = 0; OEF = params.E0;
                 which_tau = 1; tau = params.tau_i; tauMTT = params.tauMTT;
                 tau_p = params.tau_p; tau_n = params.tau_n;
                 E0 = params.E0; V0 = params.V0; alpha = params.alpha;
                 % get the simulated values of all variables                
-                for ii = 1:size(t, 1) - 1
+                for ii = 1:length(t) - 1
                     ii_flow = in_flow(ii, pp);
                     v(ii + 1) = runge_kutta(dt, @dvdt, t(ii), v(ii), ii_flow);
                     OUT_FLOW(ii + 1) = flow_out(v(ii + 1), t(ii), ii_flow);
@@ -46,7 +46,7 @@ for ee = 1:model.num_exps
                     CMRO2(ii + 1) = (OEF(ii + 1) / E0) * IN_FLOW(ii);
                     IN_FLOW(ii + 1) = ii_flow;
                 end
-                Sr = convolve_vecs(S(1:tl / params.delta_t)', 1, fs, 1 / tr);
+                Sr = convolve_vecs(S(1:length(t) - 1)', 1, fs, 1 / tr);
                 model.trial_preds.pred{cc, ss, ee} = Sr;
             end
         end

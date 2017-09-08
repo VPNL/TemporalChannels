@@ -260,6 +260,8 @@ classdef ModelTS
                     model = pred_trials_standard(model);
                 case 'htd'
                     model = pred_trials_htd(model);
+                case 'balloon'
+                    model = pred_trials_balloon(model);
                 case '2ch-lin'
                     model = pred_trials_2ch_lin(model);
                 case 'cts-pow'
