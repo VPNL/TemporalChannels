@@ -24,6 +24,7 @@ run_preds = cellfun(@(X) zeros(X / tr, ncats), rd, 'uni', false);
 run_preds(empty_cells) = {[]};
 
 % get the simulated values of all variables for each predictor in each run
+run_preds = cell(nruns_max, nsess);
 for ss = 1:nsess
     [~, session_id] = fileparts(model.sessions{ss});
     fprintf('Simulating balloon model for %s', session_id);
@@ -63,6 +64,17 @@ for ss = 1:nsess
         end
         session_run_preds = run_preds(:, ss); 
         save(fpath, 'session_run_preds', '-v7.3');
+        % store predictors for each experiment separately as welll
+        if length(model.experiments) > 1
+            srp = session_run_preds; rcnt = 0;
+            for ee = 1:length(model.experiments)
+                session_run_preds = srp(rcnt + 1:rcnt + model.num_runs(ee, ss));
+                fname = ['balloon_model_' model.experiments{ee} '.mat'];
+                fpath = fullfile(model.sessions{ss}, 'Stimuli', fname);
+                save(fpath, 'session_run_preds', '-v7.3');
+                rcnt = rcnt + model.num_runs(ee, ss);
+            end
+        end
         fprintf('\n');
     end
 end
