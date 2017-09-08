@@ -50,10 +50,10 @@ for ss = 1:nsess
                     OUT_FLOW(ii + 1) = flow_out(v(ii + 1), t(ii), ii_flow);
                     q(ii + 1) = runge_kutta(dt, @dqdt, t(ii), q(ii), v(ii), ii_flow);  
                     S1 = params.k1 * (1 - q(ii + 1));
-                    S2 = params.k2 * (1 - (q(ii + 1) / v(ii + 1)));
+                    S2 = params.k2 * (1 - q(ii + 1) / v(ii + 1));
                     S3 = params.k3 * (1 - v(ii + 1));
                     S(ii + 1) = V0 * (S1 + S2 + S3);
-                    OEF(ii + 1) = 1 - (1 - E0) .^ (1. / ii_flow);
+                    OEF(ii + 1) = 1 - (1 - E0) .^ (1 ./ ii_flow);
                     CMRO2(ii + 1) = (OEF(ii + 1) / E0) * IN_FLOW(ii);
                     IN_FLOW(ii + 1) = ii_flow;
                 end

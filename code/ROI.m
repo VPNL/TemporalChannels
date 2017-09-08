@@ -516,7 +516,7 @@ classdef ROI
             t3 = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' R2_str];
             title({t1; t2; t3});
             set(gca, 'TickDir', 'out', 'FontSize', 8, ...
-                'XTick', 1:size(amps, 2) + 1, 'XTickLabel', xlabs);
+                'XTick', 1:npreds, 'XTickLabel', xlabs(1:npreds));
             % plot variance explained for each session
             varexp = [roi.model.varexp{:}];
             subplot(1 + nexps, 2, 2); hold on;
@@ -531,8 +531,9 @@ classdef ROI
             end
             title('Individual Subjects');  ylim([0 1]);
             xlabel('Session'); ylabel('R^2');
+            session_ids = strrep(roi.session_ids, '_', '-');
             set(gca, 'TickDir', 'out', 'FontSize', 8, ...
-                'XTick', 1:nsess, 'XTickLabel', roi.session_ids);
+                'XTick', 1:nsess, 'XTickLabel', session_ids);
             % plot measurement vs prediction for each trial type
             pre_dur = roi.model.pre_dur;
             post_dur = roi.model.post_dur;
