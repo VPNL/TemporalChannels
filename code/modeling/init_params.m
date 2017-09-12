@@ -5,7 +5,7 @@ function [params, irfs] = init_params(model_type, nsess, fs)
 %   1) model_type: descriptor for type of model initialize
 %     'standard' -- irfs = hrf
 %     'htd'      -- irfs = hrf, dhrf
-%     'balloon'  -- params = tau_m, tau_n, tau_p, tau, lag, exponent
+%     'balloon'  -- params = tauMTT, tau_n, tau_p, E0, V0, alpha
 %     '2ch-lin'  -- irfs = nrfS, nrfT, hrf
 %     'cts-pow'  -- params = tau1, epsilon; irfs = nrfS, hrf
 %     'cts-div'  -- params = tau1, sigma; irfs = nrfS, hrf
@@ -33,8 +33,9 @@ dhrf = [diff(hrf); 0]; dhrf = dhrf * (max(hrf) / max(dhrf));
 % default paramters for CTS family of moddels
 epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for balloon model (see Chen & Glover, 2015)
-tau_p = 25; tau_n = 25; tau_i = 0.24; lag = 1; exponent = 2;
-E0 = 0.4; V0 = 0.03; tauMTT = 2.5; alpha = 0.4;
+tau_p = 25; tau_n = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
+% parameters of gamma IRF
+tau_g = 0.24; lag = 1; exponent = 2;
 % setup structs
 params = struct; irfs = struct;
 
@@ -47,18 +48,16 @@ switch model_type
     case 'balloon'
         params.tau_p = tau_p;   % viscoelastic time constant for inflation
         params.tau_n = tau_n;   % viscoelastic time constant for deflation
-        params.tau_i = tau_i;   % initial viscoelastic time constant
         params.E0 = E0;         % resting oxygen extraction fraction
         params.V0 = V0;         % resting blood volume
         params.tauMTT = tauMTT; % transit time through balloon
         params.alpha = alpha;   % steady-state flow-volume relationship
         % time constants for gamma function
-        params.lag = lag; params.exponent = exponent;
         params.delta_t = 1 / fs; t_lag = (0:1 / fs:40) - lag;
-        gamma_n = ((t_lag / tau_i) .^ (exponent - 1) .* exp(-t_lag / tau_i));
-        gamma_d = (tau_i * factorial(exponent - 1));
+        gamma_n = ((t_lag / tau_g) .^ (exponent - 1) .* exp(-t_lag / tau_g));
+        gamma_d = (tau_g * factorial(exponent - 1));
         irfs.gamma = repmat({rectify(gamma_n ./ gamma_d)}, 1, nsess);
-        % constants for determining signal strength
+        % constants for calculating signal at 3T
         params.k1 = 6.7; params.k2 = 2.73; params.k3 = 0.57;
     case '2ch-lin'
         nrfS = watson_irfs('S', fs);

@@ -1,7 +1,7 @@
 function model = pred_trials_balloon(model)
 % Generates trial predictors using the standard model.
 
-% define global variables
+% define global variables and signal parameters
 global which_tau tau_n tau_p tau tauMTT alpha E0 V0;
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
@@ -22,7 +22,7 @@ for ee = 1:model.num_exps
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
         t = 0:params.delta_t:model.pre_dur + td + model.post_dur;
-        for ss = 1:length(sessions)
+        for ss = 1%:length(sessions)
             in_flow = convolve_vecs(cstim, irfs.gamma{ss}, fs, fs);
             in_flow = 0.7 * (in_flow / sum(irfs.gamma{ss})) + 1;
             for pp = 1:size(cstim, 2)
@@ -49,6 +49,9 @@ for ee = 1:model.num_exps
                 Sr = convolve_vecs(S(1:length(t) - 1)', 1, fs, 1 / tr);
                 model.trial_preds.pred{cc, ss, ee} = Sr;
             end
+        end
+        for ss = 2:nsess
+            model.trial_preds.pred{cc, ss, ee} = model.trial_preds.pred{cc, 1, ee};
         end
     end
     rcnt = rcnt + nruns(ee, 1);
