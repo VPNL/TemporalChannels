@@ -1,5 +1,5 @@
-function model = pred_runs_standard(model)
-% Generates run predictors using the standard linear model. 
+function model = pred_runs_glm(model)
+% Generates run predictors using a general linear model. 
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;

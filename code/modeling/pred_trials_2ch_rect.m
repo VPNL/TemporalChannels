@@ -1,6 +1,6 @@
 function model = pred_trials_2ch_rect(model)
 % Generates trial predictors using the 2 temporal-channel model proposed by
-% Stigliani et al. (2017). 
+% Stigliani et al. (2017) with rectification nonlinearity. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

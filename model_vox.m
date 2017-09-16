@@ -15,8 +15,8 @@ function [vox, model] = model_vox(type, exps_fit, exps_val)
 % 
 % EXAMPLES
 % 
-% Fit the 'standard' model to multiple experiments in each voxel:
-% [vox, model] = model_vox('standard', {'Exp1' 'Exp2' 'Exp3'});
+% Fit a GLM to multiple experiments in each voxel:
+% [vox, model] = model_vox('glm', {'Exp1' 'Exp2' 'Exp3'});
 % 
 % Cross-validate the fit of the 2ch model using independent data:
 % [vox, model] = model_vox('2ch', {'Exp1' 'Exp2'}, {['Exp3'});

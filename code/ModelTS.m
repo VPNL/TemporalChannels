@@ -3,22 +3,22 @@
 % 
 % CONSTRUCTOR INPUTS
 %   1) type: which model to use
-%      Linear models:
-%        'standard' -- standard general linear model
+%      Hemodynamic models:
+%        'glm'      -- general linear model for fMRI (Boynton 1996)
 %        'htd'      -- hemodynamic temporal derivative (HTD; Henson 2002)
-%        '2ch-lin'  -- linear version of 2 temporal-channel model
-%      Nonlinear single-channel models:
-%        'cts-pow'  -- CTS with power law (Zhou et al., 2017)
-%        'cts-div'  -- CTS with divisive normalization (Zhou et al., 2017)
-%        'dcts'     -- dynamic CTS (Zhou et al., 2017)
-%        'balloon'  -- hemodynamic balloon model (Buxton et al., 1998)
+%        'balloon'  -- nonlinear balloon model (Buxton, 1998)
+%      Single-channel linear-nonlinear (LN) models:
+%        'cts-pow'  -- CTS with power law (Zhou 2017)
+%        'cts-div'  -- CTS with divisive normalization (Zhou 2017)
+%        'dcts'     -- dynamic CTS (Zhou 2017)
 %      Multi-channel models:
-%        '2ch'      -- 2 temporal-channel model (Stigliani et al., 2017)
-%        '2ch-rect' -- 2 temporal-channel model without offset responses
-%        '2ch-div'  -- 2 temporal-channel model with CTS-div on sustained
-%        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on sustained
-%        '2ch-dcts' -- 2 temporal-channel model with dCTS on sustained
-%        '2ch-opt'  -- 2 temporal-channel model with dCTS on sustained
+%        '2ch'      -- 2 temporal-channel model with squaring on T
+%        '2ch-lin'  -- 2 temporal-channel model without nonlinearity
+%        '2ch-rect' -- 2 temporal-channel model with rectification on T
+%        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on S
+%        '2ch-div'  -- 2 temporal-channel model with CTS-div on S
+%        '2ch-dcts' -- 2 temporal-channel model with dCTS on on S
+%        '2ch-opt'  -- 2 temporal-channel model with optimized dCTS on on S
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of paths to session data directories
 %
@@ -68,9 +68,10 @@ classdef ModelTS
         % path to project directory
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         % descriptors for each model implemented
-        types = {'standard' 'htd' '2ch-lin' ...
-            'cts-pow' 'cts-div' 'dcts' 'balloon'...
-            '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+        types = {'glm' 'htd' 'balloon' ... % hemodynamic models
+            'cts-pow' 'cts-div' 'dcts' ... % single-channel LN models
+            '2ch' '2ch-lin' '2ch-rect' '2ch-sqrt-rect' ... % analytical 2ch models
+            '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};     % optimized 2ch models
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -197,51 +198,51 @@ classdef ModelTS
                 custom_norm = 0;
             end
             % if using a multi-channel model
-            if ~sum(strcmp(model.type, {'standard' 'cts-pow' 'cts-div' 'dcts'}))
-                if custom_norm == 1
-                    % code run_preds for all experiments in example subject
-                    roi_list = dir(fullfile(model.sessions{1}, 'ROIs'));
-                    roi = tcROI(roi_list(3).name, model.experiments);
-                    imodel = modelTS(model.type, model.experiments, roi.sessions);
-                    imodel.normT = 1;
-                    imodel = code_stim(imodel);
-                    imodel = pred_runs(imodel);
-                    for ss = 1:length(imodel.sessions)
-                        % get predictors for all runs in this session
-                        iconcat = cell2mat(imodel.run_preds(:, ss));
-                        npreds = size(iconcat, 2);
-                        % find max of predictors
-                        maxS = max(max(iconcat(:, 1:npreds / 2)));
-                        maxT = max(max(iconcat(:, npreds / 2 + 1:npreds)));
-                        % compute scalars to normalize max heights
-                        normTs{ss} = maxS / maxT;
-                    end
-                    model.normT = mean([normTs{:}]);
+            smodels = {'glm' 'htd' 'balloon' 'cts-pow' 'cts-div' 'dcts'};
+            if ~ sum(strcmp(model.type, smodels)) && custom_norm
+                % code run_preds for all fitting experiments
+                imodel = ModelTS(model.type, model.experiments, model.sessions);
+                imodel = code_stim(imodel);
+                imodel.normT = 1;
+                imodel = pred_runs(imodel);
+                for ss = 1:length(imodel.sessions)
+                    % get predictors for all runs in this session
+                    spreds = cell2mat(imodel.run_preds(:, ss));
+                    npreds = size(spreds, 2);
+                    % find max of predictors
+                    maxS = max(max(spreds(:, 1:npreds / 2)));
+                    maxT = max(max(spreds(:, npreds / 2 + 1:npreds)));
+                    % compute scalars to normalize max heights
+                    normTs{ss} = maxS / maxT;
                 end
+                % set normalization constant to average across sessions
+                model.normT = mean([normTs{:}]);
             end
         end
         
         % generate fMRI predictors for each session and run
         function model = pred_runs(model)
             switch model.type
-                case 'standard'
-                    model = pred_runs_standard(model);
+                case 'glm'
+                    model = pred_runs_glm(model);
                 case 'htd'
                     model = pred_runs_htd(model);
-                case '2ch-lin'
-                    model = pred_runs_2ch_lin(model);
+                case 'balloon'
+                    model = pred_runs_balloon(model);
                 case 'cts-pow'
                     model = pred_runs_cts_pow(model);
                 case 'cts-div'
                     model = pred_runs_cts_div(model);
                 case 'dcts'
                     model = pred_runs_dcts(model);
-                case 'balloon'
-                    model = pred_runs_balloon(model);
                 case '2ch'
                     model = pred_runs_2ch(model);
+                case '2ch-lin'
+                    model = pred_runs_2ch_lin(model);
                 case '2ch-rect'
                     model = pred_runs_2ch_rect(model);
+                case '2ch-sqrt-rect'
+                    model = pred_runs_2ch_sqrt_rect(model);
                 case '2ch-pow'
                     model = pred_runs_2ch_pow(model);
                 case '2ch-div'
@@ -256,26 +257,28 @@ classdef ModelTS
         % generate fMRI predictors for each session and trial type
         function model = pred_trials(model)
             switch model.type
-                case 'standard'
-                    model = pred_trials_standard(model);
+                case 'glm'
+                    model = pred_trials_glm(model);
                 case 'htd'
                     model = pred_trials_htd(model);
                 case 'balloon'
                     model = pred_trials_balloon(model);
-                case '2ch-lin'
-                    model = pred_trials_2ch_lin(model);
                 case 'cts-pow'
                     model = pred_trials_cts_pow(model);
                 case 'cts-div'
                     model = pred_trials_cts_div(model);
                 case 'dcts'
                     model = pred_trials_dcts(model);
-                case '2ch-pow'
-                    model = pred_trials_2ch_pow(model);
                 case '2ch'
                     model = pred_trials_2ch(model);
+                case '2ch-lin'
+                    model = pred_trials_2ch_lin(model);
                 case '2ch-rect'
                     model = pred_trials_2ch_rect(model);
+                case '2ch-sqrt-rect'
+                    model = pred_trials_2ch_sqrt_rect(model);
+                case '2ch-pow'
+                    model = pred_trials_2ch_pow(model);
                 case '2ch-div'
                     model = pred_trials_2ch_div(model);
                 case '2ch-dcts'

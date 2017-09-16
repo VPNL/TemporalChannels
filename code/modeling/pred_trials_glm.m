@@ -1,5 +1,5 @@
-function model = pred_trials_standard(model)
-% Generates trial predictors using the standard model.
+function model = pred_trials_glm(model)
+% Generates trial predictors using a general linear model.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

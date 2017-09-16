@@ -379,17 +379,19 @@ classdef ROI
             % preallocate predictor array for each trial type
             roi.pred = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
-            cmodels = {'htd' '2ch-lin' '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
-            if sum(strcmp(model.type, cmodels))
+            if strcmp(model.type(1:3), '2ch') || strcmp(model.type, 'htd')
+                mc_flag = 1;
                 roi.predS = cell(nconds, nsubs, nexps);
                 roi.predT = cell(nconds, nsubs, nexps);
+            else
+                mc_flag = 0;
             end
             % predict response for each session, experiment, and trial type
             for ss = 1:nsubs
                 for ee = 1:nexps
                     for cc = 1:length(model.cond_list{ee})
-                        mc_flag = sum(strcmp(model.type, cmodels));
-                        if mc_flag % if using a multi-channel model
+                        % if using a multi-channel model
+                        if mc_flag
                             ampS = roi.model.betas{ss}(1:ncats);
                             ampT = roi.model.betas{ss}(ncats + 1:2 * ncats);
                             % scale trial predictors by betas
@@ -500,8 +502,7 @@ classdef ROI
             xlabs = label_preds(roi.model);
             amps = reshape([roi.model.betas{:}], npreds, [])';
             R2 = [roi.model.varexp{:}];
-            cmodels = {'htd' '2ch-lin' '2ch' '2ch-rect' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
-            smodels = {'standard' 'cts-pow' 'cts-div' 'dcts' 'balloon'};
+            smodels = {'glm' 'balloon' 'cts-pow' 'cts-div' 'dcts'};
             % setup figure
             fig_name = [roi.nickname ' - ' roi.model.type ' model'];
             fig_pos = [.1 .1 .8 .3 + nexps * .2];
@@ -556,7 +557,7 @@ classdef ROI
                     [pr, c_min, c_max] = lineTS(x, y_p, 2, [0 0 0]);
                     y_min = min([y_min c_min]); y_max = max([y_max c_max]);
                     % plot separate channel contributions if applicable
-                    if sum(strcmp(roi.model.type, cmodels))
+                    if ~ sum(strcmp(roi.model.type, smodels))
                         y_pS = [roi.predS_sum{cc, :, ee}]';
                         [sp, c_min, c_max] = lineTS(x, y_pS, 1, [0 0 1]);
                         y_min = min([y_min c_min]); y_max = max([y_max c_max]);

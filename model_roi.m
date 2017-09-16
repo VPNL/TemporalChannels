@@ -18,8 +18,8 @@ function [roi, model] = model_roi(name, type, fit_exps, val_exps)
 % 
 % EXAMPLES
 % 
-% Fit the standard model to multiple experiments in V1:
-% [roi, model] = model_roi('V1', 'standard', {'Exp1' 'Exp2' 'Exp3'});
+% Fit a GLM to multiple experiments in V1:
+% [roi, model] = model_roi('V1', 'glm', {'Exp1' 'Exp2' 'Exp3'});
 % 
 % Validate the fit of 2ch model across data from multiple experiments:
 % [roi, model] = model_roi('V1', '2ch', {'Exp1' 'Exp2'}, {'Exp3' 'Exp4'});
@@ -42,7 +42,7 @@ elseif nargin == 3
 else
     error('Unexpected input arguements.');
 end
-
+smodels = {'glm' 'balloon' 'cts-pow' 'cts-div' 'dcts'}; % single-channel
 
 %% Fit the model to fit_exps
 
@@ -56,6 +56,9 @@ model(1) = ModelTS(type, fit_exps, roi(1).sessions);
 fprintf('Coding the stimulus...\n')
 model(1) = code_stim(model(1));
 fprintf('Generating predictors...\n')
+if ~ sum(strcmp(type, smodels))
+    model(1) = norm_model(model(1), 1);
+end
 model(1) = pred_runs(model(1));
 model(1) = pred_trials(model(1));
 
@@ -79,6 +82,9 @@ if cv_flag
         roi(vn) = tc_runs(roi(vn));
         model(vn) = ModelTS(type, val_exps(vv, :), roi(vn).sessions);
         model(vn) = code_stim(model(vn));
+        if ~ sum(strcmp(type, smodels))
+            model(vn).normT = model(1).normT;
+        end
         model(vn) = pred_runs(model(vn));
         model(vn) = pred_trials(model(vn));
         % setup model struct by fitting model directly to data

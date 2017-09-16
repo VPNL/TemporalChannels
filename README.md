@@ -112,7 +112,7 @@ Fitting a model using the `model_roi` function requires passing at least three i
 1. *name* — name of a region of interest (e.g., `'V1'`) in session ROI directories (`~/TemporalChannels/data/*/ROIs/`).
  
 2. *type* — label indicating which model to use for predicting responses.
-    1. `‘standard’` — standard linear systems analysis of fMRI data (Boynton et al., 1996)
+    1. `‘glm’` — general linear model for fMRI data (Boynton et al., 1996)
     2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
     3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
     4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
@@ -166,7 +166,7 @@ The `model_vox` wrapper function can be used to fit a model in each voxel using 
 Fitting models to each voxel using the `model_vox` function requires passing at least two input arguments:
  
 1. *type* — label indicating which model to use for predicting responses.
-    1. `‘standard’` — standard linear systems analysis of fMRI data (Boynton et al., 1996)
+    1. `‘glm’` — general linear model for fMRI (Boynton et al., 1996)
     2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
     3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
     4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
@@ -202,9 +202,9 @@ Example of fitting the 2 temporal-channel model using V1 data from Exp1 & Exp2:
  
     [roi, model] = model_roi(‘V1', '2ch', {‘Exp1’ 'Exp2'});
  
-Example of fitting the standard model using V1 data from Exp1 & Exp2 and validating on V1 data from Exp3:
+Example of fitting a GLM using V1 data from Exp1 & Exp2 and validating on V1 data from Exp3:
  
-    [roi, model] = model_roi(‘V1', 'standard', {‘Exp1’ 'Exp2'}, 'Exp3');
+    [roi, model] = model_roi(‘V1', 'glm', {‘Exp1’ 'Exp2'}, 'Exp3');
  
 ### Using ModelTS class methods
  

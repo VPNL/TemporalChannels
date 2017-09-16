@@ -29,7 +29,7 @@ for ee = 1:model.num_exps
                 % initialize variables
                 [v, q, IN_FLOW, OUT_FLOW, CMRO2] = deal(1);
                 S = 0; OEF = params.E0;
-                which_tau = 1; tau = params.tau_i; tauMTT = params.tauMTT;
+                which_tau = 1; tau = params.tau_p; tauMTT = params.tauMTT;
                 tau_p = params.tau_p; tau_n = params.tau_n;
                 E0 = params.E0; V0 = params.V0; alpha = params.alpha;
                 % get the simulated values of all variables                
