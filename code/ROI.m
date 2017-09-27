@@ -36,7 +36,7 @@ classdef ROI
         model = []; % data structure of models fits for each session
         predS = {}; % predicted sustained contributions per trial type
         predT = {}; % predicted transient contributions per trial type
-        predD = {}; % predicted delay activity contributions per trial type
+        predD = {}; % predicted delay channel contributions per trial type
         pred = {};  % total predicted contributions for each trial type
     end
     
@@ -105,19 +105,18 @@ classdef ROI
                 % find paths to data files for each experiment
                 for ee = 1:length(roi.experiments)
                     d = dir(fullfile(spath, roi.experiments{ee}, 'Run*.mat'));
-                    fnames = {d.name}; num_runs(ee, ss) = length(fnames);
+                    num_runs(ee, ss) = length({d.name});
                 end
             end
         end
         
         % find the paths to the data files for each session
         function filenames = get.filenames(roi)
-            sessions = roi.sessions; nsess = length(sessions);
             nruns = roi.num_runs; filenames = {};
             % for each session
-            for ss = 1:nsess
+            for ss = 1:length(roi.sessions)
                 rcnt = 0;
-                spath = fullfile(sessions{ss}, 'ROIs', roi.name);
+                spath = fullfile(roi.sessions{ss}, 'ROIs', roi.name);
                 % for each experiment
                 for ee = 1:length(roi.experiments)
                     % store paths to data file for each run
@@ -183,9 +182,9 @@ classdef ROI
         
         % find set of all_sessions with current ROI
         function roi = select_sessions(roi)
-            sessions = {}; scnt = 0;
-            for ss = 1:length(roi.all_sessions)
-                [~, session_id] = fileparts(roi.all_sessions{ss});
+            sessions = {}; all_sessions = roi.all_sessions; scnt = 0;
+            for ss = 1:length(all_sessions)
+                [~, session_id] = fileparts(all_sessions{ss});
                 spath = fullfile(roi.project_dir, 'data', session_id);
                 cpath = fullfile(spath, 'ROIs', roi.name);
                 ecnt = 0;
@@ -301,11 +300,8 @@ classdef ROI
                 run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
                 run_durs = model.run_durs(:, ss); num_runs = sum(cell2mat(run_durs) > 0);
                 b0_cell = cellfun(@(X) zeros(X, num_runs), run_durs, 'uni', false);
-                for rr = 1:num_runs
-                    b0_cell{rr}(:, rr) = 1;
-                end
-                b0 = cell2mat(b0_cell);
-                predictors = [run_preds b0];
+                for rr = 1:num_runs; b0_cell{rr}(:, rr) = 1; end
+                b0 = cell2mat(b0_cell); predictors = [run_preds b0];
                 run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
                 tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
                 tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
@@ -314,6 +310,7 @@ classdef ROI
                 roi.model.run_preds{ss} = predictors * mm.betas';
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
+                roi.model.residual{ss} = mm.residual;
                 rbetas = mm.betas(npreds + 1:npreds + nruns(ss));
                 % store paramters of nuisance regressors
                 roi.model.rbetas{ss} = rbetas;
@@ -323,7 +320,9 @@ classdef ROI
                 roi.model.varexp{ss} = ve;
             end
             % optimize model parameters if applicable
-            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+            omodels = {'cts-pow' 'cts-div' 'dcts' ...
+                '2ch-pow-quad' '2ch-pow-rect' '2ch-div' '2ch-dcts' '2ch-opt' ...
+                '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect' '3ch-opt'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
@@ -379,19 +378,27 @@ classdef ROI
             % preallocate predictor array for each trial type
             roi.pred = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
-            if strcmp(model.type(1:3), '2ch') || strcmp(model.type, 'htd')
-                mc_flag = 1;
+            if model.num_channels > 1
                 roi.predS = cell(nconds, nsubs, nexps);
                 roi.predT = cell(nconds, nsubs, nexps);
-            else
-                mc_flag = 0;
+            end
+            if model.num_channels > 2
+                roi.predD = cell(nconds, nsubs, nexps);
             end
             % predict response for each session, experiment, and trial type
             for ss = 1:nsubs
                 for ee = 1:nexps
                     for cc = 1:length(model.cond_list{ee})
                         % if using a multi-channel model
-                        if mc_flag
+                        if model.num_channels == 1
+                            amp = roi.model.betas{ss}(1:ncats);
+                            % scale trial predictors by betas
+                            pred = model.trial_preds.pred{cc, ss, ee};
+                            pred = pred .* repmat(amp, size(pred, 1), 1);
+                            % store trial predictors in roi
+                            roi.pred{cc, ss, ee} = pred;
+                        end
+                        if model.num_channels > 1
                             ampS = roi.model.betas{ss}(1:ncats);
                             ampT = roi.model.betas{ss}(ncats + 1:2 * ncats);
                             % scale trial predictors by betas
@@ -402,14 +409,16 @@ classdef ROI
                             % store trial predictors in roi
                             roi.predS{cc, ss, ee} = fmriS;
                             roi.predT{cc, ss, ee} = fmriT;
-                            roi.pred{cc, ss, ee} = fmriS + fmriT;
-                        else % if using a single channel model
-                            amp = roi.model.betas{ss}(1:ncats);
-                            % scale trial predictors by betas
-                            pred = model.trial_preds.pred{cc, ss, ee};
-                            pred = pred .* repmat(amp, size(pred, 1), 1);
-                            % store trial predictors in roi
-                            roi.pred{cc, ss, ee} = pred;
+                            if model.num_channels == 2
+                                roi.pred{cc, ss, ee} = fmriS + fmriT;
+                            end
+                            if model.num_channels > 2
+                                ampD = roi.model.betas{ss}(2 * ncats + 1:3 * ncats);
+                                predD = model.trial_preds.D{cc, ss, ee};
+                                fmriD = predD .* repmat(ampD, size(predD, 1), 1);
+                                roi.predD{cc, ss, ee} = fmriD;
+                                roi.pred{cc, ss, ee} = fmriS + fmriT + fmriD;
+                            end
                         end
                     end
                 end
@@ -484,7 +493,7 @@ classdef ROI
             end
             % format plot
             ylabel('fMRI (% signal)'); ylim([floor(y_min) ceil(y_max)]);
-            legend(me(:), roi.experiments); legend boxoff;
+            legend(me(:), roi.experiments(1, :)); legend boxoff;
             title(roi.nickname, 'Interpreter', 'none');
             set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8);
         end
@@ -495,7 +504,7 @@ classdef ROI
                 save_flag = 0;
             end
             % get design parameters and label data
-            nexps = length(roi.experiments);
+            nexps = size(roi.experiments, 2);
             roi = select_sessions(roi);
             sessions = roi.sessions; nsess = length(sessions);
             npreds = length(roi.model.betas{1});
@@ -564,6 +573,11 @@ classdef ROI
                         y_pT = [roi.predT_sum{cc, :, ee}]';
                         [tp, c_min, c_max] = lineTS(x, y_pT, 1, [1 0 0]);
                         y_min = min([y_min c_min]); y_max = max([y_max c_max]);
+                        if strcmp(roi.model.type(1:3), '3ch')
+                            y_pD = [roi.predD_sum{cc, :, ee}]';
+                            [dp, c_min, c_max] = lineTS(x, y_pD, 1, [0 1 0]);
+                            y_min = min([y_min c_min]); y_max = max([y_max c_max]);
+                        end
                     end
                     % plot stimulus
                     x_s = [xcnt + pre_dur - 1 xcnt + tl - post_dur];
@@ -575,13 +589,17 @@ classdef ROI
                 % set legend and format plot
                 if sum(strcmp(roi.model.type, smodels))
                     leg = {roi.nickname [roi.model.type ' model']};
-                    legend([me pr], leg, 'Location', 'NorthWest');
+                    legend([me pr], leg, 'Location', 'NorthWestOutside');
                 else
                     l1 = [roi.nickname ' (N = ' num2str(nsess) ')'];
                     l2 = [roi.model.type ' model'];
                     l3 = {'S contribution' 'T contribution'};
-                    leg = [l1 l2 l3];
-                    legend([me pr sp tp], leg, 'Location', 'NorthWest');
+                    leg = [l1 l2 l3]; ptrs = [me pr sp tp];
+                    if strcmp(roi.model.type(1:3), '3ch')
+                        leg = [leg 'D contribution'];
+                        ptrs = [ptrs dp];
+                    end
+                    legend(ptrs, leg, 'Location', 'NorthWestOutside');
                 end
                 legend boxoff;
                 title([roi.experiments{ee}], 'FontSize', 8);

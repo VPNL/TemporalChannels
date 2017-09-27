@@ -1,9 +1,9 @@
 function irf = watson_irfs(channel, fs)
 % Derive the sustained and transient impulse response functions proposed
-% by Watson (1986)
+% by Watson (1986).
 % 
 % INPUT
-%   1) channel: either 'S' (sustained IRF) or 'T' (transient IRF)
+%   1) channel: either 'S' (sustained) or 'T' (transient)
 %   2) fs: sampling rate of IRF (Hz)
 % 
 % OUTPUT

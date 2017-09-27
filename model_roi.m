@@ -56,9 +56,6 @@ model(1) = ModelTS(type, fit_exps, roi(1).sessions);
 fprintf('Coding the stimulus...\n')
 model(1) = code_stim(model(1));
 fprintf('Generating predictors...\n')
-if ~ sum(strcmp(type, smodels))
-    model(1) = norm_model(model(1), 1);
-end
 model(1) = pred_runs(model(1));
 model(1) = pred_trials(model(1));
 
@@ -67,10 +64,14 @@ fprintf('Extracting trial time series...\n')
 roi(1) = tc_trials(roi(1), model(1));
 fprintf('Fitting the %s model...\n', model(1).type)
 [roi(1), model(1)] = tc_fit(roi(1), model(1), 1);
+if model(1).num_channels > 1
+    model(1) = norm_model(model(1), 1);
+end
+[roi(1), model(1)] = tc_fit(roi(1), model(1));
 roi(1) = tc_pred(roi(1), model(1));
 
 
-%% validation the model on test_exps if applicable
+%% validate the model on test_exps if applicable
 
 if cv_flag
     num_vals = size(val_exps, 1);
@@ -82,9 +83,8 @@ if cv_flag
         roi(vn) = tc_runs(roi(vn));
         model(vn) = ModelTS(type, val_exps(vv, :), roi(vn).sessions);
         model(vn) = code_stim(model(vn));
-        if ~ sum(strcmp(type, smodels))
-            model(vn).normT = model(1).normT;
-        end
+        if model(vn).num_channels > 1 model(vn).normT = model(1).normT; end
+        if model(vn).num_channels > 2 model(vn).normD = model(1).normD; end
         model(vn) = pred_runs(model(vn));
         model(vn) = pred_trials(model(vn));
         % setup model struct by fitting model directly to data

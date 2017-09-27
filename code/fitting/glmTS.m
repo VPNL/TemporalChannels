@@ -1,4 +1,4 @@
-function models = glmTS(Y,X)
+function model = glmTS(Y, X)
 % Apply a general linear model (GLM) to data in Y using design matrix in X
 %
 % INPUTS
@@ -26,33 +26,33 @@ else
 end
 
 % initialize model struct
-models.design_mat = [];
-models.betas = [];
-models.residual = [];
-models.stdevs = [];
-models.dof = [];
+model.design_mat = [];
+model.betas = [];
+model.residual = [];
+model.stdevs = [];
+model.dof = [];
 
 % get number of TRs, voxels, and predictors
 [num_trs, num_vox] = size(Y);
 num_preds = size(X, 2);
    
 % compute degrees of freedom and store design matrix
-models.dof = size(Y, 1) - rank(X);
-models.design_mat = X;
+model.dof = size(Y, 1) - rank(X);
+model.design_mat = X;
 
 % estimate beta weights for each predictor in the design matrix
-models.betas = X\Y;
+model.betas = X \ Y;
 
 % compute residual error at each time point
-models.residual = Y - X * models.betas;
+model.residual = Y - X * model.betas;
 
 % estimate the standard deviation of each beta
 indep_noise = inv(X' * eye(num_trs) * X);
-error_var = sqrt(sum(models.residual .^ 2) / models.dof);
-models.stdevs = sqrt((diag(indep_noise) .* diag(X' * X)) * error_var .^ 2);
+error_var = sqrt(sum(model.residual .^ 2) / model.dof);
+model.stdevs = sqrt((diag(indep_noise) .* diag(X' * X)) * error_var .^ 2);
 
 % reshape betas and stadard deviations
-models.betas = reshape(models.betas,[1 num_preds num_vox]);
-models.stdevs = reshape(models.stdevs,[1 num_preds num_vox]);
+model.betas = reshape(model.betas,[1 num_preds num_vox]);
+model.stdevs = reshape(model.stdevs,[1 num_preds num_vox]);
 
 end

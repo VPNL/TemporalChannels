@@ -1,4 +1,3 @@
-
 % ModelTS: Code for modeling fMRI responses to time-varying visual stimuli.
 % 
 % CONSTRUCTOR INPUTS
@@ -12,13 +11,15 @@
 %        'cts-div'  -- CTS with divisive normalization (Zhou 2017)
 %        'dcts'     -- dynamic CTS (Zhou 2017)
 %      Multi-channel models:
-%        '2ch'      -- 2 temporal-channel model with squaring on T
-%        '2ch-lin'  -- 2 temporal-channel model without nonlinearity
-%        '2ch-rect' -- 2 temporal-channel model with rectification on T
-%        '2ch-pow'  -- 2 temporal-channel model with CTS-pow on S
-%        '2ch-div'  -- 2 temporal-channel model with CTS-div on S
-%        '2ch-dcts' -- 2 temporal-channel model with dCTS on on S
-%        '2ch-opt'  -- 2 temporal-channel model with optimized dCTS on on S
+%        '2ch'      -- 2-channel model with squaring on T
+%        '2ch-lin'  -- 2-channel model without nonlinearity
+%        '2ch-rect' -- 2-channel model with rectification on T
+%        '2ch-pow'  -- 2-channel model with CTS-pow on S
+%        '2ch-div'  -- 2-channel model with CTS-div on S
+%        '2ch-dcts' -- 2-channel model with dCTS on on S
+%        '2ch-opt'  -- 2-channel model with optimized S and T IRFs
+%        '3ch'      -- 3-channel model with cts-pow on S and optimized D
+%        '3ch-opt'  -- 3-channel model with optimized S, T, and D
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of paths to session data directories
 %
@@ -62,6 +63,7 @@ classdef ModelTS
         run_durs = {};  % run durations (s)
         stim = {};      % stimulus step function
         normT = 20;     % transient channel normalization scalar
+        normD = 20;     % delay channel normalization scalar
     end
 
     properties (Constant, Hidden)
@@ -70,8 +72,9 @@ classdef ModelTS
         % descriptors for each model implemented
         types = {'glm' 'htd' 'balloon' ... % hemodynamic models
             'cts-pow' 'cts-div' 'dcts' ... % single-channel LN models
-            '2ch' '2ch-lin' '2ch-rect' '2ch-sqrt-rect' ... % analytical 2ch models
-            '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};     % optimized 2ch models
+            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect'  ... % analytical 2ch models
+            '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' '2ch-dcts-quad' '2ch-opt' ...  % optimized 2ch models
+            '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect' '3ch-opt'}; % optimized 3ch models
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -81,8 +84,9 @@ classdef ModelTS
     end
     
     properties (Dependent, Hidden)
-        num_runs  % numer of runs per experiment per session
-        stimfiles % paths to stimulus history files for each run
+        num_runs     % numer of runs per experiment per session
+        stimfiles    % paths to stimulus history files for each run
+        num_channels % number of channels in model (1-3 per condition)
     end
     
     methods
@@ -144,7 +148,21 @@ classdef ModelTS
                 end
             end
         end
-                
+        
+        % Find paths to stimulus timing parameter files.
+        function num_channels = get.num_channels(model)
+            switch model.type(1:3)
+                case '2ch'
+                    num_channels = 2;
+                case 'htd'
+                    num_channels = 2;
+                case '3ch'
+                    num_channels = 3;
+                otherwise
+                    num_channels = 1;
+            end
+        end
+        
         % code onset, offset, and category of each stimulus in experiments
         function model = code_stim(model)
             % get session and run parameters
@@ -198,25 +216,34 @@ classdef ModelTS
                 custom_norm = 0;
             end
             % if using a multi-channel model
-            smodels = {'glm' 'htd' 'balloon' 'cts-pow' 'cts-div' 'dcts'};
-            if ~ sum(strcmp(model.type, smodels)) && custom_norm
+            if custom_norm && model.num_channels > 1 
                 % code run_preds for all fitting experiments
                 imodel = ModelTS(model.type, model.experiments, model.sessions);
                 imodel = code_stim(imodel);
-                imodel.normT = 1;
+                imodel.normT = 1; imodel.normD = 1;
                 imodel = pred_runs(imodel);
                 for ss = 1:length(imodel.sessions)
                     % get predictors for all runs in this session
                     spreds = cell2mat(imodel.run_preds(:, ss));
                     npreds = size(spreds, 2);
                     % find max of predictors
-                    maxS = max(max(spreds(:, 1:npreds / 2)));
-                    maxT = max(max(spreds(:, npreds / 2 + 1:npreds)));
+                    if model.num_channels == 2
+                        maxS = max(max(spreds(:, 1:npreds / 2)));
+                        maxT = max(max(spreds(:, npreds / 2 + 1:npreds)));
+                    elseif model.num_channels == 3
+                        maxS = max(max(spreds(:, 1:npreds / 3)));
+                        maxT = max(max(spreds(:, npreds / 3 + 1:2 * npreds / 3)));
+                        maxD = max(max(spreds(:, 2 * npreds / 3 + 1:npreds)));
+                        normDs{ss} = maxS / maxD;
+                    end
                     % compute scalars to normalize max heights
                     normTs{ss} = maxS / maxT;
                 end
                 % set normalization constant to average across sessions
                 model.normT = mean([normTs{:}]);
+                if model.num_channels > 2
+                    model.normD = mean([normDs{:}]);
+                end
             end
         end
         
@@ -235,22 +262,32 @@ classdef ModelTS
                     model = pred_runs_cts_div(model);
                 case 'dcts'
                     model = pred_runs_dcts(model);
-                case '2ch'
-                    model = pred_runs_2ch(model);
-                case '2ch-lin'
-                    model = pred_runs_2ch_lin(model);
-                case '2ch-rect'
-                    model = pred_runs_2ch_rect(model);
-                case '2ch-sqrt-rect'
-                    model = pred_runs_2ch_sqrt_rect(model);
-                case '2ch-pow'
-                    model = pred_runs_2ch_pow(model);
-                case '2ch-div'
-                    model = pred_runs_2ch_div(model);
-                case '2ch-dcts'
-                    model = pred_runs_2ch_dcts(model);
+                case '2ch-lin-lin'
+                    model = pred_runs_2ch_lin_lin(model);
+                case '2ch-lin-quad'
+                    model = pred_runs_2ch_lin_quad(model);
+                case '2ch-lin-rect'
+                    model = pred_runs_2ch_lin_rect(model);
+                case '2ch-pow-quad'
+                    model = pred_runs_2ch_pow_quad(model);
+                case '2ch-pow-rect'
+                    model = pred_runs_2ch_pow_rect(model);
+                case '2ch-div-quad'
+                    model = pred_runs_2ch_div_quad(model);
+                case '2ch-dcts-quad'
+                    model = pred_runs_2ch_dcts_quad(model);
                 case '2ch-opt'
                     model = pred_runs_2ch_opt(model);
+                case '3ch-lin-quad'
+                    model = pred_runs_3ch_lin_quad(model);
+                case '3ch-lin-rect'
+                    model = pred_runs_3ch_lin_rect(model);
+                case '3ch-pow-quad'
+                    model = pred_runs_3ch_pow_quad(model);
+                case '3ch-pow-rect'
+                    model = pred_runs_3ch_pow_rect(model);
+                case '3ch-opt'
+                    model = pred_runs_3ch_opt(model);
             end
         end
         
@@ -269,22 +306,32 @@ classdef ModelTS
                     model = pred_trials_cts_div(model);
                 case 'dcts'
                     model = pred_trials_dcts(model);
-                case '2ch'
-                    model = pred_trials_2ch(model);
-                case '2ch-lin'
-                    model = pred_trials_2ch_lin(model);
-                case '2ch-rect'
-                    model = pred_trials_2ch_rect(model);
-                case '2ch-sqrt-rect'
-                    model = pred_trials_2ch_sqrt_rect(model);
-                case '2ch-pow'
-                    model = pred_trials_2ch_pow(model);
-                case '2ch-div'
-                    model = pred_trials_2ch_div(model);
-                case '2ch-dcts'
-                    model = pred_trials_2ch_dcts(model);
+                case '2ch-lin-lin'
+                    model = pred_trials_2ch_lin_lin(model);
+                case '2ch-lin-quad'
+                    model = pred_trials_2ch_lin_quad(model);
+                case '2ch-lin-rect'
+                    model = pred_trials_2ch_lin_rect(model);
+                case '2ch-pow-quad'
+                    model = pred_trials_2ch_pow_quad(model);
+                case '2ch-pow-rect'
+                    model = pred_trials_2ch_pow_rect(model);
+                case '2ch-div-quad'
+                    model = pred_trials_2ch_div_quad(model);
+                case '2ch-dcts-quad'
+                    model = pred_trials_2ch_dcts_quad(model);
                 case '2ch-opt'
                     model = pred_trials_2ch_opt(model);
+                case '3ch-lin-quad'
+                    model = pred_trials_3ch_lin_quad(model);
+                case '3ch-lin-rect'
+                    model = pred_trials_3ch_lin_rect(model);
+                case '3ch-pow-quad'
+                    model = pred_trials_3ch_pow_quad(model);
+                case '3ch-pow-rect'
+                    model = pred_trials_3ch_pow_rect(model);
+                case '3ch-opt'
+                    model = pred_trials_3ch_opt(model);
             end
         end
         

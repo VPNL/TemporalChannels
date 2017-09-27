@@ -26,6 +26,12 @@ switch param
         param_min = 1;
     case 'sigma'
         param_min = 1e-4;
+    case 'tau_s'
+        param_min = 1;
+    case 'tau_t'
+        param_min = 1;
+    case 'tau_d'
+        param_min = 1;
 end
 model.params.(param) = cellfun(@(X) max([param_min X + step_size]), param_init, 'uni', false);
 
@@ -46,17 +52,34 @@ switch model.type
         lpf = cellfun(@(X) exp(-(0:999) / X), model.params.tau2, 'uni', false);
         lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
         model.irfs.lpf = lpf;
-    case '2ch-dcts'
+    case '2ch-dcts-quad'
         lpf = cellfun(@(X) exp(-(0:999) / X), model.params.tau2, 'uni', false);
         lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
         model.irfs.lpf = lpf;
     case '2ch-opt'
-        nrfS = cellfun(@(X) (0:999) .* exp(-(0:999) / X), model.params.tau1, 'uni', false);
-        nrfS = cellfun(@(X) resample(X/sum(X), 1, 1000/model.fs)', nrfS, 'uni', false);
-        model.irfs.nrfS = nrfS;
-        lpf = cellfun(@(X) exp(-(0:999) / X), model.params.tau2, 'uni', false);
-        lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
-        model.irfs.lpf = lpf;
+        model.irfs.nrfS = cellfun(@(X) tc_irfs('S', X, model.fs), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tc_irfs('T', X, model.fs), ...
+            model.params.tau_t, 'uni', false);
+    case '3ch-lin-quad'
+        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        model.irfs.nrfD = nrfD;
+    case '3ch-lin-rect'
+        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        model.irfs.nrfD = nrfD;
+    case '3ch-pow-quad'
+        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        model.irfs.nrfD = nrfD;
+    case '3ch-pow-rect'
+        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        model.irfs.nrfD = nrfD;
+    case '3ch-opt'
+        model.irfs.nrfS = cellfun(@(X) tc_irfs('S', X, model.fs), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tc_irfs('T', X, model.fs), ...
+            model.params.tau_t, 'uni', false);
+        model.irfs.nrfD = cellfun(@(X) tc_irfs('D', X, model.fs), ...
+            model.params.tau_d, 'uni', false);
 end
 
 end

@@ -1,6 +1,6 @@
-function model = pred_trials_2ch_lin(model)
-% Generates trial predictors using the 2 temporal-channel model proposed by
-% Stigliani et al. (2017) without a nonlinearity. 
+function model = pred_trials_2ch_lin_lin(model)
+% Generates trial predictors using the 2 temporal-channel model with linear
+% sustained and linear transient channel. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);

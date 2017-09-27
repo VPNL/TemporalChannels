@@ -24,6 +24,7 @@ classdef Voxel
     
     properties
         experiments % array of experiments to model
+        sessions    % array of experimental sessions
         model = []; % data structure of models fits for each session
     end
     
@@ -37,10 +38,6 @@ classdef Voxel
     properties (Constant, Hidden)
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         tr = 1; % fMRI TR (s)
-    end
-    
-    properties (Dependent)
-        sessions   % paths to sessions that have all experiments
     end
     
     properties (Dependent, Hidden)
@@ -80,14 +77,13 @@ classdef Voxel
                 
         % find the number of runs per experiment for each session
         function num_runs = get.num_runs(vox)
-            sessions = vox.sessions; nsess = length(sessions);
-            num_runs = zeros(length(vox.experiments), nsess);
-            for ss = 1:nsess
-                spath = fullfile(sessions{ss}, 'Voxels');
+            num_runs = zeros(length(vox.experiments), length(vox.sessions));
+            for ss = 1:length(vox.sessions)
+                spath = fullfile(vox.sessions{ss}, 'Voxels');
                 % find paths to data files for each experiment
                 for ee = 1:length(vox.experiments)
-                    d = dir(fullfile(spath, [vox.experiments{ee} '_' 'Run*.mat']));
-                    fnames = {d.name}; num_runs(ee, ss) = length(fnames);
+                    d = dir(fullfile(spath, vox.experiments{ee}, 'Run*.mat'));
+                    num_runs(ee, ss) = length({d.name});
                 end
             end
         end
@@ -95,8 +91,7 @@ classdef Voxel
         % find the paths to the data files for each session
         function filenames = get.filenames(vox)
             sessions = vox.sessions; nsess = length(sessions);
-            nruns = vox.num_runs;
-            filenames = {};
+            filenames = {}; nruns = vox.num_runs;
             % for each session
             for ss = 1:nsess
                 rcnt = 0;
@@ -258,10 +253,13 @@ classdef Voxel
                 vox.model.stdevs{ss} = mm.stdevs(:, 1:npreds, :);
                 vox.model.rbetas{ss} = mm.betas(:, npreds + 1:npreds + nruns(ss), :); % nuisance regressor betas
                 vox.model.rstdevs{ss} = mm.stdevs(:, npreds + 1:npreds + nruns(ss), :); % nuisance regressor stdevs
-                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(mm.residual .^ 2, 1) ./ sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
+                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(mm.residual .^ 2, 1) ./ ...
+                    sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
             end
             % optimize model parameters if applicable
-            omodels = {'cts-pow' 'cts-div' 'dcts' '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+            omodels = {'cts-pow' 'cts-div' 'dcts' ...
+                '2ch-pow-quad' '2ch-pow-rect' '2ch-div' '2ch-dcts' '2ch-opt' ...
+                '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect' '3ch-opt'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)

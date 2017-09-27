@@ -39,9 +39,6 @@ end
 if err_flag
     xvec = [x fliplr(x)]; yvec = [y_mean + err fliplr(y_mean - err)];
     me = patch(xvec, yvec, ecol, 'LineStyle', 'none');
-    if strcmp(lower(err_type), 'sem')
-        alpha(me, .5);
-    end
 end
 ma = plot(x, y_mean, 'Color', lcol, 'LineWidth', lw);
 ymin = min(y_mean - err);

@@ -18,10 +18,7 @@ function hrf = canonical_hrf(TR, P)
 sr = 16; dt = TR / sr; fratio = 6;
 
 % define default HRF parameters
-p = [6 16 32];
-if nargin > 1
-    p(1:length(P)) = P;
-end
+p = [6 16 32]; if nargin > 1; p(1:length(P)) = P; end
 
 % derive positive gamma function
 x1 = 0:p(3) / dt; h1 = p(1); f1 = zeros(size(x1)); Q1  = find(x1 > 0);

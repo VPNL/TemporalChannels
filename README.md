@@ -112,11 +112,28 @@ Fitting a model using the `model_roi` function requires passing at least three i
 1. *name* — name of a region of interest (e.g., `'V1'`) in session ROI directories (`~/TemporalChannels/data/*/ROIs/`).
  
 2. *type* — label indicating which model to use for predicting responses.
-    1. `‘glm’` — general linear model for fMRI data (Boynton et al., 1996)
-    2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
-    3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
-    4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
-    5. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
+    1. Hemodynamic models
+        1. `‘glm’` — general linear model for fMRI data (Boynton et al., 1996)
+        2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
+        3. `‘balloon’` — nonlinear hemodynamic balloon model (Buxton et al., 1998)
+    2. Single-channel linear-nonlinear models
+        1. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
+        2. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
+        3. `‘dcts’` — compressive temporal summation model (Zhou et al., 2017)
+    3. Two-channel models (solved analytically)
+        1. `‘2ch-lin-quad’` — 2 temporal-channel model (Stigliani et al., 2017) with linear sustained and quadratic transient
+        2. `‘2ch-lin-rect’` — 2 temporal-channel model with linear sustained and rectified transient
+        3. `‘2ch-lin-lin’` — 2 temporal-channel model with linear sustained and linear transient
+    4. Two-channel models (solved with optimized hyperparameters)
+        1. `‘2ch-pow-quad’` — 2 temporal-channel model with CTS-pow on sustained and quadratic transient
+        2. `‘2ch-pow-rect’` — 2 temporal-channel model with CTS-pow on sustained and rectified transient
+        3. `‘2ch-opt’` — 2 temporal-channel model with optimized sustained and transient time constants
+    5. Three-channel models (solved with optimized delay channel)
+        1. `‘3ch-lin-quad’` — 3 temporal-channel model with linear sustained and quadratic transient
+        2. `‘3ch-lin-rect’` — 3 temporal-channel model with linear sustained and rectified transient
+        3. `‘3ch-pow-quad’` — 3 temporal-channel model with CTS-pow on sustained and quadratic transient
+        4. `‘3ch-pow-rect’` — 3 temporal-channel model with CTS-pow on sustained and rectified transient
+        5. `‘3ch-opt’` — 3 temporal-channel model with optimized sustained, transient, and delay time constants
  
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
@@ -166,12 +183,29 @@ The `model_vox` wrapper function can be used to fit a model in each voxel using 
 Fitting models to each voxel using the `model_vox` function requires passing at least two input arguments:
  
 1. *type* — label indicating which model to use for predicting responses.
-    1. `‘glm’` — general linear model for fMRI (Boynton et al., 1996)
-    2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
-    3. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
-    4. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
-    5. `‘2ch’` — 2 temporal-channel model (Stigliani et al., 2017)
- 
+    1. Hemodynamic models
+        1. `‘glm’` — general linear model for fMRI data (Boynton et al., 1996)
+        2. `‘htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
+        3. `‘balloon’` — nonlinear hemodynamic balloon model (Buxton et al., 1998)
+    2. Single-channel linear-nonlinear models
+        1. `‘cts-pow’` — compressive temporal summation model with power law (Zhou et al., 2017)
+        2. `‘cts-div’` — compressive temporal summation model with divisive normalization (Zhou et al., 2017)
+        3. `‘dcts’` — compressive temporal summation model (Zhou et al., 2017)
+    3. Two-channel models (solved analytically)
+        1. `‘2ch-lin-quad’` — 2 temporal-channel model (Stigliani et al., 2017) with linear sustained and quadratic transient
+        2. `‘2ch-lin-rect’` — 2 temporal-channel model with linear sustained and rectified transient
+        3. `‘2ch-lin-lin’` — 2 temporal-channel model with linear sustained and linear transient
+    4. Two-channel models (solved with optimized hyperparameters)
+        1. `‘2ch-pow-quad’` — 2 temporal-channel model with CTS-pow on sustained and quadratic transient
+        2. `‘2ch-pow-rect’` — 2 temporal-channel model with CTS-pow on sustained and rectified transient
+        3. `‘2ch-opt’` — 2 temporal-channel model with optimized sustained and transient time constants
+    5. Three-channel models (solved with optimized delay channel)
+        1. `‘3ch-lin-quad’` — 3 temporal-channel model with linear sustained and quadratic transient
+        2. `‘3ch-lin-rect’` — 3 temporal-channel model with linear sustained and rectified transient
+        3. `‘3ch-pow-quad’` — 3 temporal-channel model with CTS-pow on sustained and quadratic transient
+        4. `‘3ch-pow-rect’` — 3 temporal-channel model with CTS-pow on sustained and rectified transient
+        5. `‘3ch-opt’` — 3 temporal-channel model with optimized sustained, transient, and delay time constants
+
 2. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
 3. *val_exps* — optional argument specifying which experiment/s to use for validating the model (e.g., `'Exp3'`).
@@ -189,7 +223,7 @@ After fitting the model in each voxel, the function returns two outputs:
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
     2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
-    4. `model(1).params` — stores model hyperparameters
+    4. `model(1).params` — stores session-specific model hyperparameters
     5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))
  
 By default, outputs are saved in the results directory (`~/TemporalChannels/results/`). To generate whole-brain maps of model parameters, you must apply the inverse of the transformation used to flatten the volumetric data stored in `~/TemporalChannels/data/*/Voxels/`.
@@ -198,11 +232,11 @@ By default, outputs are saved in the results directory (`~/TemporalChannels/resu
  
 ### Using the model_roi function
  
-Example of fitting the 2 temporal-channel model using V1 data from Exp1 & Exp2:
+Example of fitting a two-channel model using V1 data from Exp1 & Exp2:
  
-    [roi, model] = model_roi(‘V1', '2ch', {‘Exp1’ 'Exp2'});
+    [roi, model] = model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'});
  
-Example of fitting a GLM using V1 data from Exp1 & Exp2 and validating on V1 data from Exp3:
+Example of fitting a GLM using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
  
     [roi, model] = model_roi(‘V1', 'glm', {‘Exp1’ 'Exp2'}, 'Exp3');
  
@@ -212,7 +246,7 @@ The `ModelTS.m` class file defines a class of objects that store predictors for 
  
 Example of creating predictors using a ModelTS object (`model`):
  
-    type = '2ch';                              % specify the type of model to use
+    type = '2ch-lin-quad';                     % specify the type of model to use
     fit_exps = {'Exp1' 'Exp2'};                % list of experiments for fitting
     sessions = roi.sessions;                   % list of sessions to model (see below)
     model = ModelTS(type, fit_exps, sessions); % setup ModelTS object

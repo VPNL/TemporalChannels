@@ -1,6 +1,6 @@
-function model = pred_runs_2ch_lin(model)
-% Generates run predictors using the 2 temporal-channel model proposed by
-% Stigliani et al. (2017) without a nonlinearity. 
+function model = pred_runs_2ch_div_quad(model)
+% Generates run predictors using the 2 temporal-channel model with CTS-div
+% on sustained and quadratic transient channel. 
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
@@ -19,8 +19,11 @@ end
 % generate run predictors for each session
 run_preds = cellfun(@(X) zeros(X / tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
-predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
+predSl = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
+predSn = cellfun(@(X) X .^ 2, predSl, 'uni', false);
+predSd = cellfun(@(X, Y) X + Y .^ 2, predSn, params.sigma, 'uni', false);
+predS = cellfun(@(X, Y) X ./ Y, predSn, predSd, 'uni', false);
+predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, stim, irfs.nrfT, 'uni', false);
 predS(empty_cells) = {1}; predT(empty_cells) = {1};
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predT, irfs.hrf, 'uni', false);

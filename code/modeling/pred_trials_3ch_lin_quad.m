@@ -1,6 +1,6 @@
-function model = pred_trials_2ch(model)
-% Generates trial predictors using the 2 temporal-channel model proposed by
-% Stigliani et al. (2017) with quadratic nonlinearity. 
+function model = pred_trials_3ch_lin_quad(model)
+% Generates trial predictors using a 3 temporal-channel model with linear
+% sustained, quadratic transient, and optimized delay channel. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
@@ -9,6 +9,7 @@ fs = model.fs; tr = model.tr; cond_list = model.cond_list;
 stimfiles = model.stimfiles; nruns = model.num_runs;
 model.trial_preds.S = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 model.trial_preds.T = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+model.trial_preds.D = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 
 rcnt = 1;
 for ee = 1:model.num_exps
@@ -23,13 +24,18 @@ for ee = 1:model.num_exps
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs);
+            predTq = predT .^ 2;
+            predD = convolve_vecs(cstim, irfs.nrfD{ss}, fs, fs);
+            predDr = rectify(predD, 'negative') .^ 2;
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
-            fmriT = convolve_vecs(predT, irfs.hrf{ss}, fs, 1 / tr);
+            fmriT = convolve_vecs(predTq, irfs.hrf{ss}, fs, 1 / tr);
+            fmriD = convolve_vecs(predDr, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmriS;
             model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;
+            model.trial_preds.D{cc, ss, ee} = fmriD * model.normD;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

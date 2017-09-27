@@ -1,6 +1,6 @@
-function model = pred_runs_2ch_sqrt_rect(model)
-% Generates run predictors using the 2 temporal-channel model proposed by
-% Stigliani et al. (2017) with sqare root and rectification nonlinearities.
+function model = pred_runs_3ch_pow_rect(model)
+% Generates run predictors using the 3 temporal-channel model with CTS-pow
+% on sustained, rectified transient, and optimized delay channel.
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
@@ -20,14 +20,17 @@ end
 run_preds = cellfun(@(X) zeros(X / tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
 predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
-predSr = cellfun(@(X) sqrt(X), predS, 'uni', false);
+predSp = cellfun(@(X, Y) X .^ Y, predS, params.epsilon, 'uni', false);
 predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
-predTr = cellfun(@(X) rectify(X), predT, 'uni', false);
-predSr(empty_cells) = {1}; predTr(empty_cells) = {1};
-fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predSr, irfs.hrf, 'uni', false);
+predTr = cellfun(@(X) rectify(X, 'positive'), predT, 'uni', false);
+predD = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfD, 'uni', false);
+predDr = cellfun(@(X) rectify(X, 'negative') .^ 2, predD, 'uni', false);
+predSp(empty_cells) = {1}; predTr(empty_cells) = {1}; predDr(empty_cells) = {1};
+fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predSp, irfs.hrf, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predTr, irfs.hrf, 'uni', false);
-fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]};
-run_preds = cellfun(@(X, Y) [X Y * model.normT], fmriS, fmriT, 'uni', false);
+fmriD = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predDr, irfs.hrf, 'uni', false);
+fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]}; fmriD(empty_cells) = {[]};
+run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normD], fmriS, fmriT, fmriD, 'uni', false);
 model.run_preds = run_preds;
 
 end

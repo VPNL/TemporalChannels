@@ -32,6 +32,12 @@ for pp = 1:length(param_names)
             params_lims{pp} = [10 500];
         case 'sigma'
             params_lims{pp} = [.01 .5];
+        case 'tau_s'
+            params_lims{pp} = [1 50];
+        case 'tau_t'
+            params_lims{pp} = [1 50];
+        case 'tau_d'
+            params_lims{pp} = [1 50];
     end
     params_grid{pp} = linspace(params_lims{pp}(1), params_lims{pp}(2), grid_size);
 end
@@ -87,8 +93,6 @@ fprintf('Performing %s grid search for %s...\n', model_init.type, roi_init.sessi
 ss_roi = ROI(roi_init.name, roi_init.experiments, session);
 ss_roi = tc_runs(ss_roi);
 ss_roi = tc_trials(ss_roi, ss_model);
-
-% test
 var_exp = {};
 for ii = 1:niters
     fprintf([num2str(ii) ' '])
@@ -106,14 +110,6 @@ for ii = 1:niters
 end
 fprintf('\n')
 [~, model_idxs] = sort(cell2mat(var_exp), 2, 'descend');
-
-
-% search_rois = ROI(roi_init.name, roi_init.experiments, repmat({session}, 1, niters));
-% search_rois = select_sessions(search_rois);
-% search_rois.runs = repmat(ss_roi.runs, 1, niters);
-% search_rois.baseline = repmat(ss_roi.baseline, 1, niters);
-% search_rois = tc_fit(search_rois, search_models);
-% [~, model_idxs] = sort([search_rois.model.varexp{:}], 2, 'descend');
 
 % initialize output objects with correct number of seed points
 for seed = 1:nseeds

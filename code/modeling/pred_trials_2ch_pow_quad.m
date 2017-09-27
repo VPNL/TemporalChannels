@@ -1,6 +1,6 @@
-function model = pred_trials_2ch_opt(model)
-% Generates trial predictors using the 2 temopral-channel model with dCTS
-% on sustained channel. 
+function model = pred_trials_2ch_pow_quad(model)
+% Generates trial predictors using the 2 temporal-channel with CTS-pow on
+% sustained and quadratic transient channel.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions);
@@ -23,10 +23,12 @@ for ee = 1:model.num_exps
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predSp = predS .^ params.epsilon{ss};
+            predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs);
+            predTq = predT .^ 2;
             % convolve neural predictors with HRF
-            fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
-            fmriT = convolve_vecs(predT, irfs.hrf{ss}, fs, 1 / tr);
+            fmriS = convolve_vecs(predSp, irfs.hrf{ss}, fs, 1 / tr);
+            fmriT = convolve_vecs(predTq, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmriS;
             model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;

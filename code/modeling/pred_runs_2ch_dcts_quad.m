@@ -1,6 +1,6 @@
-function model = pred_runs_2ch_opt(model)
+function model = pred_runs_2ch_dcts_quad(model)
 % Generates run predictors using the 2 temporal-channel model with dCTS on
-% sustained channel. 
+% sustained and quadratic transient channel. 
 
 % get design parameters
 params_init = model.params; irfs_init = model.irfs;
@@ -19,9 +19,15 @@ end
 % generate run predictors for each session
 run_preds = cellfun(@(X) zeros(X / tr, ncats), rd, 'uni', false);
 empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
-predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, stim, irfs.nrfT, 'uni', false);
-predS(empty_cells) = {1}; predT(empty_cells) = {1};
+predSl = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
+predSn = cellfun(@(X) X .^ 2, predSl, 'uni', false);
+predSf = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), predSl, irfs.lpf, 'uni', false);
+predSd = cellfun(@(X, Y) X .^ 2 + Y .^ 2, predSf, params.sigma, 'uni', false);
+predS = cellfun(@(X, Y) X ./ Y, predSn, predSd, 'uni', false);
+clear('predSl', 'predSn', 'predSf', 'predSd');
+predTl = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
+predS(empty_cells) = {1}; predTl(empty_cells) = {1};
+predT = cellfun(@(X) X .^ 2, predTl, 'uni', false);
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predT, irfs.hrf, 'uni', false);
 fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]};
