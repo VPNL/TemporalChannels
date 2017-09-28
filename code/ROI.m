@@ -360,6 +360,7 @@ classdef ROI
             end
             % carry over model parameters for all sessions to roi.model
             roi.model.type = model.type;
+            roi.model.num_channels = model.num_channels;
             roi.model.cond_list = model.cond_list;
             roi.model.cat_list = unique([model.cats{:}]);
             roi.model.pre_dur = model.pre_dur;
@@ -500,9 +501,7 @@ classdef ROI
         
         % plot measurement vs. prediction for each trial type
         function plot_model(roi, save_flag)
-            if nargin == 1
-                save_flag = 0;
-            end
+            if nargin == 1; save_flag = 0; end
             % get design parameters and label data
             nexps = size(roi.experiments, 2);
             roi = select_sessions(roi);
@@ -607,10 +606,9 @@ classdef ROI
                 set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8);
             end
             % norm y-axis limit across experiments
+            y_min = floor(y_min); y_max = ceil(y_max);
             for ee = 1:nexps
-                set(ax(ee), ...
-                    'YLim', [floor(y_min) ceil(y_max)], ...
-                    'YTick', floor(y_min):ceil(y_max));
+                set(ax(ee), 'YLim', [y_min y_max], 'YTick', y_min:y_max);
             end
             % save to results directory if applicable
             if save_flag

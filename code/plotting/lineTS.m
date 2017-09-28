@@ -26,7 +26,7 @@ end
 
 % compute mean and error of y
 y_mean = mean(y, 1);
-if size(y, 1) > 1
+if nargin > 4 && size(y, 1) > 1
     err = std(y);
     if strcmp(lower(err_type), 'sem')
         err = err / (sqrt(size(y, 1) - 1));
