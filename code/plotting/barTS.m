@@ -12,18 +12,10 @@ function [ymin, ymax] = barTS(y, col, x1)
 % 
 % AS 5/2017
 
-% set plotting color for each bar
-if nargin < 2 || isempty(col)
-    col = [0 0 0];
-end
-if size(col, 1) == 1
-    col = repmat(col, size(y, 2), 1);
-end
-
-% check for third input
-if nargin < 3
-    x1 = 0;
-end
+% check inputs
+if nargin < 2 || isempty(col); col = [0 0 0]; end
+if size(col, 1) == 1; col = repmat(col, size(y, 2), 1); end
+if nargin < 3; x1 = 0; end
 
 % compute mean and standard error of y
 y_m = mean(y, 1);
@@ -34,17 +26,16 @@ else
 end
 
 % plot bars and error bars
-vv_x = [-1 1 1 -1]; xvec = 0.45 * vv_x + x1; xvec_e = 0.1 * vv_x + x1;
-vv_y = [0 0 1 1]; vv_ye = [-1 -1 1 1]; xcnt = 0; 
+xv = [-1 1 1 -1]; xve = 0.1 * xv + x1;  yv = [0 0 1 1]; yve = [-1 -1 1 1];
+xvec = 0.45 * xv + x1; xcnt = 0; 
 for bb = 1:length(y_m)
-    yvec = y_m(bb) * vv_y; xcnt = xcnt + 1;
+    yvec = y_m(bb) * yv; xcnt = xcnt + 1;
     patch(xcnt + xvec, yvec, col(bb, :));
-    yvec_e = repmat(y_m(bb), 1, 4) + vv_ye * err(bb);
-    patch(xcnt + xvec_e, yvec_e, [1 1 1]);
+    yvec_e = repmat(y_m(bb), 1, 4) + yve * err(bb);
+    patch(xcnt + xve, yvec_e, [1 1 1]);
 end
 
-% get limits
-ymin = min([floor(min(y_m - err)) 0]);
-ymax = ceil(max(y_m + err));
+% get limits of y-axis
+ymin = min([min(y_m - err) 0]); ymax = max(y_m + err);
 
 end

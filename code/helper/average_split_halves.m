@@ -1,19 +1,19 @@
-function roi = pool_split_halves(rois, models, fit_exps, val_exps)
+function roi = average_split_halves(rois, models, fit_exps, val_exps)
 
 %% check inputs
 if nargin < 1 || isempty(rois)
     rois = {'IOG-faces' 'pFus-faces' 'mFus-faces' ...
         'LOS-bodies' 'ITG-bodies' 'MTG-bodies' 'OTS-bodies' ...
-        'IOS-characters' 'pOTS-characters' 'mOTS-characters'};
+        'IOS-characters' 'pOTS-characters' 'mOTS-characters' ...
+        'V1' 'V2' 'V3' 'hV4' 'MT'};
 else
     rois = force_cell(strrep(rois, '_', '-'));
 end
 
 if nargin < 2 || isempty(models)
-    models = {'glm' 'htd' 'balloon' ...
-        'cts-pow' 'cts-div' 'dcts' ...
-        '2ch' '2ch-rect' '2ch-sqrt-rect' ...
-        '2ch-pow' '2ch-div' '2ch-dcts' '2ch-opt'};
+    models = {'glm' 'htd' 'balloon' 'cts-pow' 'cts-div' 'dcts' ...
+        '2ch-lin-quad' '2ch-lin-rect' '2ch-pow-quad' '2ch-pow-rect' ...
+        '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect'};
 else
     models = force_cell(models);
 end
@@ -34,7 +34,6 @@ end
 project_dir = fullfile(RAID, 'projects', 'CategoryChannels');
 model_dir = fullfile(project_dir, 'model', 'TemporalChannels');
 res_dir = fullfile(model_dir, 'results');
-fig_dir = fullfile(model_dir, 'figures');
 % generate stem of data filenames
 fstems = cell(1, size(fit_exps, 1));
 for ff = 1:size(fit_exps, 1)
@@ -54,10 +53,8 @@ for rr = 1:length(rois)
         end
         roi = pool_across_folds(fold(1).roi, fold(2).roi);
         fname = [rois{rr} '_' models{mm} '_fitExpAExpBExpC_split_half.mat'];
-        save(fullfile(res_dir, fname), 'roi', '-v7.3');
+        save(fullfile(res_dir, 'split_half', fname), 'roi', '-v7.3');
     end
 end
-
-
 
 end

@@ -101,7 +101,7 @@ end
 
 % plot model fit and predictions for fit_exps and val_exps
 for rr = 1:length(roi)
-    plot_model(roi(rr));
+    plot_roi(roi(rr), 'model');
 end
 
 %% Save output in results

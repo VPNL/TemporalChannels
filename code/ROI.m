@@ -14,7 +14,7 @@
 %   tc_pred -- predicts trial responses using model solutoin
 %   plot_runs -- plots measured vs. predicted responses for each run
 %   plot_exps -- plots comparison of trial responses across experiments
-%   plot_model -- plots measured vs. predicted reponses for each trial type
+%   plot_roi -- plots various components of ROI analysis
 %   recompute -- validates model solution on indpendent data
 %
 % Example model fitting steps ("model" is a ModelTS object):
@@ -23,7 +23,7 @@
 %   roi = tc_trials(roi, model)
 %   roi = tc_fit(roi, model)
 %   roi = tc_pred(roi, model)
-%   fig = plot_model(roi)
+%   fig = plot_roi(roi, 'model')
 %
 % AS 2/2017
 
@@ -426,202 +426,23 @@ classdef ROI
             end
         end
         
-        % plot measurement vs. prediction for runs in each session
-        function plot_runs(roi)
-            % get design parameters
-            roi = select_sessions(roi);
-            sessions = roi.sessions; nsess = length(sessions);
-            % setup figure
-            fig_name = [roi.nickname ' run timecourses'];
-            fig_pos = [.1 .3 .8 .6];
-            fig = figTS(fig_name, fig_pos);
-            % plot run time series and predictors for each session
-            for ss = 1:nsess
-                subplot(nsess, 1, ss); hold on;
-                plot(roi.model.run_tcs{ss}, 'k');
-                plot(roi.model.run_preds{ss}, 'r');
-                if ss == 1
-                    ylabel('% signal');
-                end
-                [~, session_id] = fileparts(sessions{ss});
-                leg = {[session_id ': ' num2str(roi.model.varexp{ss}, 2) '%'] 'pred'};
-                legend(leg); legend boxoff; axis tight;
-                ylims = get(gca, 'ylim'); ylim([ylims(1) ceil(ylims(2))]);
-                set(gca, 'XColor', 'w', 'FontSize', 8, ...
-                    'TickDir', 'out', 'YTick', [0 ceil(ylims(2))]);
+        % plot various components of ROI analysis
+        function fig = plot_roi(roi, plot_type, save_flag)
+            if nargin < 2; plot_type = 'model'; end
+            if nargin < 3; save_flag = 0; end
+            switch plot_type
+                case 'model'
+                    fig = plot_roi_model(roi, save_flag);
+                case 'runs'
+                    fig = plot_roi_runs(roi, save_flag);
+                case 'exps'
+                    fig = plot_roi_exps(roi, save_flag);
+                case 'trials'
+                    fig = plot_roi_trials(roi, save_flag);
             end
         end
         
-        % plot measured responses for each trial type across experiments
-        function plot_exps(roi)
-            % get design parameters
-            nexps = length(roi.experiments);
-            cond_list = roi.model.cond_list;
-            all_conds = unique([cond_list{:}], 'stable');
-            nconds = length(all_conds);
-            pre_dur = roi.model.pre_dur; post_dur = roi.model.post_dur;
-            cols = lines(nexps);
-            cond_idxs = idx_trials(roi);
-            % setup figure
-            fig_name = [roi.nickname ' trial responses'];
-            fig_pos = [.1 .3 .8 .4];
-            fig = figTS(fig_name, fig_pos);
-            % plot responses to trials of the same type across experiments
-            xcnt = 3; zlc = xcnt;
-            y_max = 0; y_min = -1;
-            for cc = 1:nconds
-                % get duration of trial time window
-                if nexps > 1
-                    tl = length(roi.trial_avgs{cond_idxs(cc, 1), 1, 1});
-                else
-                    tl = length(roi.trial_avgs{cond_idxs(cc, 1), 1});
-                end
-                % plot custom zero line for trial
-                plot([zlc - 1 zlc + tl], [0 0], 'k-');
-                % plot measured response in peristimulus time window
-                x = xcnt:xcnt + tl - 1;
-                for ee = 1:nexps
-                    if cond_idxs(cc, ee) > 0
-                        y_m = [roi.trial_avgs{cond_idxs(cc, ee), :, ee}]';
-                        [me(ee), cymin, cymax] = lineTS(x, y_m, 1, cols(ee, :), cols(ee, :), 'sem');
-                        y_min = min([y_min cymin]); y_max = max([y_max cymax]);
-                    end
-                end
-                % plot stimulus
-                plot([xcnt + pre_dur - 1 xcnt + tl - post_dur], [-.5 -.5], 'k-', 'LineWidth', 4);
-                text(xcnt + pre_dur - 1, -.8, all_conds{cc}, 'FontSize', 8);
-                xcnt = xcnt + tl + 3; zlc = xcnt;
-            end
-            % format plot
-            ylabel('fMRI (% signal)'); ylim([floor(y_min) ceil(y_max)]);
-            legend(me(:), roi.experiments(1, :)); legend boxoff;
-            title(roi.nickname, 'Interpreter', 'none');
-            set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8);
-        end
-        
-        % plot measurement vs. prediction for each trial type
-        function plot_model(roi, save_flag)
-            if nargin == 1; save_flag = 0; end
-            % get design parameters and label data
-            nexps = size(roi.experiments, 2);
-            roi = select_sessions(roi);
-            sessions = roi.sessions; nsess = length(sessions);
-            npreds = length(roi.model.betas{1});
-            xlabs = label_preds(roi.model);
-            amps = reshape([roi.model.betas{:}], npreds, [])';
-            R2 = [roi.model.varexp{:}];
-            smodels = {'glm' 'balloon' 'cts-pow' 'cts-div' 'dcts'};
-            % setup figure
-            fig_name = [roi.nickname ' - ' roi.model.type ' model'];
-            fig_pos = [.1 .1 .8 .3 + nexps * .2];
-            fig = figTS(fig_name, fig_pos);
-            % plot model solution
-            subplot(1 + nexps, 2, 1); hold on;
-            [ymin, ymax] = barTS(amps, [0 0 0]);
-            xlim([0 size(amps, 2) + 1]); ylim([ymin ymax]);
-            xlabel('Predictor'); ylabel('Beta (% signal)');
-            t1 = roi.nickname; R2_str = num2str(mean(R2), 3);
-            t2 = [roi.model.type ' fit to ' strjoin(roi.model.fit_exps, '/')];
-            t3 = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' R2_str];
-            title({t1; t2; t3});
-            set(gca, 'TickDir', 'out', 'FontSize', 8, ...
-                'XTick', 1:npreds, 'XTickLabel', xlabs(1:npreds));
-            % plot variance explained for each session
-            varexp = [roi.model.varexp{:}];
-            subplot(1 + nexps, 2, 2); hold on;
-            [ymin, ymax] = barTS(R2, [0 0 0]); xcnt = 1;
-            xlim([0 size(R2, 2) + 1]); ylim([ymin ymax]);
-            for ss = 1:nsess
-                ypos = max([0 varexp(ss)]) + .1;
-                lab = num2str(varexp(ss), 2);
-                text(xcnt, ypos, lab, 'FontSize', 6, ...
-                    'HorizontalAlignment', 'center');
-                xcnt = xcnt + 1;
-            end
-            title('Individual Subjects');  ylim([0 1]);
-            xlabel('Session'); ylabel('R^2');
-            session_ids = strrep(roi.session_ids, '_', '-');
-            set(gca, 'TickDir', 'out', 'FontSize', 8, ...
-                'XTick', 1:nsess, 'XTickLabel', session_ids);
-            % plot measurement vs prediction for each trial type
-            pre_dur = roi.model.pre_dur;
-            post_dur = roi.model.post_dur;
-            y_max = 0; y_min = -1;
-            for ee = 1:nexps
-                ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on;
-                xcnt = 3; zlc = xcnt;
-                for cc = 1:length(roi.trial_avgs(:, 1, ee))
-                    % plot custom zero line for trial
-                    tl = length(roi.trial_avgs{cc, 1, ee});
-                    plot([zlc - 1 zlc + tl], [0 0], 'k-');
-                    % plot measured response for peristimulus time window
-                    x = xcnt:xcnt + tl - 1;
-                    y_m = [roi.trial_avgs{cc, :, ee}]';
-                    lcol = [.9 .9 .9]; ecol = [.7 .7 .7];
-                    [me, c_min, c_max] = lineTS(x, y_m, 1, lcol, ecol, 'std');
-                    y_min = min([y_min c_min]); y_max = max([y_max c_max]);
-                    % plot model prediction for peristimulus time window
-                    y_p = [roi.pred_sum{cc, :, ee}]';
-                    [pr, c_min, c_max] = lineTS(x, y_p, 2, [0 0 0]);
-                    y_min = min([y_min c_min]); y_max = max([y_max c_max]);
-                    % plot separate channel contributions if applicable
-                    if ~ sum(strcmp(roi.model.type, smodels))
-                        y_pS = [roi.predS_sum{cc, :, ee}]';
-                        [sp, c_min, c_max] = lineTS(x, y_pS, 1, [0 0 1]);
-                        y_min = min([y_min c_min]); y_max = max([y_max c_max]);
-                        y_pT = [roi.predT_sum{cc, :, ee}]';
-                        [tp, c_min, c_max] = lineTS(x, y_pT, 1, [1 0 0]);
-                        y_min = min([y_min c_min]); y_max = max([y_max c_max]);
-                        if strcmp(roi.model.type(1:3), '3ch')
-                            y_pD = [roi.predD_sum{cc, :, ee}]';
-                            [dp, c_min, c_max] = lineTS(x, y_pD, 1, [0 1 0]);
-                            y_min = min([y_min c_min]); y_max = max([y_max c_max]);
-                        end
-                    end
-                    % plot stimulus
-                    x_s = [xcnt + pre_dur - 1 xcnt + tl - post_dur];
-                    x_t = roi.model.cond_list{ee}(cc);
-                    plot(x_s, [-.5 -.5], 'k-', 'LineWidth', 4);
-                    text(xcnt + pre_dur - 1, -1, x_t, 'FontSize', 8);
-                    xcnt = xcnt + tl + 3; zlc = xcnt;
-                end
-                % set legend and format plot
-                if sum(strcmp(roi.model.type, smodels))
-                    leg = {roi.nickname [roi.model.type ' model']};
-                    legend([me pr], leg, 'Location', 'NorthWestOutside');
-                else
-                    l1 = [roi.nickname ' (N = ' num2str(nsess) ')'];
-                    l2 = [roi.model.type ' model'];
-                    l3 = {'S contribution' 'T contribution'};
-                    leg = [l1 l2 l3]; ptrs = [me pr sp tp];
-                    if strcmp(roi.model.type(1:3), '3ch')
-                        leg = [leg 'D contribution'];
-                        ptrs = [ptrs dp];
-                    end
-                    legend(ptrs, leg, 'Location', 'NorthWestOutside');
-                end
-                legend boxoff;
-                title([roi.experiments{ee}], 'FontSize', 8);
-                ylabel('fMRI (% signal)');
-                set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8);
-            end
-            % norm y-axis limit across experiments
-            y_min = floor(y_min); y_max = ceil(y_max);
-            for ee = 1:nexps
-                set(ax(ee), 'YLim', [y_min y_max], 'YTick', y_min:y_max);
-            end
-            % save to results directory if applicable
-            if save_flag
-                fpath = fullfile(roi.project_dir, 'figures');
-                fname = [roi.nickname '_' roi.model.type 'Model' ...
-                    '_fit' [roi.model.fit_exps{:}] ...
-                    '_test' [roi.experiments{:}] ...
-                    '_' date '.jpg'];
-                saveas(fig, fullfile(fpath, fname), 'jpg');
-            end
-        end
-        
-        % recompute model performance given indepdendently-fit weights
+        % recompute model performance given specified weights
         function roi = recompute(roi, model, fit)
             check_model(roi, model);
             [nruns, nsubs] = size(model.run_preds);

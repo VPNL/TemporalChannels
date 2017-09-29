@@ -38,12 +38,11 @@ end
 % plot line and error region
 if err_flag
     xvec = [x fliplr(x)]; yvec = [y_mean + err fliplr(y_mean - err)];
-    me = patch(xvec, yvec, ecol, 'LineStyle', 'none');
+    me = patch(xvec, yvec, ecol, 'LineStyle', 'none'); alpha(me, 0.5);
 end
 ma = plot(x, y_mean, 'Color', lcol, 'LineWidth', lw);
 ymin = min(y_mean - err);
 ymax = max(y_mean + err);
-
 if err_flag
     h = me;
 else

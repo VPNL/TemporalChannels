@@ -275,7 +275,7 @@ Plot mean response across all sessions for each trial type in experiments:
  
 Plot mean response vs. model prediction across all sessions for each trial type:
  
-    fig = plot_model(roi);
+    fig = plot_roi(roi, 'model');
  
 Plot response vs. model prediction in individual sessions for each run:
  
