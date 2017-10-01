@@ -1,5 +1,5 @@
 % Stores and operates on fMRI time series of an ROI across multiple scan
-% sessions. Used with ModelTS object to fit and validate various temporal
+% sessions. Used with tchModel object to fit and validate various temporal
 % encoding models in each participant with a given ROI.
 %
 % CONSTRUCTOR INPUTS
@@ -8,26 +8,26 @@
 %   3) isessions: list of sessions to analyze (optional)
 %
 % METHODS
-%   tc_runs -- preprocesses and stores time series of all voxels in ROI
-%   tc_trials -- compiles trial-level time series sorted by experiment
-%   tc_fit -- fits ModelTS object to the mean time series of each ROI
-%   tc_pred -- predicts trial responses using model solutoin
+%   tch_runs -- preprocesses and stores time series of all voxels in ROI
+%   tch_trials -- compiles trial-level time series sorted by experiment
+%   tch_fit -- fits tchModel object to the mean time series of each ROI
+%   tch_pred -- predicts trial responses using model solutoin
 %   plot_runs -- plots measured vs. predicted responses for each run
 %   plot_exps -- plots comparison of trial responses across experiments
 %   plot_roi -- plots various components of ROI analysis
 %   recompute -- validates model solution on indpendent data
 %
-% Example model fitting steps ("model" is a ModelTS object):
-%   roi = ROI('V1', {'Exp1' 'Exp2'})
-%   roi = tc_runs(roi)
-%   roi = tc_trials(roi, model)
-%   roi = tc_fit(roi, model)
-%   roi = tc_pred(roi, model)
+% Example model fitting steps ("model" is a tchModel object):
+%   roi = tchROI('V1', {'Exp1' 'Exp2'})
+%   roi = tch_runs(roi)
+%   roi = tch_trials(roi, model)
+%   roi = tch_fit(roi, model)
+%   roi = tch_pred(roi, model)
 %   fig = plot_roi(roi, 'model')
 %
 % AS 2/2017
 
-classdef ROI
+classdef tchROI
     
     properties
         name        % name of data directories for this region
@@ -74,7 +74,7 @@ classdef ROI
     methods
         
         % class constructor
-        function roi = ROI(name, exps, isessions)
+        function roi = tchROI(name, exps, isessions)
             if nargin == 2
                 roi.name = name;
                 roi.experiments = force_cell(exps);
@@ -207,14 +207,14 @@ classdef ROI
         end
         
         % preprocess and store run timeseries of each voxel
-        function roi = tc_runs(roi, detrend)
+        function roi = tch_runs(roi, detrend)
             if nargin == 1
                 detrend = 4;
             end
             roi = select_sessions(roi); % select sessions with region
             fpaths = roi.filenames;     % find paths to data files
-            raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
-            roi.runs = cellfun(@(X) psc(X, detrend), raw_runs, 'uni', false);
+            raw_runs = cellfun(@(X) tch_load(X, 'tSeries'), fpaths, 'uni', false);
+            roi.runs = cellfun(@(X) tch_psc(X, detrend), raw_runs, 'uni', false);
         end
         
         % check dimensionality of roi time series and model predictions
@@ -228,7 +228,7 @@ classdef ROI
         end
         
         % compile time series for each trial type
-        function roi = tc_trials(roi, model)
+        function roi = tch_trials(roi, model)
             % check model and get design parameters
             check_model(roi, model);
             sessions = roi.sessions; nsess = length(sessions);
@@ -273,7 +273,7 @@ classdef ROI
         end
         
         % estimate noise ceiling for each ROI using inter-trial variability
-        function roi = tc_noise_ceil(roi)
+        function roi = tch_noise_ceil(roi)
             trials = roi.trials;
             trials_avg = cellfun(@(X) mean(X, 2), trials, 'uni', false);
             trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), trials, trials_avg, 'uni', false);
@@ -289,7 +289,7 @@ classdef ROI
         end
         
         % use GLM to fit weights for each predictor in model
-        function [roi, model] = tc_fit(roi, model, optimize_flag, fit_exps)
+        function [roi, model] = tch_fit(roi, model, optimize_flag, fit_exps)
             if nargin < 3; optimize_flag = 0; end
             if nargin < 4; fit_exps = model.experiments; end
             check_model(roi, model); sessions = roi.sessions;
@@ -306,7 +306,7 @@ classdef ROI
                 tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
                 tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
                 % fit GLM and store betas, SEMs, and variance explained
-                mm = glmTS(tc, predictors);
+                mm = tch_glm(tc, predictors);
                 roi.model.run_preds{ss} = predictors * mm.betas';
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
@@ -328,35 +328,72 @@ classdef ROI
                 for ss = 1:length(sessions)
                     fname_grid = ['grid_search_results_' model.type ...
                         '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grid = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grid);
+                    fpath_grid = fullfile(sessions{ss}, 'ROIs', ...
+                        roi.name, fname_grid);
                     fname_grad = ['grad_desc_results_' model.type ...
                         '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grad = fullfile(sessions{ss}, 'ROIs', roi.name, fname_grad);
+                    fpath_grad = fullfile(sessions{ss}, 'ROIs', ...
+                        roi.name, fname_grad);
                     % load optimization results if saved, otherwise compute
                     if exist(fpath_grad, 'file') == 2
                         fprintf('Loading gradient descent results. \n');
                         load(fpath_grad);
+                        oroi = tchROI(roi.name, roi.experiments, sessions{ss});
+                        oroi = tch_runs(oroi);
+                        omodel = tchModel(model.type, roi.experiments, sessions{ss});
+                        omodel = code_stim(omodel);
+                        for pp = 1:length(param_names)
+                            pn = param_names{pp};
+                            omodel.params.(pn){1} = params.(pn){1};
+                            omodel = update_param(omodel, pn, 0);                            
+                        end
+                        omodel = pred_runs(omodel);
+                        omodel = pred_trials(omodel);
+                        oroi = tch_trials(oroi, omodel);
+                        oroi = tch_fit(oroi, omodel);
                     elseif exist(fpath_grid, 'file') == 2
                         fprintf('Loading grid search results. \n');
                         load(fpath_grid);
-                        [rois, models] = optimize_fit(rois, models);
-                        save(fpath_grad, 'rois', 'models', '-v7.3');
+                        oroi = tchROI(roi.name, roi.experiments, sessions{ss});
+                        oroi = tch_runs(oroi);
+                        omodel = tchModel(model.type, roi.experiments, sessions{ss});
+                        omodel = code_stim(omodel);
+                        for mm = 1:length(params)
+                            omodel(mm) = omodel(1); oroi(mm) = oroi(1);
+                            for pp = 1:length(param_names)
+                                pn = param_names{pp};
+                                omodel(mm).params.(pn){1} = params(mm).(pn){1};
+                                omodel(mm) = update_param(omodel(mm), pn, 0);                            
+                            end
+                            omodel(mm) = pred_runs(omodel(mm));
+                            omodel(mm) = pred_trials(omodel(mm));
+                            oroi(mm) = tch_trials(oroi(mm), omodel(mm));
+                            oroi(mm) = tch_fit(oroi(mm), omodel(mm));
+                        end
+                        [oroi, omodel] = tch_optimize_fit(oroi, omodel);
+                        params = omodel(1).params;
+                        save(fpath_grad, 'params', '-v7.3');
                     else
-                        [rois, models] = grid_search(roi, model, ss, 5);
-                        save(fpath_grid, 'rois', 'models', '-v7.3');
-                        [rois, models] = optimize_fit(rois, models);
-                        save(fpath_grad, 'rois', 'models', '-v7.3');
+                        [oroi, omodel] = tch_grid_search(roi, model, ss, 5);
+                        params = omodel(1).params;
+                        for mm = 2:length(omodel)
+                            params(mm) = omodel(mm).params;
+                        end
+                        save(fpath_grid, 'params', '-v7.3');
+                        [oroi, omodel] = tch_optimize_fit(oroi, omodel);
+                        params = omodel(1).params;
+                        save(fpath_grad, 'params', '-v7.3');
                     end
                     % copy optimized parameters for session
                     for pp = 1:length(param_names)
-                        opt_params = models.params.(param_names{pp}){1};
+                        opt_params = omodel.params.(param_names{pp}){1};
                         model.params.(param_names{pp}){ss} = opt_params;
                         model = update_param(model, param_names{pp}, 0);
                     end
-                    model = pred_runs(model);
-                    model = pred_trials(model);
-                    [roi, model] = tc_fit(roi, model, 0);
                 end
+                model = pred_runs(model);
+                model = pred_trials(model);
+                [roi, model] = tch_fit(roi, model, 0);
             end
             % carry over model parameters for all sessions to roi.model
             roi.model.type = model.type;
@@ -371,7 +408,7 @@ classdef ROI
         end
         
         % predict responses for each trial type using model solution
-        function roi = tc_pred(roi, model)
+        function roi = tch_pred(roi, model)
             nexps = length(roi.experiments);
             nconds = max(cellfun(@length, model.cond_list));
             ncats = length(unique([model.cats{:}]));
@@ -471,7 +508,7 @@ classdef ROI
             roi.model.betas = fit.betas;
             roi.model.stdevs = fit.stdevs;
             roi.model.fit_exps = fit.fit_exps;
-            roi = tc_pred(roi, model);
+            roi = tch_pred(roi, model);
         end
         
     end

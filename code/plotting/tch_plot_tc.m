@@ -1,4 +1,4 @@
-function [h, ymin, ymax] = lineTS(x, y, lw, lcol, ecol, err_type)
+function [h, ymin, ymax] = tch_plot_tc(x, y, lw, lcol, ecol, err_type)
 % Generates clean version of a simple line plot with error region
 % 
 % INPUTS

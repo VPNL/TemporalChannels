@@ -23,7 +23,7 @@ for ee = 1:length(roi1)
     roi(ee).trials = cellfun(@(X, Y) (X + Y) ./ 2, ...
         roi1(ee).trials, roi2(ee).trials, 'uni', false);
     roi(ee).runs = vertcat(roi1(1).runs, roi2(1).runs);
-    roi1(ee) = tc_noise_ceil(roi1(ee)); roi2(ee) = tc_noise_ceil(roi2(ee));
+    roi1(ee) = tch_noise_ceil(roi1(ee)); roi2(ee) = tch_noise_ceil(roi2(ee));
     roi(ee).noise_ceils = cellfun(@(X, Y) (X + Y) ./ 2, ...
         roi1(ee).noise_ceils, roi2(ee).noise_ceils, 'uni', false);
     % average model properties across folds

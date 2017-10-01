@@ -12,7 +12,7 @@ cols = lines(max(cellfun(@length, roi.model.cond_list)));
 % setup figure
 fig_name = [roi.nickname ' trial responses'];
 fig_pos = [.1 .1 max(cellfun(@length, cond_groups)) * .2 nexps * .2];
-fig = figTS(fig_name,  fig_pos);
+fig = tch_fig(fig_name,  fig_pos);
 
 % plot responses overlaying trials of the same type across experiments
 for ee = 1:nexps
@@ -30,7 +30,7 @@ for ee = 1:nexps
             x = xcnt:xcnt + tl(cc) - 1;
             ym = [roi.trial_avgs{cond_groups{ee}{gg}(cc), :, ee}]';
             col = cols(cond_groups{ee}{gg}(cc), :); cnt = cnt + 1;
-            me(cnt) = lineTS(x, ym, 1, col, col, 'sem');
+            me(cnt) = tch_plot_tc(x, ym, 1, col, col, 'sem');
             leg_str(cnt) = roi.model.cond_list{ee}(cond_groups{ee}{gg}(cc));
         end
         % plot stimulus
@@ -46,7 +46,7 @@ for ee = 1:nexps
     conds = roi.model.cond_list{ee};
     legend(me(:), leg_str, 'Location', 'NorthWestOutside'); legend boxoff;
     title(roi.experiments{ee}); ylabel('fMRI (% signal)'); axis tight;
-    set(gca, 'XColor', 'w', 'TickDir', 'out', 'YTick', -2:10, 'FontSize', 8);
+    set(gca, 'XColor', 'w', 'YTick', -2:10);
 end
 
 % match y-axis limits across experiments
@@ -56,7 +56,7 @@ for ee = 1:nexps
     xmin = min([xmin xlims(1)]); xmax = max([xmax xlims(2)]);
     ymin = min([ymin ylims(1)]); ymax = max([ymax ylims(2)]);
 end
-yticks = floor(ymin):ceil(ymax);
+yticks = floor(ymin):ceil(ymax); ymax = ceil(ymax);
 for ee = 1:nexps
     set(ax(ee), 'XLim', [xmin xmax], 'YLim', [ymin ymax], 'YTick', yticks);
 end

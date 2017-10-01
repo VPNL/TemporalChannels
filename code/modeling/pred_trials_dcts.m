@@ -11,7 +11,7 @@ model.trial_preds.pred = cell(max(cellfun(@length, cond_list)), nsess, model.num
 
 rcnt = 1;
 for ee = 1:model.num_exps
-    [on, off, c, ims, ton, toff, tc, rd, cl] = stimfileTS(stimfiles{rcnt, 1});
+    [on, off, c, ims, ton, toff, tc, rd, cl] = tch_stimfile(stimfiles{rcnt, 1});
     istim = model.stim{rcnt, 1};
     for cc = 1:length(cond_list{ee})
         % find trial onset and offset times

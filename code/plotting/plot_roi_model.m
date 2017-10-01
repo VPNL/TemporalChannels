@@ -3,6 +3,16 @@ function fig = plot_roi_model(roi, save_flag)
 % check inputs
 if length(roi) > 1; roi = roi(1); end
 if nargin < 2; save_flag = 0; end
+switch roi.model.type(1:3)
+    case 'htd'
+        roi.model.num_channels = 2;
+    case '2ch'
+        roi.model.num_channels = 2;
+    case '3ch'
+        roi.model.num_channels = 3;
+    otherwise
+        roi.model.num_channels = 1;
+end
 
 % get design parameters, data, and predictor names
 nexps = size(roi.experiments, 2); npreds = size(roi.model.betas{1}, 2);
@@ -14,31 +24,30 @@ xlabs = label_preds(roi.model); xlabs = xlabs(1:npreds);
 
 % setup figure
 fig_name = [roi.nickname ' - ' roi.model.type ' model'];
-fig = figTS(fig_name, [.1 .1 .8 .3 + nexps * .2]);
+fig = tch_fig(fig_name, [.1 .1 .8 .3 + nexps * .2]);
 
 % plot model weights
-subplot(1 + nexps, 2, 1); hold on;
-[ymin, ymax] = barTS(amps, [0 0 0]);
+subplot(1 + nexps, 2, 1); hold on; tch_set_axes(gca);
+[ymin, ymax] = tch_plot_bar(amps, [0 0 0]);
 axis tight; xlim([0 size(amps, 2) + 1]); ylim([ymin ymax]);
 title({roi.nickname; fit_str; val_str});
 xlabel('Predictor'); ylabel('Beta (% signal)');
-set(gca, 'TickDir', 'out', 'XTick', 1:npreds, 'XTickLabel', xlabs);
+set(gca, 'XTick', 1:npreds, 'XTickLabel', xlabs);
 
 % plot variance explained for each session
-subplot(1 + nexps, 2, 2); hold on;
-[ymin, ymax] = barTS(R2, [0 0 0]);
+subplot(1 + nexps, 2, 2); hold on; tch_set_axes(gca);
+[ymin, ymax] = tch_plot_bar(R2, [0 0 0]);
 xlim([0 size(R2, 2) + 1]); ylim([ymin ymax]);
 for ss = 1:length(roi.sessions)
     ypos = max([0 R2(ss)]) + .1; lab = num2str(R2(ss), 2);
-    text(ss, ypos, lab, 'HorizontalAlignment', 'center');
+    text(ss, ypos, lab, 'HorizontalAlignment', 'center', 'FontSize', 8);
 end
 title('Performance'); xlabel('Session'); ylabel('R^2'); ylim([0 1]);
-set(gca, 'TickDir', 'out', 'XTick', 1:length(roi.sessions), ...
-    'XTickLabel', strrep(roi.session_ids, '_', '-'));
+set(gca, 'XTick', 1:length(roi.sessions), 'XTickLabel', roi.session_ids);
 
 % plot measurement vs prediction for each trial type
 for ee = 1:nexps
-    ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on;
+    ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on; tch_set_axes(gca);
     xcnt = 3; zlc = xcnt;
     for cc = 1:length(roi.trial_avgs(:, 1, ee))
         % plot custom zero line for trial
@@ -46,16 +55,16 @@ for ee = 1:nexps
         plot([zlc - 1 zlc + tl], [0 0], 'k-');
         % plot measured response for peristimulus time window
         x = xcnt:xcnt + tl - 1; ym = [roi.trial_avgs{cc, :, ee}]';
-        me = lineTS(x, ym, 1, [.7 .7 .7], [.7 .7 .7], 'std');
+        me = tch_plot_tc(x, ym, 1, [.9 .9 .9], [.7 .7 .7], 'std');
         % plot model prediction for peristimulus time window
-        pr = lineTS(x, [roi.pred_sum{cc, :, ee}]', 2, [0 0 0]);
+        pr = tch_plot_tc(x, [roi.pred_sum{cc, :, ee}]', 2, [0 0 0]);
         % plot separate channel contributions if applicable
         if roi.model.num_channels > 1
-            sp = lineTS(x, [roi.predS_sum{cc, :, ee}]', 1, [0 0 1]);
-            tp = lineTS(x, [roi.predT_sum{cc, :, ee}]', 1, [1 0 0]);
+            sp = tch_plot_tc(x, [roi.predS_sum{cc, :, ee}]', 1, [0 0 1]);
+            tp = tch_plot_tc(x, [roi.predT_sum{cc, :, ee}]', 1, [1 0 0]);
         end
         if roi.model.num_channels > 2
-            dp = lineTS(x, [roi.predD_sum{cc, :, ee}]', 1, [0 1 0]);
+            dp = tch_plot_tc(x, [roi.predD_sum{cc, :, ee}]', 1, [0 1 0]);
         end
         % plot stimulus
         stim = [xcnt + roi.model.pre_dur xcnt + tl - roi.model.post_dur];
@@ -75,7 +84,7 @@ for ee = 1:nexps
     end
     legend(ptrs, leg, 'Location', 'NorthWestOutside'); legend boxoff;
     title([roi.experiments{ee}], 'FontSize', 8); ylabel('fMRI (% signal)');
-    set(gca, 'XColor', 'w', 'TickDir', 'out', 'FontSize', 8); axis tight;
+    set(gca, 'XColor', 'w'); axis tight;
 end
 
 % match y-axis limits across experiments

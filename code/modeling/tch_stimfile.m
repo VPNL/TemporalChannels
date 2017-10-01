@@ -1,5 +1,5 @@
-function [on, off, c, ims, ton, toff, tc, rd, cl] = stimfileTS(stimfile)
-% Compiles stimulus timing parameters for a given run of fMRI data
+function [on, off, c, ims, ton, toff, tc, rd, cl] = tch_stimfile(stimfile)
+% Compiles stimulus timing parameters for a given run of fMRI data.
 %
 % INPUT
 %   stimfile: path to stimulus timing parameter file (*.txt)

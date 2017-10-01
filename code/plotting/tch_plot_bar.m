@@ -1,4 +1,4 @@
-function [ymin, ymax] = barTS(y, col, x1)
+function [ymin, ymax] = tch_plot_bar(y, col, x1)
 % Generates clean version of simple bar graph with error bars.
 % 
 % INPUTS

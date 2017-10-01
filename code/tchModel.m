@@ -1,4 +1,4 @@
-% ModelTS: Code for modeling fMRI responses to time-varying visual stimuli.
+% tchModel: Code for modeling fMRI responses to time-varying visual stimuli.
 % 
 % CONSTRUCTOR INPUTS
 %   1) type: which model to use
@@ -31,14 +31,14 @@
 % 
 % Example model generation steps:
 %   exps = {'Exp1' 'Exp2' 'Exp3'};
-%   model = ModelTS('2ch', exps, ROI('V1', exps).sessions);
+%   model = tchModel('2ch', exps, ROI('V1', exps).sessions);
 %   model = code_stim(model);
 %   model = pred_runs(model);
 %   model = pred_trials(model);
 % 
 % AS 2/2017
 
-classdef ModelTS
+classdef tchModel
     
     properties
         type              % model type identifier
@@ -91,8 +91,8 @@ classdef ModelTS
     
     methods
         
-        % ModelTS class constructor
-        function model = ModelTS(type, exps, sessions)
+        % tchModel class constructor
+        function model = tchModel(type, exps, sessions)
             % standardize the input arguements
             if nargin > 1 && nargin < 4
                 model.type = lower(type);
@@ -111,7 +111,7 @@ classdef ModelTS
             end
             % initialize model parameters
             nsess = length(model.sessions);
-            [params, irfs] = init_params(type, nsess, model.fs);
+            [params, irfs] = tch_init_params(type, nsess, model.fs);
             model.params = params; model.irfs = irfs;
             model.num_exps = length(model.experiments);
         end
@@ -169,8 +169,9 @@ classdef ModelTS
             stimfiles = model.stimfiles; [nruns_max, nsess] = size(stimfiles);
             fs = model.fs; gd = model.gap_dur;
             % get image onsets/offsets and condition orders from stimfiles
-            [on, off, c, ims, ton, toff, tc, rd, cl] = cellfun(@stimfileTS, stimfiles, 'uni', false);
-            % store stimulus parameters in modelTS object
+            [on, off, c, ims, ton, toff, tc, rd, cl] = cellfun(...
+                @tch_stimfile, stimfiles, 'uni', false);
+            % store stimulus parameters in tchModel object
             model.onsets = on;     % image onset times (s)
             model.offsets = off;   % image offset times (s)
             model.conds = c;       % condition labels per image
@@ -218,7 +219,7 @@ classdef ModelTS
             % if using a multi-channel model
             if custom_norm && model.num_channels > 1 
                 % code run_preds for all fitting experiments
-                imodel = ModelTS(model.type, model.experiments, model.sessions);
+                imodel = tchModel(model.type, model.experiments, model.sessions);
                 imodel = code_stim(imodel);
                 imodel.normT = 1; imodel.normD = 1;
                 imodel = pred_runs(imodel);

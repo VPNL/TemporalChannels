@@ -1,6 +1,6 @@
-function irf = tc_irfs(channel, tau, fs)
+function irf = tch_irfs(channel, tau, fs)
 % Derive the sustained and transient impulse response functions based on
-% the formulation proposed by Watson (1986).
+% the formulation outlined by Watson (1986).
 % 
 % INPUT
 %   1) channel: 'S' (sustained), 'T' (transient), or 'D' (delay)

@@ -1,5 +1,5 @@
 function roi_pool = pool_across_sessions(roi)
-% Pools ROI results across multiple scan sessions in each subject.
+% Pools tchROI results across multiple scan sessions in each subject.
 % 
 % AS 5/2017
 
@@ -15,7 +15,7 @@ for ss = 1:length(subjects)
 end
 
 sessions_init = cellfun(@(X) X(1), subject_idxs); vox_cnts = {}; vox_props = {};
-roi_pool = ROI(roi.name, roi.experiments, all_sessions(sessions_init));
+roi_pool = tchROI(roi.name, roi.experiments, all_sessions(sessions_init));
 for subject = 1:length(subjects)
     for session = 1:length(subject_idxs{subject})
         vox_cnts{subject}(session) = size(roi.runs{1, subject_idxs{subject}(session)}, 2);

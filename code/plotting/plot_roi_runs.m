@@ -7,11 +7,11 @@ if nargin < 2; save_flag = 0; end
 
 % setup figure
 fig_name = [roi.nickname ' run timecourses'];
-fig = figTS(fig_name, [.1 .3 .8 length(roi.sessions) * .1]);
+fig = tch_fig(fig_name, [.1 .1 .8 length(roi.sessions) * .1]);
 
 % plot run time series and predictors for each session
 for ss = 1:length(roi.sessions)
-    subplot(length(roi.sessions), 1, ss); hold on;
+    subplot(length(roi.sessions), 1, ss); hold on; tch_set_axes(gca);
     plot(roi.model.run_tcs{ss}, 'k');
     plot(roi.model.run_preds{ss}, 'r');
     if ss == 1; ylabel('% signal'); end
@@ -19,7 +19,7 @@ for ss = 1:length(roi.sessions)
     leg = {[session_id ': ' num2str(R2 * 100, 2) '%'] 'pred'};
     legend(leg, 'Location', 'NorthWestOutside'); legend boxoff; axis tight;
     ylims = get(gca, 'YLim'); ylim([ylims(1) ceil(ylims(2))]);
-    set(gca, 'XColor', 'w', 'TickDir', 'out', 'YTick', [0 ceil(ylims(2))]);
+    set(gca, 'XColor', 'w', 'YTick', [0 ceil(ylims(2))]);
 end
 
 % save to figures directory if applicable

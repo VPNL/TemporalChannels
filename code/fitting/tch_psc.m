@@ -1,16 +1,16 @@
-function tc = psc(tc, detrend)
-% Preprocess voxel time series and convert to precent signal change
+function tc = tch_psc(tc, detrend)
+% Preprocess voxel time series and convert to precent signal change.
 %
 % INPUTS
-% tc: TR by voxel matrix of fMRI time series data
-% detrend:
-%   1 = normaliztion without trend removal
-%   2 = normalization with linear trend removal
-%   3 = normalization with linear + quadratic trend removal
-%   4 = normalization with low frequency baseline drift removal
+%   1) tc: TR by voxel data matrix of fMRI time series
+%   2) detrend:
+%      1 = normaliztion without trend removal
+%      2 = normalization with linear trend removal
+%      3 = normalization with linear + quadratic trend removal
+%      4 = normalization with low frequency baseline drift removal
 %
 % OUTPUT
-% tc: preprocessed TR by voxel data matrix
+%   tc: preprocessed TR by voxel data matrix
 %
 % adapted from vistaoft (http://github.com/vistalab/vistasoft/)
 % AS 2/2017

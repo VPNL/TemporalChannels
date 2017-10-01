@@ -57,28 +57,28 @@ switch model.type
         lpf = cellfun(@(X) X / sum(X), lpf, 'uni', false);
         model.irfs.lpf = lpf;
     case '2ch-opt'
-        model.irfs.nrfS = cellfun(@(X) tc_irfs('S', X, model.fs), ...
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X, model.fs), ...
             model.params.tau_s, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X) tc_irfs('T', X, model.fs), ...
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X, model.fs), ...
             model.params.tau_t, 'uni', false);
     case '3ch-lin-quad'
-        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        nrfD = cellfun(@(X) tch_irfs('D', X, model.fs), model.params.tau_d, 'uni', false);
         model.irfs.nrfD = nrfD;
     case '3ch-lin-rect'
-        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        nrfD = cellfun(@(X) tch_irfs('D', X, model.fs), model.params.tau_d, 'uni', false);
         model.irfs.nrfD = nrfD;
     case '3ch-pow-quad'
-        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        nrfD = cellfun(@(X) tch_irfs('D', X, model.fs), model.params.tau_d, 'uni', false);
         model.irfs.nrfD = nrfD;
     case '3ch-pow-rect'
-        nrfD = cellfun(@(X) delay_irfs(X, model.fs), model.params.tau_d, 'uni', false);
+        nrfD = cellfun(@(X) tch_irfs('D', X, model.fs), model.params.tau_d, 'uni', false);
         model.irfs.nrfD = nrfD;
     case '3ch-opt'
-        model.irfs.nrfS = cellfun(@(X) tc_irfs('S', X, model.fs), ...
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X, model.fs), ...
             model.params.tau_s, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X) tc_irfs('T', X, model.fs), ...
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X, model.fs), ...
             model.params.tau_t, 'uni', false);
-        model.irfs.nrfD = cellfun(@(X) tc_irfs('D', X, model.fs), ...
+        model.irfs.nrfD = cellfun(@(X) tch_irfs('D', X, model.fs), ...
             model.params.tau_d, 'uni', false);
 end
 

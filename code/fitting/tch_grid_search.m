@@ -1,20 +1,20 @@
-function [rois, models] = grid_search(roi_init, model_init, session_num, nseeds)
+function [rois, models] = tch_grid_search(iroi, imodel, session_num, nseeds)
 % Performs a grid search to find seeds for model optimization. 
 % 
 % INPUTS
-%   1) roi_init: ROI object fitted with default model parameters
-%   2) model_init: ModelTS object with default parameters
+%   1) iroi: tchROI object fitted with default model parameters
+%   2) imodel: tchModel object with default parameters
 %   3) session_num: session number to perform grid search in
 %   4) nseeds: number of model seed points to return
 % 
 % OUTPUTS
-%   1) rois: updated ROI object fit with each of the top nseeds models
-%   2) models: updated ModelTS object storing model for each seed point
+%   1) rois: updated tchROI object fit with each of the top nseeds models
+%   2) models: updated tchModel object storing model for each seed point
 % 
 % AS 5/2017
 
-session = roi_init.sessions{session_num};
-param_names = fieldnames(model_init.params);
+session = iroi.sessions{session_num};
+param_names = fieldnames(imodel.params);
 if length(param_names) > 2
     grid_size = 12;
 else
@@ -62,12 +62,12 @@ end
 niters = size(params_list, 1);
 
 % generate model grid for search only if necessary
-fname = ['grid_search_models_' model_init.type '_fit' [roi_init.experiments{:}] '.mat'];
+fname = ['grid_search_models_' imodel.type '_fit' [iroi.experiments{:}] '.mat'];
 fpath = fullfile(session, 'Stimuli', fname);
-ss_model = ModelTS(model_init.type, model_init.experiments, session);
+ss_model = tchModel(imodel.type, imodel.experiments, session);
 ss_model = code_stim(ss_model);
 if ~(exist(fpath, 'file') == 2)
-    fprintf('Generating %s model grid for %s...\n', model_init.type, roi_init.session_ids{session_num});
+    fprintf('Generating %s model grid for %s...\n', imodel.type, iroi.session_ids{session_num});
     run_preds = {};
     for ii = 1:niters
         fprintf([num2str(ii) ' '])
@@ -83,16 +83,17 @@ if ~(exist(fpath, 'file') == 2)
         end
     end
     fprintf('\n')
-    save(fpath, 'ii_model', 'run_preds', 'params_list', '-v7.3');
+    save(fpath, 'run_preds', 'params_list', '-v7.3');
 else
     load(fpath);
 end
 
 % fit models and find the best fitting parameter sets for each session
-fprintf('Performing %s grid search for %s...\n', model_init.type, roi_init.session_ids{session_num});
-ss_roi = ROI(roi_init.name, roi_init.experiments, session);
-ss_roi = tc_runs(ss_roi);
-ss_roi = tc_trials(ss_roi, ss_model);
+fprintf('Performing %s grid search for %s...\n', ...
+    imodel.type, iroi.session_ids{session_num});
+ss_roi = tchROI(iroi.name, iroi.experiments, session);
+ss_roi = tch_runs(ss_roi);
+ss_roi = tch_trials(ss_roi, ss_model);
 var_exp = {};
 for ii = 1:niters
     fprintf([num2str(ii) ' '])
@@ -102,7 +103,7 @@ for ii = 1:niters
         ii_model = update_param(ii_model, param_names{pp}, 0);
     end
     ii_model.run_preds = run_preds(:, ii);
-    ii_roi = tc_fit(ii_roi, ii_model);
+    ii_roi = tch_fit(ii_roi, ii_model);
     var_exp{ii} = [ii_roi.model.varexp{:}];
     if rem(ii, 20) == 0
         fprintf('\n')
@@ -128,8 +129,8 @@ for seed = 1:nseeds
     end
     models(seed) = pred_runs(models(seed));
     models(seed) = pred_trials(models(seed));
-    rois(seed) = tc_fit(rois(seed), models(seed));
-    rois(seed) = tc_pred(rois(seed), models(seed));
+    rois(seed) = tch_fit(rois(seed), models(seed));
+    rois(seed) = tch_pred(rois(seed), models(seed));
 end
 
 end

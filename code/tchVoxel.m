@@ -1,5 +1,5 @@
 % Stores and operates on fMRI time series of individual voxels across
-% multiple scan sessions. Used with ModelTS object to fit and validate
+% multiple scan sessions. Used with tchModel object to fit and validate
 % various temporal encoding models in each voxel. 
 % 
 % CONSTRUCTOR INPUTS
@@ -7,20 +7,20 @@
 %   2) session_list: list of sessions to model (optional)
 %
 % METHODS
-%   tc_runs -- preprocesses and stores time series of all voxels
-%   tc_trials -- compiles trial-level time series sorted by experiment
-%   tc_fit -- fits ModelTS object to the mean time series of each voxel
+%   tch_runs -- preprocesses and stores time series of all voxels
+%   tch_trials -- compiles trial-level time series sorted by experiment
+%   tch_fit -- fits tchModel object to the mean time series of each voxel
 %   recompute -- validates model solution on indpendent data
 % 
-% Example model fitting steps ("model" is a ModelTS object):
-%   vox = Voxel({'Exp1' 'Exp2'})
-%   vox = tc_runs(vox)
-%   vox = tc_trials(vox, model)
-%   vox = tc_fit(vox, model)
+% Example model fitting steps ("model" is a tchModel object):
+%   vox = tchVoxel({'Exp1' 'Exp2'})
+%   vox = tch_runs(vox)
+%   vox = tch_trials(vox, model)
+%   vox = tch_fit(vox, model)
 % 
 % AS 7/2017
 
-classdef Voxel
+classdef tchVoxel
     
     properties
         experiments % array of experiments to model
@@ -55,7 +55,7 @@ classdef Voxel
     methods
         
         % class constructor
-        function vox = Voxel(exps, isessions)
+        function vox = tchVoxel(exps, isessions)
             if nargin == 1
                 vox.experiments = force_cell(exps);
             elseif nargin == 2
@@ -155,7 +155,7 @@ classdef Voxel
                     sessions{scnt} = spath;
                 end
             end
-            % error if no sessions with ROI are found
+            % error if no sessions with specificed experiments are found
             if scnt == 0
                 error('No sessions found with all experiments');
             else
@@ -164,11 +164,11 @@ classdef Voxel
         end
         
         % preprocess and store run timeseries of each voxel
-        function vox = tc_runs(vox)
+        function vox = tch_runs(vox)
             vox = select_sessions(vox); % sessions with all experiments
             fpaths = vox.filenames;     % paths to data files
-            raw_runs = cellfun(@(X) loadTS(X, 'tSeries'), fpaths, 'uni', false);
-            vox.runs = cellfun(@(X) psc(X), raw_runs, 'uni', false);
+            raw_runs = cellfun(@(X) tch_load(X, 'tSeries'), fpaths, 'uni', false);
+            vox.runs = cellfun(@(X) tch_psc(X), raw_runs, 'uni', false);
         end
         
         % check dimensionality of vox time series and model predictions
@@ -182,7 +182,7 @@ classdef Voxel
         end
         
         % compile time series for each trial type
-        function vox = tc_trials(vox, model)
+        function vox = tch_trials(vox, model)
             % check model and get design parameters
             check_model(vox, model);
             sessions = vox.sessions; nsess = length(sessions);
@@ -228,7 +228,7 @@ classdef Voxel
         end
         
         % use GLM to fit weights for each predictor in model
-        function [vox, model] = tc_fit(vox, model, optimize_flag, fit_exps)
+        function [vox, model] = tch_fit(vox, model, optimize_flag, fit_exps)
             if nargin < 3; optimize_flag = 0; end
             if nargin < 4; fit_exps = model.experiments; end
             check_model(vox, model); sessions = vox.sessions;
@@ -247,7 +247,7 @@ classdef Voxel
                 end
                 vox.model.run_tcs{ss} = tc;
                 % fit GLM and store betas, SEMs, and variance explained
-                mm = glmTS(tc, predictors);
+                mm = tch_glm(tc, predictors);
                 vox.model.run_preds{ss} = predictors * squeeze(mm.betas);
                 vox.model.betas{ss} = mm.betas(:, 1:npreds, :);
                 vox.model.stdevs{ss} = mm.stdevs(:, 1:npreds, :);
@@ -276,12 +276,12 @@ classdef Voxel
                     elseif exist(fpath_grid, 'file') == 2
                         fprintf('Loading grid search results. \n');
                         load(fpath_grid);
-                        [voxels, models] = optimize_fit(voxels, models);
+                        [voxels, models] = tch_optimize_fit(voxels, models);
                         save(fpath_grad, 'voxels', 'models', '-v7.3');
                     else
-                        [voxels, models] = grid_search(vox, model, ss, 5);
+                        [voxels, models] = tch_grid_search(vox, model, ss, 5);
                         save(fpath_grid, 'voxels', 'models', '-v7.3');
-                        [rois, models] = optimize_fit(rois, models);
+                        [rois, models] = tch_optimize_fit(rois, models);
                         save(fpath_grad, 'voxels', 'models', '-v7.3');
                     end
                     % copy optimized parameters for session
@@ -292,7 +292,7 @@ classdef Voxel
                     end
                     model = pred_runs(model);
                     model = pred_trials(model);
-                    [vox, model] = tc_fit(vox, model, 0);
+                    [vox, model] = tch_fit(vox, model, 0);
                 end
             end
             % carry over model parameters to vox model struct

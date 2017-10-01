@@ -1,4 +1,4 @@
-function [params, irfs] = init_params(model_type, nsess, fs)
+function [params, irfs] = tch_init_params(model_type, nsess, fs)
 % Initializes model parameters for given type of model
 % 
 % INPUTS
@@ -83,43 +83,42 @@ switch model_type
         params.tau1 = repmat({tau1}, 1, nsess);
         params.tau2 = repmat({tau2}, 1, nsess);
         params.sigma = repmat({sigma}, 1, nsess);
-        lpf = exp(-(0:999) / tau2);
-        lpf = lpf / sum(lpf);
+        lpf = exp(-(0:999) / tau2); lpf = lpf / sum(lpf);
         irfs.lpf = repmat({lpf}, 1, nsess);
         nrfS = (0:999) .* exp(-(0:999) / tau1);
         nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
         irfs.nrfS = repmat({nrfS}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-lin-lin'
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-lin-quad'
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-lin-rect'
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-pow-quad'
         params.epsilon = repmat({epsilon}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '2ch-pow-rect'
         params.epsilon = repmat({epsilon}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
         case '2ch-div-quad'
@@ -132,8 +131,7 @@ switch model_type
     case '2ch-dcts-quad'
         params.tau2 = repmat({tau2}, 1, nsess);
         params.sigma = repmat({0.1}, 1, nsess);
-        lpf = exp(-(0:999) / tau2);
-        lpf = lpf / sum(lpf);
+        lpf = exp(-(0:999) / tau2); lpf = lpf / sum(lpf);
         irfs.lpf = repmat({lpf}, 1, nsess);
         nrfS = watson_irfs('S', fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
@@ -143,58 +141,58 @@ switch model_type
     case '2ch-opt'
         params.tau_s = repmat({tau_s}, 1, nsess);
         params.tau_t = repmat({tau_t}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-lin-quad'
         params.tau_d = repmat({tau_d}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tc_irfs('D', tau_d, fs);
+        nrfD = tch_irfs('D', tau_d, fs);
         irfs.nrfD = repmat({nrfD}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-lin-rect'
         params.tau_d = repmat({tau_d}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tc_irfs('D', tau_d, fs);
+        nrfD = tch_irfs('D', tau_d, fs);
         irfs.nrfD = repmat({nrfD}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-pow-quad'
         params.epsilon = repmat({epsilon}, 1, nsess);
         params.tau_d = repmat({tau_d}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tc_irfs('D', tau_d, fs);
+        nrfD = tch_irfs('D', tau_d, fs);
         irfs.nrfD = repmat({nrfD}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-pow-rect'
         params.epsilon = repmat({epsilon}, 1, nsess);
         params.tau_d = repmat({tau_d}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tc_irfs('D', tau_d, fs);
+        nrfD = tch_irfs('D', tau_d, fs);
         irfs.nrfD = repmat({nrfD}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-opt'
         params.tau_s = repmat({tau_s}, 1, nsess);
         params.tau_t = repmat({tau_t}, 1, nsess);
         params.tau_d = repmat({tau_d}, 1, nsess);
-        nrfS = tc_irfs('S', tau_s, fs);
+        nrfS = tch_irfs('S', tau_s, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tc_irfs('T', tau_t, fs);
+        nrfT = tch_irfs('T', tau_t, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tc_irfs('D', tau_d, fs);
+        nrfD = tch_irfs('D', tau_d, fs);
         irfs.nrfD = repmat({nrfD}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
 end

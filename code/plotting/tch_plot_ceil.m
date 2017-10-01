@@ -1,4 +1,4 @@
-function [ymin, ymax] = errorbarTS(x, y)
+function [ymin, ymax] = tch_plot_ceil(x, y)
 % Plots error bars for showing confidence intervals and noise ceilings.
 % 
 % INPUTS

@@ -12,7 +12,7 @@ cols = lines(nexps); cond_idxs = idx_trials(roi);
 
 % setup figure
 fig_name = [roi.nickname ' experiment responses'];
-fig = figTS(fig_name, [.1 .3 .8 .4]);
+fig = tch_fig(fig_name, [.1 .3 .8 .4]);
 
 % plot responses overlaying trials of the same type across experiments
 xcnt = 3; zlc = xcnt;
@@ -26,20 +26,21 @@ for cc = 1:nconds
     for ee = 1:nexps
         if cond_idxs(cc, ee) > 0
             ym = [roi.trial_avgs{cond_idxs(cc, ee), :, ee}]';
-            me(ee) = lineTS(x, ym, 1, cols(ee, :), cols(ee, :), 'sem');
+            me(ee) = tch_plot_tc(x, ym, 1, cols(ee, :), cols(ee, :), 'sem');
         end
     end
     % plot stimulus
     stim = [xcnt + roi.model.pre_dur xcnt + tl - roi.model.post_dur];
-    plot(stim, [-.5 -.5], 'k-', 'LineWidth', 4);
-    text(xcnt + roi.model.pre_dur - 1, -.8, all_conds{cc}, 'FontSize', 8);
+    plot(stim, [-.5 -.5], 'k-', 'LineWidth', 8);
+    text(xcnt + roi.model.pre_dur, -.6, all_conds{cc}, 'FontSize', 8);
     xcnt = xcnt + tl + 3; zlc = xcnt;
 end
 
 % format plot
 title(roi.nickname); ylabel('fMRI (% signal)');
-legend(me(:), roi.experiments(1, :)); legend boxoff; axis tight;
-set(gca, 'XColor', 'w', 'TickDir', 'out', 'YTick', -2:10);
+legend(me(:), roi.experiments(1, :), 'Location', 'NorthWestOutside');
+axis tight; ylims = get(gca, 'YLim'); ylim([ylims(1) ceil(ylims(2))]);
+set(gca, 'XColor', 'w', 'YTick', -2:10); legend boxoff;
 
 % save to figures directory if applicable
 if save_flag

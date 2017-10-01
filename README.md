@@ -9,17 +9,17 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
 1. [Instructions](#instructions)
     1. [Oranizing the data directory](#organizing-the-data-directory)
     2. [Generating stimulus timing parameter files](#generating-stimulus-timing-parameter-files)
-    3. [Modeling a region of interest using model_roi](#modeling-a-region-of-interest-using-model_roi)
+    3. [Modeling a region of interest using tch_model_roi](#modeling-a-region-of-interest-using-tch_model_roi)
         1. [Inputs](#inputs)
         2. [Outputs](#outputs)
-    4. [Modeling each voxel using model_vox](#modeling-each-voxel-using-model_vox)
+    4. [Modeling each voxel using tch_model_vox](#modeling-each-voxel-using-tch_model_vox)
         1. [Inputs](#inputs)
         2. [Outputs](#outputs)
 2. [Example code](#example-code)
-    1. [Using the model_roi function](#using-the-model_roi-function)
-    2. [Using ModelTS class methods](#using-modelts-class-methods)
-    3. [Using ROI class methods](#using-roi-class-methods)
-    4. [Using Voxel class methods](#using-voxel-class-methods)
+    1. [Using the tch_model_roi function](#using-the-tch_model_roi-function)
+    2. [Using tchModel class methods](#using-tchmodel-class-methods)
+    3. [Using tchROI class methods](#using-tchroi-class-methods)
+    4. [Using tchVoxel class methods](#using-tchvoxel-class-methods)
 * * *
 ## Instructions
  
@@ -81,15 +81,15 @@ Lines 5 and below contain the following information about each stimulus delimite
  
 There is no need to model the baseline explicitly. That is, the code assumes a baseline condition for all times in which a stimulus is not shown. We recommend including a prolonged (≥ 12 s) baseline period immediately before each trial to enable use of trial averaging methods and associated plotting functions.
  
-### Modeling a region of interest using model_roi
+### Modeling a region of interest using tch_model_roi
  
-The `model_roi` wrapper function is used to fit and validate various temporal models to the mean time series of a region of interest in each session using the procedures described below:
+The `tch_model_roi` wrapper function is used to fit and validate various temporal models to the mean time series of a region of interest in each session using the procedures described below:
  
-1. An object `roi` of the class `ROI` is generated that loads, preprocesses, and organizes the run time series for a set of experiments in each session. As explained in detail below `roi(1)` is an object containing model fits, and `roi(2)` is an object containing validation of those fits.
+1. An object `roi` of the class `tchROI` is generated that loads, preprocesses, and organizes the run time series for a set of experiments in each session. As explained in detail below `roi(1)` is an object containing model fits, and `roi(2)` is an object containing validation of those fits.
     1. Run time series averaged across all voxels in a region are stored in a 2D cell array `roi(1).run_avgs` with each row indexing a run and each column indexing a session (e.g., `roi(1).run_avgs(:, N)` contains all runs from the *N*-th session in the object).
     2. Storing time series in a cell array allows the code to accommodate runs with different durations as well as sessions with different numbers of runs.
  
-2. An object `model` of the class `ModelTS` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
+2. An object `model` of the class `tchModel` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
     1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(:, N)` contains all run predictors for the *N*-th session in the object). 
     2. Predictors are also generated for each trial type and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, N, K)` contains predictors for each trial type in the *K*-th experiment of the *N*-th session). Be aware that trial predictors will vary across sessions for models with session-specific hyperparameters such as the CTS model.
  
@@ -107,7 +107,7 @@ The `model_roi` wrapper function is used to fit and validate various temporal mo
  
 #### Inputs
  
-Fitting a model using the `model_roi` function requires passing at least three input arguments:
+Fitting a model using the `tch_model_roi` function requires passing at least three input arguments:
  
 1. *name* — name of a region of interest (e.g., `'V1'`) in session ROI directories (`~/TemporalChannels/data/*/ROIs/`).
  
@@ -143,30 +143,30 @@ Fitting a model using the `model_roi` function requires passing at least three i
  
 After fitting a model to data from each session, the function plots the session-averaged measured vs. predicted fMRI responses for each trial type and returns two outputs:
  
-1. *roi* — object of the class `ROI` that stores fMRI data and model predictions for a given region of interest.
+1. *roi* — object of the class `tchROI` that stores fMRI data and model predictions for a given region of interest.
     1. `roi(1).run_avgs` — contains average time series for each run in *fit_exps* (see `roi(2).run_avgs` for the first set of *val_exps* if applicable)
     2. `roi(1).trial_avgs` —  contains average time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for the first set of *val_exps*)
     3. `roi(1).model` — contains model fits and *R*^2 (see `roi(2).model` for the first set of *val_exps*)
-    4. See properties in `ROI` class file for more details ([`~/TemporalChannels/functions/ROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ROI.m))
+    4. See properties in `tchROI` class file for more details ([`~/TemporalChannels/functions/tchROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchROI.m))
  
-2. *model* — object of the class `ModelTS` that stores channel predictors for each session.
+2. *model* — object of the class `tchModel` that stores channel predictors for each session.
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for the first set of *val_exps* if applicable)
     2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for the first set of *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
     4. `model(1).params` — stores model hyperparameters
-    5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))
+    5. See properties in `tchModel` class file for more details ([`~/TemporalChannels/functions/tchModel.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchModel.m))
  
 By default, both outputs are saved in a `.mat` file in the results directory (`~/TemporalChannels/results/`).
  
-### Modeling each voxel using model_vox
+### Modeling each voxel using tch_model_vox
  
-The `model_vox` wrapper function can be used to fit a model in each voxel using the procedure described below:
+The `tch_model_vox` wrapper function can be used to fit a model in each voxel using the procedure described below:
  
-1. An object `vox` of the class `Voxel` is generated that loads, preprocess, and organizes the run time series of each voxel for a set of experiments in each session. 
+1. An object `vox` of the class `tchVoxel` is generated that loads, preprocess, and organizes the run time series of each voxel for a set of experiments in each session. 
     1. Run time series for each voxel are stored in a 2D cell array `vox(1).runs` with each row indexing a run and each column indexing a session (e.g., `vox(1).runs(K, N)` contains a TR by voxel time series matrix from the *K*-th run of the *N*-th session in the object).
     2. Make note of the reshape parameters you used flatten the fMRI volumes in `~/TemporalChannels/data/*/Voxels` so you can perform the inverse transformation to reshape the model parameter vectors back to volume space for subsequent analyses. 
  
-2. An object `model` of the class `ModelTS` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
+2. An object `model` of the class `tchModel` is generated that creates channel predictors for a set of experiments in each session, where `model(1)` contains channel predictors for the data used to fit the model and `model(2)` contains channel predictors for the independent validation data. The channel predictors are derived from the stimulus sequence and the model architecture.
     1. Run predictors are stored in a 2D cell array `model(1).run_preds` with each row indexing a run and each column indexing a session (e.g., `model(1).run_preds(:, N)` contains all run predictors for the *N*-th session in the object). 
     2. Predictors are also generated for each trial type and stored in a 3D cell array `model(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `model(1).trial_preds(:, N, K)` contains predictors for each trial type in the *K*-th experiment of the *N*-th session). Be aware that trial predictors will vary across sessions for models with session-specific hyperparameters such as the CTS model.
    
@@ -180,7 +180,7 @@ The `model_vox` wrapper function can be used to fit a model in each voxel using 
  
 #### Inputs
  
-Fitting models to each voxel using the `model_vox` function requires passing at least two input arguments:
+Fitting models to each voxel using the `tch_model_vox` function requires passing at least two input arguments:
  
 1. *type* — label indicating which model to use for predicting responses.
     1. Hemodynamic models
@@ -214,64 +214,64 @@ Fitting models to each voxel using the `model_vox` function requires passing at 
  
 After fitting the model in each voxel, the function returns two outputs:
  
-1. *vox* — object of the class `Voxel` that stores fMRI data and model parameters for each voxel.
+1. *vox* — object of the class `tchVoxel` that stores fMRI data and model parameters for each voxel.
     1. `vox(1).runs` — contains run time series for *fit_exps* (see `vox(2).runs` for *val_exps* if applicable)
     2. `vox(1).trials` —  contains trial time series for *fit_exps* (see `vox(2).trials` for *val_exps*)
     3. `vox(1).model` — contains model fits and *R*^2 (see `vox(2).model` for *val_exps*)
-    4. See properties in `Voxel.m` class file for more details ([`~/TemporalChannels/functions/Voxel.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/Voxel.m))
-2. *model* — object of the class `ModelTS` that stores channel predictors for each session.
+    4. See properties in `tchVoxel.m` class file for more details ([`~/TemporalChannels/functions/tchVoxel.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchVoxel.m))
+2. *model* — object of the class `tchModel` that stores channel predictors for each session.
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for *val_exps* if applicable)
     2. `model(1).trial_preds` — contains predictors for each trial type in *fit_exps* that are used for visualization (see `model(2).trial_preds` for *val_exps*)
     3. `model(1).irfs` — stores impulse response functions
     4. `model(1).params` — stores session-specific model hyperparameters
-    5. See properties in `ModelTS` class file for more details ([`~/TemporalChannels/functions/ModelTS.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/ModelTS.m))
+    5. See properties in `tchModel` class file for more details ([`~/TemporalChannels/functions/tchModel.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchModel.m))
  
 By default, outputs are saved in the results directory (`~/TemporalChannels/results/`). To generate whole-brain maps of model parameters, you must apply the inverse of the transformation used to flatten the volumetric data stored in `~/TemporalChannels/data/*/Voxels/`.
  
 ## Example code
  
-### Using the model_roi function
+### Using the tch_model_roi function
  
 Example of fitting a two-channel model using V1 data from Exp1 & Exp2:
  
-    [roi, model] = model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'});
+    [roi, model] = tch_model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'});
  
 Example of fitting a GLM using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
  
-    [roi, model] = model_roi(‘V1', 'glm', {‘Exp1’ 'Exp2'}, 'Exp3');
+    [roi, model] = tch_model_roi(‘V1', 'glm', {‘Exp1’ 'Exp2'}, 'Exp3');
  
-### Using ModelTS class methods
+### Using tchModel class methods
  
-The `ModelTS.m` class file defines a class of objects that store predictors for each run and trial type using the methods listed in the example below.
+The `tchModel.m` class file defines a class of objects that store predictors for each run and trial type using the methods listed in the example below.
  
-Example of creating predictors using a ModelTS object (`model`):
+Example of creating predictors using a tchModel object (`model`):
  
-    type = '2ch-lin-quad';                     % specify the type of model to use
-    fit_exps = {'Exp1' 'Exp2'};                % list of experiments for fitting
-    sessions = roi.sessions;                   % list of sessions to model (see below)
-    model = ModelTS(type, fit_exps, sessions); % setup ModelTS object
-    model = code_stim(model);                  % code the timing of stimuli
-    model = pred_runs(model);                  % generate channel predictors
-    model = pred_trials(model);                % generate trial predictors
+    type = '2ch-lin-quad';                      % specify the type of model to use
+    fit_exps = {'Exp1' 'Exp2'};                 % list of experiments for fitting
+    sessions = roi.sessions;                    % list of sessions to model (see below)
+    model = tchModel(type, fit_exps, sessions); % setup tchModel object
+    model = code_stim(model);                   % code the timing of stimuli
+    model = pred_runs(model);                   % generate channel predictors
+    model = pred_trials(model);                 % generate trial predictors
  
-### Using ROI class methods
+### Using tchROI class methods
  
-The `ROI.m` class file defines a class of objects that store and operate on fMRI time series for a given region of interest using the methods listed in the example below.
+The `tchROI.m` class file defines a class of objects that store and operate on fMRI time series for a given region of interest using the methods listed in the example below.
  
-Example of fitting a model to a ROI object (`roi`):
+Example of fitting a model to a tchROI object (`roi`):
  
-    roi_name = 'V1';               % name of region to model
-    fit_exps = {'Exp1' 'Exp2'};    % list of experiments for fitting
-    roi = ROI(roi_name, fit_exps); % setup ROI object
-    roi = tc_runs(roi);            % preprocess run time series
-    roi = tc_trials(roi, model);   % compile responses to each trial
-    roi = tc_noise_ceil(roi);      % estimate noise ceiling for each region
-    roi = tc_fit(roi, model);      % fit model for each session
-    roi = tc_pred(roi, model);     % predict responses for each trial type
+    roi_name = 'V1';                  % name of region to model
+    fit_exps = {'Exp1' 'Exp2'};       % list of experiments for fitting
+    roi = tchROI(roi_name, fit_exps); % setup tchROI object
+    roi = tch_runs(roi);              % preprocess run time series
+    roi = tch_trials(roi, model);     % compile responses to each trial
+    roi = tch_noise_ceil(roi);        % estimate noise ceiling for each region
+    roi = tch_fit(roi, model);        % fit model for each session
+    roi = tch_pred(roi, model);       % predict responses for each trial type
  
 Plot mean response across all sessions for each trial type in experiments:
  
-    fig = plot_exps(roi);
+    fig = plot_roi(roi, 'exps');
  
 Plot mean response vs. model prediction across all sessions for each trial type:
  
@@ -279,17 +279,17 @@ Plot mean response vs. model prediction across all sessions for each trial type:
  
 Plot response vs. model prediction in individual sessions for each run:
  
-    fig = plot_runs(roi);
+    fig = plot_roi(roi, 'runs');
  
-### Using Voxel class methods
+### Using tchVoxel class methods
  
-The `Voxel.m` class file defines a class of objects that store and operate on fMRI time series in each voxel using the methods listed in the example below.
+The `tchVoxel.m` class file defines a class of objects that store and operate on fMRI time series in each voxel using the methods listed in the example below.
  
-Example of fitting a model to a Voxel object (`vox`):
+Example of fitting a model to a tchVoxel object (`vox`):
  
-    fit_exps = {'Exp1' 'Exp2'};  % list of experiments for fitting
-    vox = Voxel(fit_exps);       % setup Voxel object for all sessions
-    vox = tc_runs(vox);          % preprocess run time series
-    vox = tc_trials(vox, model); % compile responses to each trial
-    vox = tc_fit(vox, model);    % fit model for each voxel
+    fit_exps = {'Exp1' 'Exp2'};   % list of experiments for fitting
+    vox = tchVoxel(fit_exps);     % setup tchVoxel object for all sessions
+    vox = tch_runs(vox);          % preprocess run time series
+    vox = tch_trials(vox, model); % compile responses to each trial
+    vox = tch_fit(vox, model);    % fit model for each voxel
  

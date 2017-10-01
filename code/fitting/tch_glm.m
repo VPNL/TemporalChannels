@@ -1,4 +1,4 @@
-function model = glmTS(Y, X)
+function model = tch_glm(Y, X)
 % Apply a general linear model (GLM) to data in Y using design matrix in X
 %
 % INPUTS
