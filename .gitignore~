@@ -3,8 +3,8 @@
 *.eps
 *.espc
 *.m~
-*.asv
 my_analysis.m
-figures/*/*
+make_model_grids.m
+figures/*.m
 data/*
 !data/readme_data.txt
