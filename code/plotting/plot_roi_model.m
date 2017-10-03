@@ -3,16 +3,6 @@ function fig = plot_roi_model(roi, save_flag)
 % check inputs
 if length(roi) > 1; roi = roi(1); end
 if nargin < 2; save_flag = 0; end
-switch roi.model.type(1:3)
-    case 'htd'
-        roi.model.num_channels = 2;
-    case '2ch'
-        roi.model.num_channels = 2;
-    case '3ch'
-        roi.model.num_channels = 3;
-    otherwise
-        roi.model.num_channels = 1;
-end
 
 % get design parameters, data, and predictor names
 nexps = size(roi.experiments, 2); npreds = size(roi.model.betas{1}, 2);

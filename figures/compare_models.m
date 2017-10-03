@@ -22,21 +22,17 @@ else
 end
 
 if nargin < 2 || isempty(models)
-    models = {'glm' 'htd' 'balloon' ...
-        'cts-pow' 'cts-div' 'dcts' ...
-        '2ch' '2ch-rect' '2ch-pow' ...
-        '2ch-opt' '3ch' '3ch-opt'};
-    mnames = {'GLM' 'HTD' 'Balloon' ...
-        'CTS-p' 'CTS-n' 'dCTS' ...
-        '2ch' '2ch-r' '2ch-p' ...
-        '2ch-o' '3ch' '3ch-o'};
-    mcols = [1 1 1; 1 1 1; 1 1 1; ...
-        .75 .75 .75; .75 .75 .75; .75 .75 .75; ...
-        .5 .5 .5; .5 .5 .5; .5 .5 .5; ...
-        .25 .25 .25; .25 .25 .25; .25 .25 .25];
+    models = {'glm' 'htd' 'balloon' 'cts-pow' 'cts-div' 'dcts' ...
+        '2ch-lin-quad' '2ch-lin-rect' '2ch-pow-quad' '2ch-pow-rect' ...
+        '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect'};
+    mnames = {'GLM' 'HTD' 'Balloon' 'CTS-p' 'CTS-n' 'dCTS' ...
+        '2ch-lq' '2ch-lr' '2ch-pq' '2ch-pr' ...
+        '3ch-lq' '3ch-lr' '3ch-pq' '3ch-pr'};
+    mcols = [1 1 1; 1 1 1; 1 1 1; .7 .7 .7; .7 .7 .7; .7 .7 .7; ...
+        .4 .4 .4; .4 .4 .4; .4 .4 .4; .4 .4 .4; ...
+        .1 .1 .1; .1 .1 .1; .1 .1 .1; .1 .1 .1];
 else
-    models = force_cell(models);
-    mnames = models;
+    [models, mnames] = deal(force_cell(models));
     mcols = repmat([0 0 0], length(models), 1);
 end
 
@@ -50,23 +46,42 @@ if nargin < 4 || isempty(val_exps)
     val_exps = {'ExpAe' 'ExpBe' 'ExpCe'; 'ExpAo' 'ExpBo' 'ExpCo'};
     val_names = {'Exp1' 'Exp2' 'Exp3'};
 else
-    val_exps = force_cell(val_exps);
-    val_names = val_exps;
+    [val_exps, val_names] = deal(force_cell(val_exps));
 end
 
 %% specify paths to files in results/figures directories
 project_dir = fullfile(RAID, 'projects', 'CategoryChannels');
 model_dir = fullfile(project_dir, 'model', 'TemporalChannels');
-res_dir = fullfile(model_dir, 'results', 'pooled');
+res_dir = fullfile(model_dir, 'results');
 fig_dir = fullfile(model_dir, 'figures', 'model_comparison');
 
 %% load data for all ROIs, models, experiments, and data folds
 var_exp = {}; noise_ceils = {};
 for rr = 1:length(rois)
     for mm = 1:length(models)
-        fname = [rois{rr} '_' models{mm} '_split_half.mat'];
-        if exist(fullfile(res_dir, fname), 'file') == 2
-            load(fullfile(res_dir, fname));
+        d = struct; cnt = 0;
+        for ff = 1:size(val_exps, 1)
+            fname = [rois{rr} '_' models{mm} '_fit' [fit_exps{ff, :}]];
+            for vv = 1:size(val_exps, 2)
+                fname = [fname '_val' val_exps{ff, vv}];
+            end
+            fname = [fname '.mat'];
+            if exist(fullfile(res_dir, fname), 'file') == 2
+                cnt = cnt + 1;
+                d(cnt).roi = load(fullfile(res_dir, fname));
+            end
+        end
+        if cnt == 2
+            roi = pool_across_folds(d(1).roi.roi, d(2).roi.roi);
+        elseif cnt == 1
+            roi = d(1).roi.roi;
+            if mm == 1
+                for ee = 2:length(roi)
+                    roi(ee) = tch_noise_ceil(roi(ee));
+                end
+            end
+        end
+        if cnt > 0
             for ee = 1:size(val_exps, 2)
                 var_exp{rr, mm, ee} = [roi(ee + 1).model.varexp{:}];
                 if mm == 1
@@ -75,7 +90,10 @@ for rr = 1:length(rois)
             end
         else
             for ee = 1:size(val_exps, 2)
-                var_exp{rr, mm, ee} = zeros(size(var_exp{rr, 1, ee}));
+                var_exp{rr, mm, ee} = 0;
+                if mm == 1
+                    noise_ceils{rr, ee} = 0;
+                end
             end
         end
     end

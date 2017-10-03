@@ -11,15 +11,18 @@
 %        'cts-div'  -- CTS with divisive normalization (Zhou 2017)
 %        'dcts'     -- dynamic CTS (Zhou 2017)
 %      Multi-channel models:
-%        '2ch'      -- 2-channel model with squaring on T
-%        '2ch-lin'  -- 2-channel model without nonlinearity
-%        '2ch-rect' -- 2-channel model with rectification on T
-%        '2ch-pow'  -- 2-channel model with CTS-pow on S
-%        '2ch-div'  -- 2-channel model with CTS-div on S
-%        '2ch-dcts' -- 2-channel model with dCTS on on S
-%        '2ch-opt'  -- 2-channel model with optimized S and T IRFs
-%        '3ch'      -- 3-channel model with cts-pow on S and optimized D
-%        '3ch-opt'  -- 3-channel model with optimized S, T, and D
+%        '2ch-lin-lin'  -- 2 channels with linear S and linsear T
+%        '2ch-lin-quad' -- 2 channels with linear S and quadratic T
+%        '2ch-lin-rect' -- 2 channels with linear S and rectified T
+%        '2ch-pow-quad' -- 2 channels with CTS-pow on S and quadratic T
+%        '2ch-pow-rect' -- 2 channels with CTS-pow on S and rectified T
+%        '2ch-div-quad' -- 2 channels with CTS-norm on S and quadratic T
+%        '2ch-opt'      -- 2 channels with optimized S and T IRFs
+%        '3ch-lin-quad' -- 3 channels with linear S, quadratic T, and D
+%        '3ch-lin-rect' -- 3 channels with linear S, rectified T, and D
+%        '3ch-pow-quad' -- 3 channels with CTS-pow on S, quadratic T, and D
+%        '3ch-pow-rect' -- 3 channels with CTS-pow on S, rectified T, and D
+%        '3ch-opt'      -- 3-channels with optimized S, T, and D IRFs
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of paths to session data directories
 %
