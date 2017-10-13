@@ -1,4 +1,4 @@
-function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps)
+function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, sess)
 % Wrapper function that fits a temporal model object (tchModel) to a region
 % time series object (tchROI) and plots the fit and predictions of the 
 % model. To validate the solution, include the optional fourth input
@@ -11,6 +11,7 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps)
 %   2) type: which type of model to use
 %   3) fit_exps: set of experiments for fitting the model (e.g., {'Exp1' 'Exp2'})
 %   4) val_exps: set/s of experiments for validating the fit (optional)
+%   5) sess: cell array of sessions (defaul = all)
 % 
 % OUTPUTS
 %   1) roi: fitted tchROI object containing measured and predicted responses
@@ -21,11 +22,11 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps)
 % Fit a GLM to multiple experiments in V1:
 % [roi, model] = model_roi('V1', 'glm', {'Exp1' 'Exp2' 'Exp3'});
 % 
-% Validate the fit of 2ch model across data from multiple experiments:
-% [roi, model] = model_roi('V1', '2ch', {'Exp1' 'Exp2'}, {'Exp3' 'Exp4'});
+% Validate the fit of GLM model across data from multiple experiments:
+% [roi, model] = model_roi('V1', 'glm', {'Exp1' 'Exp2'}, {'Exp3' 'Exp4'});
 %
-% Validate the fit of cts-pow model on data separately for each experiment:
-% [roi, model] = model_roi('V1', '2ch', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
+% Validate the fit of GLM on data separately for each experiment:
+% [roi, model] = model_roi('V1', 'glm', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
 % 
 % AS 2/2017
 
@@ -33,21 +34,16 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps)
 %% Setup paths and check inputs
 mpath = fileparts(mfilename('fullpath'));
 addpath(genpath(mpath));
-
-% determine whether performing cross-validations
-if nargin == 4
-    cv_flag = 1;
-elseif nargin == 3
-    cv_flag = 0;
-else
-    error('Unexpected input arguements.');
-end
-smodels = {'glm' 'balloon' 'cts-pow' 'cts-div' 'dcts'}; % single-channel
+if nargin < 4; cv_flag = 0; else; cv_flag = 1; end
 
 %% Fit the model to fit_exps
 
 % setup tchROI object for fitting tchModel
-roi(1) = tchROI(name, fit_exps);
+if nargin < 5
+    roi(1) = tchROI(name, fit_exps);
+else
+    roi(1) = tchROI(name, fit_exps, sess);
+end
 fprintf('\nExtracting run time series for %s...\n', roi(1).nickname)
 roi(1) = tch_runs(roi(1));
 
@@ -82,16 +78,17 @@ if cv_flag
         roi(vn) = tchROI(name, val_exps(vv, :), roi(1).sessions);
         roi(vn) = tch_runs(roi(vn));
         model(vn) = tchModel(type, val_exps(vv, :), roi(vn).sessions);
-        model(vn) = code_stim(model(vn));
         if model(vn).num_channels > 1 model(vn).normT = model(1).normT; end
         if model(vn).num_channels > 2 model(vn).normD = model(1).normD; end
+        model(vn).params = roi(1).model.params;
+        model(vn) = code_stim(model(vn));
         model(vn) = pred_runs(model(vn));
         model(vn) = pred_trials(model(vn));
-        % setup model struct by fitting model directly to data
+        % setup model struct by first fitting model to validation data
         roi(vn) = tch_trials(roi(vn), model(vn));
         [roi(vn), model(vn)] = tch_fit(roi(vn), model(vn), 1, fit_exps);
         roi(vn) = tch_pred(roi(vn), model(vn));
-        % use model fit to data from fit_exps to predict data in val_exps
+        % use model fit from fit_exps to predict data in val_exps
         roi(vn) = recompute(roi(vn), model(vn), roi(1).model);
     end
 end

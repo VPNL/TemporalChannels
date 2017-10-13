@@ -1,5 +1,6 @@
-function ax = tch_set_axes(ax)
+function tch_set_axes
 
-set(ax, 'TickDir', 'out', 'FontSize', 8, 'XColor', 'k', 'YColor', 'k');
+set(gca, 'TickDir', 'out', 'FontSize', 7, 'FontName', 'Helvetica', ...
+    'XColor', 'k', 'YColor', 'k');
 
 end

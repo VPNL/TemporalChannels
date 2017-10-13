@@ -3,30 +3,28 @@ function model = pred_runs_2ch_pow_rect(model)
 % on sustained and rectified transient channel. 
 
 % get design parameters
-params_init = model.params; irfs_init = model.irfs;
-fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
-cat_list = unique([model.cats{:}]); ncats = length(cat_list);
-[nruns_max, ~] = size(model.run_durs);
-params_names = fieldnames(params_init); params = [];
+fs = model.fs; tr = model.tr; stim = model.stim;
+nruns_max = size(stim, 1); empty_cells = cellfun(@isempty, stim);
+params_names = fieldnames(model.params); params = [];
 for pp = 1:length(params_names)
-    params.(params_names{pp}) = repmat(params_init.(params_names{pp}), nruns_max, 1);
+    pname = model.params.(params_names{pp});
+    params.(params_names{pp}) = repmat(pname, nruns_max, 1);
 end
-irfs_names = fieldnames(irfs_init); irfs = [];
+irfs_names = fieldnames(model.irfs); irfs = [];
 for ff = 1:length(irfs_names)
-    irfs.(irfs_names{ff}) = repmat(irfs_init.(irfs_names{ff}), nruns_max, 1);
+    iname = model.irfs.(irfs_names{ff});
+    irfs.(irfs_names{ff}) = repmat(iname, nruns_max, 1);
 end
 
 % generate run predictors for each session
-run_preds = cellfun(@(X) zeros(X / tr, ncats), rd, 'uni', false);
-empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
-predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
-predSp = cellfun(@(X, Y) X .^ Y, predS, params.epsilon, 'uni', false);
-predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
-predTr = cellfun(@(X) rectify(X, 'positive'), predT, 'uni', false);
-predSp(empty_cells) = {1}; predTr(empty_cells) = {1};
-fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predSp, irfs.hrf, 'uni', false);
-fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predTr, irfs.hrf, 'uni', false);
-fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]};
+predSp = cellfun(@(X, Y, Z) convolve_vecs(X, Y, fs, fs) .^ Z, ...
+    stim, irfs.nrfS, params.epsilon, 'uni', false); predSp(empty_cells) = {[]};
+predTr = cellfun(@(X, Y) rectify(convolve_vecs(X, Y, fs, fs), 'positive'), ...
+    stim, irfs.nrfT, 'uni', false); predTr(empty_cells) = {[]};
+fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
+    predSp, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
+fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
+    predTr, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
 run_preds = cellfun(@(X, Y) [X Y * model.normT], fmriS, fmriT, 'uni', false);
 model.run_preds = run_preds;
 

@@ -3,23 +3,24 @@ function model = pred_trials_2ch_lin_lin(model)
 % sustained and linear transient channel. 
 
 % get design parameters
-sessions = model.sessions; nsess = length(sessions);
-params = model.params; irfs = model.irfs;
-fs = model.fs; tr = model.tr; cond_list = model.cond_list;
-stimfiles = model.stimfiles; nruns = model.num_runs;
-model.trial_preds.S = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
-model.trial_preds.T = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
+cond_list = model.cond_list; nconds_max = max(cellfun(@length, cond_list));
+fs = model.fs; tr = model.tr; nexps = model.num_exps;
+model.trial_preds.S = cell(nconds_max, nsess, nexps);
+model.trial_preds.T = cell(nconds_max, nsess, nexps);
+stimfiles = model.stimfiles; nruns = model.num_runs; rcnt = 1;
 
-rcnt = 1;
-for ee = 1:model.num_exps
-    [on, off, c, ims, ton, toff, tc, rd, cl] = tch_stimfile(stimfiles{rcnt, 1});
-    istim = model.stim{rcnt, 1};
+for ee = 1:nexps
+    % get stimulus information from example run
+    [~, ~, ~, ~, ton, toff, tc, ~, cl] = tch_stimfile(stimfiles{rcnt, 1});
     for cc = 1:length(cond_list{ee})
-        % find trial onset and offset times
-        ii = find(strcmp(cl{cc}, tc), 1);
-        ion = ton(ii); ioff = ceil(toff(ii) - .001); td = ioff - ion;
+        % find trial onset and offset times and calculate duration
+        idx = find(strcmp(cl{cc}, tc), 1);
+        td = ceil(toff(idx) - .001) - ton(idx);
         % extract stimulus vector from condition time window
-        cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
+        cstim_start = round(fs * (ton(idx) - model.pre_dur)) + 1;
+        cstim_stop = round(fs * (ton(idx) + td + model.post_dur));
+        cstim = model.stim{rcnt, 1}(cstim_start:cstim_stop, :);
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);

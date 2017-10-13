@@ -1,44 +1,55 @@
 % tchModel: Code for modeling fMRI responses to time-varying visual stimuli.
-% 
+%
 % CONSTRUCTOR INPUTS
 %   1) type: which model to use
 %      Hemodynamic models:
-%        'glm'      -- general linear model for fMRI (Boynton 1996)
-%        'htd'      -- hemodynamic temporal derivative (HTD; Henson 2002)
-%        'balloon'  -- nonlinear balloon model (Buxton, 1998)
-%      Single-channel linear-nonlinear (LN) models:
-%        'cts-pow'  -- CTS with power law (Zhou 2017)
-%        'cts-div'  -- CTS with divisive normalization (Zhou 2017)
-%        'dcts'     -- dynamic CTS (Zhou 2017)
+%        '1ch-lin'     -- general linear model for fMRI (Boynton 1996)
+%        '2ch-lin-htd' -- hemodynamic temporal derivative (HTD; Henson 2002)
+%        '1ch-balloon' -- nonlinear balloon model (Buxton, 1998)
+%      Single-channel models:
+%        '1ch-pow'  -- CTS with power law (CTS-p; Zhou 2017)
+%        '1ch-div'  -- CTS with divisive normalization (CTS-n; Zhou 2017)
+%        '1ch-dcts' -- dynamic CTS (dCTS; Zhou 2017)
+%        '1ch-exp'  -- stimulus-specific adaptation model (exponential)
+%        '1ch-cexp' -- compressed adaptation model (CTS-p + exponential)
+%      Dual-channel models:
+%        '2ch-lin-lin'   -- linear susatined and linear transient
+%        '2ch-lin-quad'  -- linear susatined and quadratic transient
+%        '2ch-lin-rect'  -- linear susatined and rectified transient
+%        '2ch-pow-quad'  -- sustained with CTS-p and quadratic transient
+%        '2ch-pow-rect'  -- sustained with CTS-p and rectified transient
+%        '2ch-div-quad'  -- sustained with CTS-n and quadratic transient
+%        '2ch-exp-quad'  -- adapted sustained and quadratic transient
+%        '2ch-exp-rect'  -- adapted sustained and rectified transient
+%        '2ch-cexp-quad' -- compressed/adapted sustained and quadratic transient
+%        '2ch-cexp-rect' -- compressed/adapted sustained and rectified transient
 %      Multi-channel models:
-%        '2ch-lin-lin'  -- 2 channels with linear S and linsear T
-%        '2ch-lin-quad' -- 2 channels with linear S and quadratic T
-%        '2ch-lin-rect' -- 2 channels with linear S and rectified T
-%        '2ch-pow-quad' -- 2 channels with CTS-pow on S and quadratic T
-%        '2ch-pow-rect' -- 2 channels with CTS-pow on S and rectified T
-%        '2ch-div-quad' -- 2 channels with CTS-norm on S and quadratic T
-%        '2ch-opt'      -- 2 channels with optimized S and T IRFs
-%        '3ch-lin-quad' -- 3 channels with linear S, quadratic T, and D
-%        '3ch-lin-rect' -- 3 channels with linear S, rectified T, and D
-%        '3ch-pow-quad' -- 3 channels with CTS-pow on S, quadratic T, and D
-%        '3ch-pow-rect' -- 3 channels with CTS-pow on S, rectified T, and D
-%        '3ch-opt'      -- 3-channels with optimized S, T, and D IRFs
+%        '3ch-lin-quad-exp'  -- linear sustained, quadratic transient, and delay
+%        '3ch-lin-rect-exp'  -- linear sustained, rectified transient, and delay
+%        '3ch-pow-quad-exp'  -- CTS-p on sustained, quadratic transient, and delay
+%        '3ch-exp-quad-exp'  -- adapted sustained, quadratic transient, and delay
+%        '3ch-exp-rect-exp'  -- adapted sustained, rectified transient, and delay
+%        '3ch-cexp-quad-exp' -- compressed/adapted sustained, quadratic transient, and delay
+%        '3ch-cexp-rect-exp' -- compressed/adapted sustained, rectified transient, and delay
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
-%   3) sessions: array of paths to session data directories
+%   3) sessions: array of names or paths to session data directories
 %
 % METHODS
 %   code_stim   -- compiles onset and offset times for each stimulus
 %   norm_model  -- customize predictor normalization parameters (optional)
 %   pred_runs   -- generates design matrix for each run of data
 %   pred_trials -- generates response predictors for each trial type
-% 
+%
 % Example model generation steps:
 %   exps = {'Exp1' 'Exp2' 'Exp3'};
-%   model = tchModel('2ch', exps, ROI('V1', exps).sessions);
+%   roi = tchROI('V1', exps);
+%   roi = select_sessions(roi);
+%   model = tchModel('2ch', exps, roi.sessions);
+%   model = norm_model(model, 1);
 %   model = code_stim(model);
 %   model = pred_runs(model);
 %   model = pred_trials(model);
-% 
+%
 % AS 2/2017
 
 classdef tchModel
@@ -47,14 +58,14 @@ classdef tchModel
         type              % model type identifier
         experiments       % array of experiments to model
         sessions = {};    % array of paths to session directories
-        params = [];      % model parameters structure
-        irfs = [];        % model impulse response functions structure
+        params = [];      % structure of model parameters
+        irfs = [];        % structure of model impulse response functions
         run_preds = [];   % fMRI predictors for each run
         trial_preds = []; % fMRI predictors for each trial type
     end
     
     properties (Hidden)
-        num_exps        % number of experiments included in model
+        num_exps        % number of experiments in model
         tonsets = {};   % trial onset times (s)
         toffsets = {};  % trial offset times (s)
         tconds = {};    % condition number of each element in tonsets
@@ -65,19 +76,28 @@ classdef tchModel
         cond_list = {}; % list of condition names in each experiment
         run_durs = {};  % run durations (s)
         stim = {};      % stimulus step function
-        normT = 20;     % transient channel normalization scalar
-        normD = 20;     % delay channel normalization scalar
+        delay = {};     % delay activity step function
+        adapt = {};     % sustained activity without adaptation decay
+        delay_act = {}; % delay activity with decay
+        adapt_act = {}; % sustained activity with adaptation decay
+        normT = 10;     % transient channel normalization scalar
+        normD = 2;      % delay channel normalization scalar
     end
-
+    
     properties (Constant, Hidden)
         % path to project directory
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
         % descriptors for each model implemented
-        types = {'glm' 'htd' 'balloon' ... % hemodynamic models
-            'cts-pow' 'cts-div' 'dcts' ... % single-channel LN models
-            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect'  ... % analytical 2ch models
-            '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' '2ch-dcts-quad' '2ch-opt' ...  % optimized 2ch models
-            '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect' '3ch-opt'}; % optimized 3ch models
+        types = {'1ch-lin' '2ch-lin-htd' '1ch-balloon' ...
+            '1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' '1ch-cexp' ...
+            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect'  ...
+            '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
+            '2ch-exp-quad' '2ch-exp-rect' ...
+            '2ch-cexp-quad' '2ch-cexp-rect' ...
+            '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
+            '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
+            '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
+            '3ch-cexp-quad-exp' '3ch-cexp-rect-exp'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -133,31 +153,31 @@ classdef tchModel
             end
         end
         
-        % Find paths to stimulus timing parameter files.
+        % Find paths to stimulus timing parameter files
         function stimfiles = get.stimfiles(model)
-            sessions = model.sessions; nsess = length(sessions);
-            nruns = model.num_runs; stimfiles = cell(max(sum(nruns, 1)), nsess);
+            nsess = length(model.sessions); nruns = model.num_runs;
+            stimfiles = cell(max(sum(nruns, 1)), nsess);
             for ss = 1:nsess
                 rcnt = 0;
                 for ee = 1:model.num_exps
                     ecnt = 1;
-                    fstem = fullfile(sessions{ss}, 'Stimuli');
+                    fstem = fullfile(model.sessions{ss}, 'Stimuli');
                     fname = [model.experiments{ee} '_Run'];
                     for ff = 1:nruns(ee, ss)
-                        rcnt = rcnt + 1;
-                        stimfiles{rcnt, ss} = fullfile(fstem, [fname num2str(ecnt) '.txt']);
+                        rcnt = rcnt + 1; sn = [num2str(ecnt) '.txt'];
+                        stimfiles{rcnt, ss} = fullfile(fstem, [fname sn]);
                         ecnt = ecnt + 1;
                     end
                 end
             end
         end
         
-        % Find paths to stimulus timing parameter files.
+        % Determine number of channels in model
         function num_channels = get.num_channels(model)
             switch model.type(1:3)
+                case '1ch'
+                    num_channels = 1;
                 case '2ch'
-                    num_channels = 2;
-                case 'htd'
                     num_channels = 2;
                 case '3ch'
                     num_channels = 3;
@@ -169,22 +189,21 @@ classdef tchModel
         % code onset, offset, and category of each stimulus in experiments
         function model = code_stim(model)
             % get session and run parameters
-            stimfiles = model.stimfiles; [nruns_max, nsess] = size(stimfiles);
+            sfiles = model.stimfiles; [nruns_max, nsess] = size(sfiles);
+            empty_cells = cellfun(@isempty, sfiles);
             fs = model.fs; gd = model.gap_dur;
             % get image onsets/offsets and condition orders from stimfiles
-            [on, off, c, ims, ton, toff, tc, rd, cl] = cellfun(...
-                @tch_stimfile, stimfiles, 'uni', false);
+            [on, off, c, im, ton, toff, tc, rd, cl] = cellfun(@tch_stimfile, ...
+                sfiles, 'uni', false); cat_list = unique([im{:}]);
             % store stimulus parameters in tchModel object
             model.onsets = on;     % image onset times (s)
             model.offsets = off;   % image offset times (s)
             model.conds = c;       % condition labels per image
-            model.cats = ims;      % category labels per image
+            model.cats = im;       % category labels per image
             model.tonsets = ton;   % trial onset times (s)
             model.toffsets = toff; % trial offset times (s)
             model.tconds = tc;     % condition labels per trial
             model.run_durs = rd;   % duration of each run (s)
-            % get list of stimulus categories sorted alphabetically
-            cat_list = unique([ims{:}]);
             % get list of trial conditions from stimfile header
             rcnt = 1;
             for ee = 1:model.num_exps
@@ -192,26 +211,75 @@ classdef tchModel
                 rcnt = rcnt + model.num_runs(ee, 1);
             end
             % find frame indices of image onsets and offsets for each cat
-            stims = cellfun(@(X) zeros(X * fs, length(cat_list)), rd, 'uni', false);
-            empty_cells = cellfun(@isempty, stimfiles); stims(empty_cells) = {[]};
+            stims = cellfun(@(X) zeros(X * fs, length(cat_list)), ...
+                rd, 'uni', false); stims(empty_cells) = {[]};
             for cc = 1:length(cat_list)
-                cat_idxs = cellfun(@(X) find(strcmp(cat_list(cc), X)), ims, 'uni', false);
-                onset_idxs = cellfun(@(X, Y) round(fs * X(Y)) + 1, on, cat_idxs, 'uni', false);
-                offset_idxs = cellfun(@(X, Y) round(fs * (X(Y) - gd / 2)), off, cat_idxs, 'uni', false);
-                onset_idxs(empty_cells) = {1}; offset_idxs(empty_cells) = {1};
+                cat_idxs = cellfun(@(X) find(strcmp(cat_list(cc), X)), ...
+                    im, 'uni', false);
+                on_idxs = cellfun(@(X, Y) round(fs * X(Y)) + 1, ...
+                    on, cat_idxs, 'uni', false); on_idxs(empty_cells) = {1};
+                off_idxs = cellfun(@(X, Y) round(fs * (X(Y) - gd / 2)), ...
+                    off, cat_idxs, 'uni', false); off_idxs(empty_cells) = {1};
                 % find frame indices of gap offset times
-                gapoff_idxs = cellfun(@(X, Y) round(fs * (X(Y) + gd / 2)), off, cat_idxs, 'uni', false);
-                gapoff_idxs(empty_cells) = {1};
+                goff_idxs = cellfun(@(X, Y) round(fs * (X(Y) + gd / 2)), ...
+                    off, cat_idxs, 'uni', false); goff_idxs(empty_cells) = {1};
                 % compile all frame indices during stimuli and gaps
-                stim_idxs = cellfun(@code_stim_idxs, onset_idxs, offset_idxs, 'uni', false);
-                gap_idxs = cellfun(@code_stim_idxs, offset_idxs, gapoff_idxs, 'uni', false);
-                % code stimulus as a step function with gaps at image offsets
-                cc_c = repmat({cc}, nruns_max, nsess);
-                stims = cellfun(@code_stim_vec, stims, stim_idxs, cc_c, repmat({1}, nruns_max, nsess), 'uni', false);
-                stims = cellfun(@code_stim_vec, stims, gap_idxs, cc_c, repmat({0}, nruns_max, nsess), 'uni', false);
+                stim_idxs = cellfun(@code_stim_idxs, ...
+                    on_idxs, off_idxs, 'uni', false);
+                gap_idxs = cellfun(@code_stim_idxs, ...
+                    off_idxs, goff_idxs, 'uni', false);
+                % code stimulus as a step function with gaps at offsets
+                cc_x = repmat({cc}, nruns_max, nsess);
+                stims = cellfun(@code_stim_vec, stims, stim_idxs, ...
+                    cc_x, repmat({1}, nruns_max, nsess), 'uni', false);
+                stims = cellfun(@code_stim_vec, stims, gap_idxs, ...
+                    cc_x, repmat({0}, nruns_max, nsess), 'uni', false);
             end
-            stims(empty_cells) = {[]};
-            model.stim = stims;
+            stims(empty_cells) = {[]}; model.stim = stims;
+            if ~isempty(strfind(model.type, 'ch-exp'))
+                model = code_adapt_decay(model, 'exp');
+            elseif ~isempty(strfind(model.type, 'ch-cexp'))
+                model = code_adapt_decay(model, 'cexp');
+            end
+            if model.num_channels > 2 && ~isempty(strfind(model.type, '-exp'))
+                model = code_delay_decay(model);
+            end
+        end
+                
+        % code decay of activity in sustained channels
+        function model = code_adapt_decay(model, type)
+            if nargin < 2; type = 'exp'; end
+            % get session and stimulus information
+            nruns_max = size(model.onsets, 1); fs = model.fs;
+            empty_cells = cellfun(@isempty, model.onsets);
+            % find frame indices of delay onsets and offsets for each cat
+            adapt_exps = repmat(model.irfs.adapt_exp, nruns_max, 1);
+            nrfS = repmat(model.irfs.nrfS, nruns_max, 1);
+            adapt_exps(empty_cells) = {[]}; nrfS(empty_cells) = {[]};
+            adapts = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
+                model.stim, nrfS, 'uni', false);
+            if strcmp(type, 'cexp')
+                ce = repmat(model.params.epsilon, nruns_max, 1);
+                adapts = cellfun(@(X, Y) X .^ Y, adapts, ce, 'uni', false);
+            end
+            adapt_acts = cellfun(@(X, Y, Z, F) code_exp_decay(X, Y, Z, F, fs), ...
+                adapts, model.onsets, model.offsets, adapt_exps, 'uni', false);
+            model.adapt = adapts; model.adapt_act = adapt_acts;
+        end
+        
+        % code decay of activity in delay channels
+        function model = code_delay_decay(model)
+            % get session and stimulus information
+            nruns_max = size(model.onsets, 1); rds = model.run_durs;
+            fs = model.fs; empty_cells = cellfun(@isempty, model.onsets);
+            ons = model.onsets; offs = model.offsets;
+            ons = cellfun(@(X, Y) [X(2:end) Y], ons, rds, 'uni', false);
+            delays = cellfun(@code_delay_act, model.stim, 'uni', false);
+            delay_exps = repmat(model.irfs.delay_exp, nruns_max, 1);
+            delay_exps(empty_cells) = {[]};
+            delay_acts = cellfun(@(X, Y, Z, F) code_exp_decay(X, Y, Z, F, fs), ...
+                delays, offs, ons, delay_exps, 'uni', false);
+            model.delay = delays; model.delay_act = delay_acts;
         end
         
         % compute custom normalization parameters using run predictors
@@ -220,16 +288,18 @@ classdef tchModel
                 custom_norm = 0;
             end
             % if using a multi-channel model
-            if custom_norm && model.num_channels > 1 
+            if custom_norm && model.num_channels > 1
                 % code run_preds for all fitting experiments
                 imodel = tchModel(model.type, model.experiments, model.sessions);
                 imodel = code_stim(imodel);
                 imodel.normT = 1; imodel.normD = 1;
                 imodel = pred_runs(imodel);
+                [normTs, normDs] = deal(cell(1, size(imodel.run_preds, 2)));
+                cat_list = unique([imodel.cats{:}]);
+                npreds = length(cat_list) * imodel.num_channels;
                 for ss = 1:length(imodel.sessions)
                     % get predictors for all runs in this session
                     spreds = cell2mat(imodel.run_preds(:, ss));
-                    npreds = size(spreds, 2);
                     % find max of predictors
                     if model.num_channels == 2
                         maxS = max(max(spreds(:, 1:npreds / 2)));
@@ -254,18 +324,22 @@ classdef tchModel
         % generate fMRI predictors for each session and run
         function model = pred_runs(model)
             switch model.type
-                case 'glm'
-                    model = pred_runs_glm(model);
-                case 'htd'
-                    model = pred_runs_htd(model);
-                case 'balloon'
-                    model = pred_runs_balloon(model);
-                case 'cts-pow'
-                    model = pred_runs_cts_pow(model);
-                case 'cts-div'
-                    model = pred_runs_cts_div(model);
-                case 'dcts'
-                    model = pred_runs_dcts(model);
+                case '1ch-lin'
+                    model = pred_runs_1ch_lin(model);
+                case '2ch-lin-htd'
+                    model = pred_runs_2ch_lin_htd(model);
+                case '1ch-balloon'
+                    model = pred_runs_1ch_balloon(model);
+                case '1ch-pow'
+                    model = pred_runs_1ch_pow(model);
+                case '1ch-div'
+                    model = pred_runs_1ch_div(model);
+                case '1ch-dcts'
+                    model = pred_runs_1ch_dcts(model);
+                case '1ch-exp'
+                    model = pred_runs_1ch_exp(model);
+                case '1ch-cexp'
+                    model = pred_runs_1ch_cexp(model);
                 case '2ch-lin-lin'
                     model = pred_runs_2ch_lin_lin(model);
                 case '2ch-lin-quad'
@@ -278,38 +352,50 @@ classdef tchModel
                     model = pred_runs_2ch_pow_rect(model);
                 case '2ch-div-quad'
                     model = pred_runs_2ch_div_quad(model);
-                case '2ch-dcts-quad'
-                    model = pred_runs_2ch_dcts_quad(model);
-                case '2ch-opt'
-                    model = pred_runs_2ch_opt(model);
-                case '3ch-lin-quad'
-                    model = pred_runs_3ch_lin_quad(model);
-                case '3ch-lin-rect'
-                    model = pred_runs_3ch_lin_rect(model);
-                case '3ch-pow-quad'
-                    model = pred_runs_3ch_pow_quad(model);
-                case '3ch-pow-rect'
-                    model = pred_runs_3ch_pow_rect(model);
-                case '3ch-opt'
-                    model = pred_runs_3ch_opt(model);
+                case '2ch-exp-quad'
+                    model = pred_runs_2ch_exp_quad(model);
+                case '2ch-exp-rect'
+                    model = pred_runs_2ch_exp_rect(model);
+                case '2ch-cexp-quad'
+                    model = pred_runs_2ch_cexp_quad(model);
+                case '2ch-cexp-rect'
+                    model = pred_runs_2ch_cexp_rect(model);
+                case '3ch-lin-quad-exp'
+                    model = pred_runs_3ch_lin_quad_exp(model);
+                case '3ch-lin-rect-exp'
+                    model = pred_runs_3ch_lin_rect_exp(model);
+                case '3ch-pow-quad-exp'
+                    model = pred_runs_3ch_lin_quad_exp(model);
+                case '3ch-exp-quad-exp'
+                    model = pred_runs_3ch_exp_quad_exp(model);
+                case '3ch-exp-rect-exp'
+                    model = pred_runs_3ch_exp_rect_exp(model);
+                case '3ch-cexp-quad-exp'
+                    model = pred_runs_3ch_cexp_quad_exp(model);
+                case '3ch-cexp-rect-exp'
+                    model = pred_runs_3ch_cexp_rect_exp(model);
             end
         end
         
         % generate fMRI predictors for each session and trial type
         function model = pred_trials(model)
             switch model.type
-                case 'glm'
-                    model = pred_trials_glm(model);
-                case 'htd'
-                    model = pred_trials_htd(model);
-                case 'balloon'
-                    model = pred_trials_balloon(model);
-                case 'cts-pow'
-                    model = pred_trials_cts_pow(model);
-                case 'cts-div'
-                    model = pred_trials_cts_div(model);
-                case 'dcts'
-                    model = pred_trials_dcts(model);
+                case '1ch-lin'
+                    model = pred_trials_1ch_lin(model);
+                case '2ch-lin-htd'
+                    model = pred_trials_2ch_lin_htd(model);
+                case '1ch-balloon'
+                    model = pred_trials_1ch_balloon(model);
+                case '1ch-pow'
+                    model = pred_trials_1ch_pow(model);
+                case '1ch-div'
+                    model = pred_trials_1ch_div(model);
+                case '1ch-dcts'
+                    model = pred_trials_1ch_dcts(model);
+                case '1ch-exp'
+                    model = pred_trials_1ch_exp(model);
+                case '1ch-cexp'
+                    model = pred_trials_1ch_cexp(model);
                 case '2ch-lin-lin'
                     model = pred_trials_2ch_lin_lin(model);
                 case '2ch-lin-quad'
@@ -322,20 +408,28 @@ classdef tchModel
                     model = pred_trials_2ch_pow_rect(model);
                 case '2ch-div-quad'
                     model = pred_trials_2ch_div_quad(model);
-                case '2ch-dcts-quad'
-                    model = pred_trials_2ch_dcts_quad(model);
-                case '2ch-opt'
-                    model = pred_trials_2ch_opt(model);
-                case '3ch-lin-quad'
-                    model = pred_trials_3ch_lin_quad(model);
-                case '3ch-lin-rect'
-                    model = pred_trials_3ch_lin_rect(model);
-                case '3ch-pow-quad'
-                    model = pred_trials_3ch_pow_quad(model);
-                case '3ch-pow-rect'
-                    model = pred_trials_3ch_pow_rect(model);
-                case '3ch-opt'
-                    model = pred_trials_3ch_opt(model);
+                case '2ch-exp-quad'
+                    model = pred_trials_2ch_exp_quad(model);
+                case '2ch-exp-rect'
+                    model = pred_trials_2ch_exp_rect(model);
+                case '2ch-cexp-quad'
+                    model = pred_trials_2ch_cexp_quad(model);
+                case '2ch-cexp-rect'
+                    model = pred_trials_2ch_cexp_rect(model);
+                case '3ch-lin-quad-exp'
+                    model = pred_trials_3ch_lin_quad_exp(model);
+                case '3ch-lin-rect-exp'
+                    model = pred_trials_3ch_lin_rect_exp(model);
+                case '3ch-pow-quad-exp'
+                    model = pred_trials_3ch_pow_quad_exp(model);
+                case '3ch-exp-quad-exp'
+                    model = pred_trials_3ch_exp_quad_exp(model);
+                case '3ch-exp-rect-exp'
+                    model = pred_trials_3ch_exp_rect_exp(model);
+                case '3ch-cexp-quad-exp'
+                    model = pred_trials_3ch_cexp_quad_exp(model);
+                case '3ch-cexp-rect-exp'
+                    model = pred_trials_3ch_cexp_rect_exp(model);
             end
         end
         

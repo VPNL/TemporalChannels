@@ -320,9 +320,15 @@ classdef tchROI
                 roi.model.varexp{ss} = ve;
             end
             % optimize model parameters if applicable
-            omodels = {'cts-pow' 'cts-div' 'dcts' ...
-                '2ch-pow-quad' '2ch-pow-rect' '2ch-div' '2ch-dcts' '2ch-opt' ...
-                '3ch-lin-quad' '3ch-lin-rect' '3ch-pow-quad' '3ch-pow-rect' '3ch-opt'};
+            omodels = {'1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' '1ch-cexp' ...
+                '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
+                '2ch-exp-quad' '2ch-exp-rect' ...
+                '2ch-cexp-quad' '2ch-cexp-rect' ...
+                '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
+                '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
+                '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
+                '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
+                '3ch-cexp-quad-exp' '3ch-cexp-rect-exp'};
             if optimize_flag && sum(strcmp(model.type, omodels))
                 param_names = fieldnames(model.params);
                 for ss = 1:length(sessions)
@@ -341,12 +347,13 @@ classdef tchROI
                         oroi = tchROI(roi.name, roi.experiments, sessions{ss});
                         oroi = tch_runs(oroi);
                         omodel = tchModel(model.type, roi.experiments, sessions{ss});
-                        omodel = code_stim(omodel);
+                        omodel.normT = model.normT; omodel.normD = model.normD;
                         for pp = 1:length(param_names)
                             pn = param_names{pp};
                             omodel.params.(pn){1} = params.(pn){1};
-                            omodel = update_param(omodel, pn, 0);                            
                         end
+                        omodel = code_stim(omodel);
+                        omodel = update_param(omodel, pn, 0);
                         omodel = pred_runs(omodel);
                         omodel = pred_trials(omodel);
                         oroi = tch_trials(oroi, omodel);
@@ -357,6 +364,7 @@ classdef tchROI
                         oroi = tchROI(roi.name, roi.experiments, sessions{ss});
                         oroi = tch_runs(oroi);
                         omodel = tchModel(model.type, roi.experiments, sessions{ss});
+                        omodel.normT = model.normT; omodel.normD = model.normD;
                         omodel = code_stim(omodel);
                         for mm = 1:length(params)
                             omodel(mm) = omodel(1); oroi(mm) = oroi(1);

@@ -36,7 +36,7 @@ for ee = 1:length(roi1)
     roi(ee).model.varexp = cellfun(@(X, Y) (X + Y) ./ 2, ...
         roi1(ee).model.varexp, roi2(ee).model.varexp, 'uni', false);
     param_names = fieldnames(roi1(ee).model.params);
-    if strcmp(roi1(ee).model.type, 'balloon')
+    if strcmp(roi1(ee).model.type, '1ch-balloon')
         param_names = [];
     end
     for pp = 1:length(param_names)

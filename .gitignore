@@ -5,6 +5,8 @@
 *.m~
 *.asv
 my_analysis.m
+my_analysis_cv.m
+figures/*.m
 figures/*/*
 data/*
 !data/readme_data.txt

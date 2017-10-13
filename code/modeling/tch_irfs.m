@@ -1,11 +1,12 @@
-function irf = tch_irfs(channel, tau, fs)
+function irf = tch_irfs(channel, tau, kappa, fs)
 % Derive the sustained and transient impulse response functions based on
 % the formulation outlined by Watson (1986).
 % 
 % INPUT
 %   1) channel: 'S' (sustained), 'T' (transient), or 'D' (delay)
-%   2) tau: time constant of gamma function (ms)
-%   3) fs: sampling rate of IRF (Hz)
+%   2) tau: time constant of excitatory mechanism (ms)
+%   3) kappa: ratio of time constants (inhibitory / excitatory)
+%   4) fs: sampling rate of IRF (Hz)
 % 
 % OUTPUT
 %   irf: either the sustained or transient IRF (sampled at fs Hz)
@@ -14,21 +15,23 @@ function irf = tch_irfs(channel, tau, fs)
 
 channel = upper(channel(1));
 if nargin < 2; tau = 4.93; end
-if nargin < 3; fs = 1000; end
+if nargin < 3; kappa = 1.33; end
+if nargin < 4; fs = 1000; end
 
 % filter parameters from Watson
-k = 1.33;     % ratio of time constants for different response stages
-t2 = k * tau; % time constant of inhibitory mechanism
-n1 = 9;       % number of stages in exctatory mechanism
-n2 = 10;      % number of stages in inhibitory mechanism
+t2 = kappa * tau; % time constant of inhibitory mechanism
+n1 = 9;           % number of stages in exctatory mechanism
+n2 = 10;          % number of stages in inhibitory mechanism
 
 % generate filters
-time = 0:1499; % time in ms
+time = 0:tau * 1000; % time in ms
 for t = time
     % excitatory filter
-    f1(t + 1) = ((tau * factorial(n1 - 1)) ^ -1) * ((t / tau) ^ (n1 - 1)) * exp(-t / tau);
+    f1(t + 1) = ((tau * factorial(n1 - 1)) ^ -1) * ...
+        ((t / tau) ^ (n1 - 1)) * exp(-t / tau);
     % inhibitory filter
-    f2(t + 1) = ((t2 * factorial(n2 - 1)) ^ -1) * ((t / t2) ^ (n2 - 1)) * exp(-t / t2);
+    f2(t + 1) = ((t2 * factorial(n2 - 1)) ^ -1) * ...
+        ((t / t2) ^ (n2 - 1)) * exp(-t / t2);
 end
 
 % derive sustained and transient IRFs

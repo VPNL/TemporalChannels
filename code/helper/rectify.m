@@ -2,11 +2,9 @@ function X_rect = rectify(X, polarity)
 % Rectify data (X) in the positive or negative direction (polarity).
 % AS 9/2017
 
-if nargin < 2
-    polarity = 'positive';
-end
+if nargin < 2; polarity = 'positive'; end
 X_rect = X;
-switch polarity
+switch lower(polarity)
     case 'positive'
         X_rect(X < 0) = 0;
     case 'negative'

@@ -3,7 +3,7 @@ function [ymin, ymax] = tch_plot_ceil(x, y)
 % 
 % INPUTS
 %   1) x: range of x-axis to plot bar
-%   2) y: matrix of data (N x P)
+%   2) y: vector of noise ceilings (N x 1)
 % 
 % OUTPUTS
 %   1) ymin: minimum value of bar - err
@@ -24,10 +24,5 @@ vv_y = [0 0 1 1]; vv_ye = [-1 -1 1 1];
 yvec_e = repmat(y_m, 1, 4) + vv_ye * err;
 patch([x fliplr(x)], yvec_e, [.9 .9 .9], 'EdgeColor', [.9 .9 .9]);
 plot(x, [y_m y_m], 'k:');
-
-% format
-ymin = min([floor(min(y_m - err)) 0]);
-ymax = ceil(max(y_m + err));
-ylim([ymin ymax]);
 
 end
