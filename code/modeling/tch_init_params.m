@@ -330,6 +330,18 @@ switch model_type
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsess);
         delay_exp = exp(-(1:12000) / tau_de);
         irfs.delay_exp = repmat({delay_exp}, 1, nsess);
+    case '3ch-pow-rect-exp'
+        params.epsilon = repmat({epsilon}, 1, nsess);
+        params.tau_de = repmat({tau_de}, 1, nsess);
+        nrfS = tch_irfs('S', tau_s, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsess);
+        nrfT = tch_irfs('T', tau_t, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsess);
+        irfs.hrf = repmat({hrf}, 1, nsess);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsess);
+        delay_exp = exp(-(1:12000) / tau_de);
+        irfs.delay_exp = repmat({delay_exp}, 1, nsess);
     case '3ch-exp-quad-exp'
         params.tau_ae = repmat({tau_ae}, 1, nsess);
         params.tau_de = repmat({tau_de}, 1, nsess);

@@ -14,10 +14,10 @@ xlabs = label_preds(roi.model); xlabs = xlabs(1:npreds);
 
 % setup figure
 fig_name = [roi.nickname ' - ' roi.model.type ' model'];
-fig = tch_fig(fig_name, [.1 .1 .8 .3 + nexps * .2]);
+fig = tch_fig(fig_name, [.1 0 .8 .3 + nexps * .2]);
 
 % plot model weights
-subplot(1 + nexps, 2, 1); hold on; tch_set_axes(gca);
+subplot(1 + nexps, 2, 1); hold on; tch_set_axes;
 [ymin, ymax] = tch_plot_bar(amps, [0 0 0]);
 axis tight; xlim([0 size(amps, 2) + 1]); ylim([ymin ymax]);
 title({roi.nickname; fit_str; val_str});
@@ -25,7 +25,7 @@ xlabel('Predictor'); ylabel('Beta (% signal)');
 set(gca, 'XTick', 1:npreds, 'XTickLabel', xlabs);
 
 % plot variance explained for each session
-subplot(1 + nexps, 2, 2); hold on; tch_set_axes(gca);
+subplot(1 + nexps, 2, 2); hold on; tch_set_axes;
 [ymin, ymax] = tch_plot_bar(R2, [0 0 0]);
 xlim([0 size(R2, 2) + 1]); ylim([ymin ymax]);
 for ss = 1:length(roi.sessions)
@@ -37,7 +37,7 @@ set(gca, 'XTick', 1:length(roi.sessions), 'XTickLabel', roi.session_ids);
 
 % plot measurement vs prediction for each trial type
 for ee = 1:nexps
-    ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on; tch_set_axes(gca);
+    ax(ee) = subplot(1 + nexps, 1, ee + 1); hold on; tch_set_axes;
     xcnt = 3; zlc = xcnt;
     for cc = 1:length(roi.trial_avgs(:, 1, ee))
         % plot custom zero line for trial

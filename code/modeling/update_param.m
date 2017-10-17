@@ -137,6 +137,10 @@ switch model.type
         delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_de, 'uni', false);
         model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+    case '3ch-pow-rect-exp'
+        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_de, 'uni', false);
+        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
     case '3ch-exp-quad-exp'
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);

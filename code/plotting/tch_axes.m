@@ -17,15 +17,11 @@ set(gca, 'XColor', 'w', 'TickDir', 'out', 'YMinorTick', 'on', 'FontSize', 7);
 
 % set title, x-axes, and axis labels
 for xx = 1:size(xlims, 1)
-    text(mean(xlims(xx, :)), ylims(2), names{xx}, ...
-        'FontSize', 7, 'FontWeight', 'bold', 'FontName', 'Helvetica', ...
-        'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
+    tch_text(mean(xlims(xx, :)), ylims(2), names{xx}, 7, [0 0 0], 'c', 'b');
     plot(xlims(xx, :), [0 0], 'k-', 'LineWidth', 0.5);
 end
-xlab_x = mean([min(xlims(:)) max(xlims(:))]);
-xlab_y = get(gca, 'XLabel'); xlab_y = xlab_y.Position(2);
-text(xlab_x, xlab_y, xlab, 'FontSize', 7, 'FontName', 'Helvetica', ...
-    'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
+xlab_x = mean([min(xlims(:)) max(xlims(:))]); xlab_y = get(gca, 'XLabel');
+tch_text(xlab_x, xlab_y.Position(2), xlab, 7, [0 0 0], 'c', 'b');
 ylabel(ylab, 'FontSize', 7);
 
 end

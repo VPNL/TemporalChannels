@@ -27,6 +27,7 @@
 %        '3ch-lin-quad-exp'  -- linear sustained, quadratic transient, and delay
 %        '3ch-lin-rect-exp'  -- linear sustained, rectified transient, and delay
 %        '3ch-pow-quad-exp'  -- CTS-p on sustained, quadratic transient, and delay
+%        '3ch-pow-rect-exp'  -- CTS-p on sustained, rectified transient, and delay
 %        '3ch-exp-quad-exp'  -- adapted sustained, quadratic transient, and delay
 %        '3ch-exp-rect-exp'  -- adapted sustained, rectified transient, and delay
 %        '3ch-cexp-quad-exp' -- compressed/adapted sustained, quadratic transient, and delay
@@ -365,7 +366,9 @@ classdef tchModel
                 case '3ch-lin-rect-exp'
                     model = pred_runs_3ch_lin_rect_exp(model);
                 case '3ch-pow-quad-exp'
-                    model = pred_runs_3ch_lin_quad_exp(model);
+                    model = pred_runs_3ch_pow_quad_exp(model);
+                case '3ch-pow-rect-exp'
+                    model = pred_runs_3ch_pow_rect_exp(model);
                 case '3ch-exp-quad-exp'
                     model = pred_runs_3ch_exp_quad_exp(model);
                 case '3ch-exp-rect-exp'
@@ -422,6 +425,8 @@ classdef tchModel
                     model = pred_trials_3ch_lin_rect_exp(model);
                 case '3ch-pow-quad-exp'
                     model = pred_trials_3ch_pow_quad_exp(model);
+                case '3ch-pow-rect-exp'
+                    model = pred_trials_3ch_pow_rect_exp(model);
                 case '3ch-exp-quad-exp'
                     model = pred_trials_3ch_exp_quad_exp(model);
                 case '3ch-exp-rect-exp'
