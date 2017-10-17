@@ -4,8 +4,7 @@
 *.espc
 *.m~
 *.asv
-my_analysis.m
-my_analysis_cv.m
+my_*.m
 figures/*.m
 figures/*/*
 data/*
