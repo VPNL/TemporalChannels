@@ -1,0 +1,29 @@
+function obj_fun = tch_obj_fun_2ch_pow_rect(roi, model)
+
+if ~strcmp(model.type, '2ch-pow-rect'); error('Incompatible model type'); end
+stim = model.stim; nruns = size(stim, 1); npreds = size(stim{1}, 2);
+fs = model.fs; tr = model.tr; irfs = model.irfs;
+run_avgs = roi.run_avgs; baseline = roi.baseline;
+param_names = fieldnames(model.params); nparams = length(param_names);
+
+conv_snS = @(x, y) cellfun(@(X, Y) convolve_vecs(X, irfs.nrfS{1}, 1, 1) .^ Y, ...
+    x, repmat({y}, nruns, 1), 'uni', false);
+conv_snT = @(x) cellfun(@(X) rectify(convolve_vecs(X, irfs.nrfT{1}, 1, 1), 'positive'), ...
+    x, 'uni', false);
+conv_nbS = @(x, y) cellfun(@(NS) convolve_vecs(NS, irfs.hrf{1}, fs, 1 / tr), ...
+    conv_snS(x, y), 'uni', false);
+conv_nbT = @(x) cellfun(@(NT) convolve_vecs(NT, irfs.hrf{1}, fs, 1 / tr), ...
+    conv_snT(x), 'uni', false);
+pred_bsS = @(x, y, b) cellfun(@(PS, BS) PS .* repmat(BS, size(PS, 1), 1), ...
+    conv_nbS(x, y), repmat({b}, nruns, 1), 'uni', false);
+pred_bsT = @(x, b) cellfun(@(PT, BT) PT .* repmat(BT, size(PT, 1), 1), ...
+    conv_nbT(x), repmat({b}, nruns, 1), 'uni', false);
+comp_bs = @(m, b0) cellfun(@(M, B0) M - repmat(B0, size(M, 1), 1), ...
+    m, b0, 'uni', false);
+calc_br = @(x, y, b, m, b0) cellfun(@(SS, ST, M) (sum([SS ST], 2) - M) .^ 2, ...
+    pred_bsS(x, y, b(1:npreds)), pred_bsT(x, b([1:npreds] + npreds)), ...
+    comp_bs(m, b0), 'uni', false);
+calc_me = @(x, y, b, m, b0) sum(cell2mat(calc_br(x, y, b, m, b0)));
+obj_fun = @(x) calc_me(stim, x(1), x([1:npreds * 2] + nparams), run_avgs, baseline);
+
+end

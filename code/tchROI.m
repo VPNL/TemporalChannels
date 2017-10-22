@@ -274,15 +274,15 @@ classdef tchROI
         
         % estimate noise ceiling for each ROI using inter-trial variability
         function roi = tch_noise_ceil(roi)
-            trials = roi.trials;
-            trials_avg = cellfun(@(X) mean(X, 2), trials, 'uni', false);
-            trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), trials, trials_avg, 'uni', false);
+            trials_avg = cellfun(@(X) mean(X, 2), roi.trials, 'uni', false);
+            trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), ...
+                roi.trials, trials_avg, 'uni', false);
             trials_err = cellfun(@(X) sum(sum(X .^ 2)), trials_err, 'uni', false);
-            total_err = []; total_var = []; ceils = [];
-            for ss = 1:size(trials, 2)
+            total_err = []; total_var = [];
+            for ss = 1:size(roi.trials, 2)
                 total_err(ss) = sum([trials_err{:, ss}]);
-                trial_mean = mean(mean(vertcat(trials{:, ss})));
-                trials_var = vertcat(trials{:, ss}) - trial_mean;
+                trial_mean = mean(mean(vertcat(roi.trials{:, ss})));
+                trials_var = vertcat(roi.trials{:, ss}) - trial_mean;
                 total_var(ss) = sum(sum(trials_var .^ 2));
                 roi.noise_ceils{ss} = 1 - (total_err / total_var);
             end
@@ -328,79 +328,10 @@ classdef tchROI
                 '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
                 '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
                 '3ch-cexp-quad-exp' '3ch-cexp-rect-exp'};
-            if optimize_flag && sum(strcmp(model.type, omodels))
-                param_names = fieldnames(model.params);
-                for ss = 1:length(sessions)
-                    fname_grid = ['grid_search_results_' model.type ...
-                        '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grid = fullfile(sessions{ss}, 'ROIs', ...
-                        roi.name, fname_grid);
-                    fname_grad = ['grad_desc_results_' model.type ...
-                        '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grad = fullfile(sessions{ss}, 'ROIs', ...
-                        roi.name, fname_grad);
-                    % load optimization results if saved, otherwise compute
-                    if exist(fpath_grad, 'file') == 2
-                        fprintf('Loading gradient descent results. \n');
-                        load(fpath_grad);
-                        oroi = tchROI(roi.name, roi.experiments, sessions{ss});
-                        oroi = tch_runs(oroi);
-                        omodel = tchModel(model.type, roi.experiments, sessions{ss});
-                        omodel.normT = model.normT; omodel.normD = model.normD;
-                        for pp = 1:length(param_names)
-                            pn = param_names{pp};
-                            omodel.params.(pn){1} = params.(pn){1};
-                        end
-                        omodel = code_stim(omodel);
-                        omodel = update_param(omodel, pn, 0);
-                        omodel = pred_runs(omodel);
-                        omodel = pred_trials(omodel);
-                        oroi = tch_trials(oroi, omodel);
-                        oroi = tch_fit(oroi, omodel);
-                    elseif exist(fpath_grid, 'file') == 2
-                        fprintf('Loading grid search results. \n');
-                        load(fpath_grid);
-                        oroi = tchROI(roi.name, roi.experiments, sessions{ss});
-                        oroi = tch_runs(oroi);
-                        omodel = tchModel(model.type, roi.experiments, sessions{ss});
-                        omodel.normT = model.normT; omodel.normD = model.normD;
-                        omodel = code_stim(omodel);
-                        for mm = 1:length(params)
-                            omodel(mm) = omodel(1); oroi(mm) = oroi(1);
-                            for pp = 1:length(param_names)
-                                pn = param_names{pp};
-                                omodel(mm).params.(pn){1} = params(mm).(pn){1};
-                                omodel(mm) = update_param(omodel(mm), pn, 0);                            
-                            end
-                            omodel(mm) = pred_runs(omodel(mm));
-                            omodel(mm) = pred_trials(omodel(mm));
-                            oroi(mm) = tch_trials(oroi(mm), omodel(mm));
-                            oroi(mm) = tch_fit(oroi(mm), omodel(mm));
-                        end
-                        [oroi, omodel] = tch_optimize_fit(oroi, omodel);
-                        params = omodel(1).params;
-                        save(fpath_grad, 'params', '-v7.3');
-                    else
-                        [oroi, omodel] = tch_grid_search(roi, model, ss, 5);
-                        params = omodel(1).params;
-                        for mm = 2:length(omodel)
-                            params(mm) = omodel(mm).params;
-                        end
-                        save(fpath_grid, 'params', '-v7.3');
-                        [oroi, omodel] = tch_optimize_fit(oroi, omodel);
-                        params = omodel(1).params;
-                        save(fpath_grad, 'params', '-v7.3');
-                    end
-                    % copy optimized parameters for session
-                    for pp = 1:length(param_names)
-                        opt_params = omodel.params.(param_names{pp}){1};
-                        model.params.(param_names{pp}){ss} = opt_params;
-                        model = update_param(model, param_names{pp}, 0);
-                    end
-                end
-                model = pred_runs(model);
-                model = pred_trials(model);
-                [roi, model] = tch_fit(roi, model, 0);
+            if sum(strcmp(model.type, omodels)) > 0 && optimize_flag == 1
+                [roi, model] = tch_optimize_fmincon(roi, model, fit_exps);
+            elseif sum(strcmp(model.type, omodels)) > 0 && optimize_flag == 2
+                [roi, model] = tch_optimize_grid_grad(roi, model, fit_exps);
             end
             % carry over model parameters for all sessions to roi.model
             roi.model.type = model.type;
