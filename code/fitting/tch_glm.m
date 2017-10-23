@@ -11,7 +11,7 @@ function model = tch_glm(Y, X)
 %   stdevs: estimated standard deviation for each beta weight
 %   dof: degrees of freedom of the fitting
 %
-% adapted from vistaoft (http://github.com/vistalab/vistasoft/)
+% Adapted from vistaoft (http://github.com/vistalab/vistasoft/)
 % AS 2/2017
 
 % check inputs

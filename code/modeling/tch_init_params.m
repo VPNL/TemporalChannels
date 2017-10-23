@@ -47,27 +47,8 @@ tau_g = 0.24; lag = 1; exponent = 2;
 params = struct; irfs = struct;
 
 switch model_type
-    case 'glm'
-        irfs.hrf = repmat({hrf}, 1, nsess);
     case '1ch-lin'
         irfs.hrf = repmat({hrf}, 1, nsess);
-    case 'htd'
-        irfs.hrf = repmat({hrf}, 1, nsess);
-        irfs.dhrf = repmat({dhrf}, 1, nsess);
-    case 'balloon'
-        params.tau_p = tau_p;   % viscoelastic time constant for inflation
-        params.tau_n = tau_n;   % viscoelastic time constant for deflation
-        params.E0 = E0;         % resting oxygen extraction fraction
-        params.V0 = V0;         % resting blood volume
-        params.tauMTT = tauMTT; % transit time through balloon
-        params.alpha = alpha;   % steady-state flow-volume relationship
-        % time constants for gamma function
-        params.delta_t = 1 / fs; t_lag = (0:1 / fs:40) - lag;
-        gamma_n = ((t_lag / tau_g) .^ (exponent - 1) .* exp(-t_lag / tau_g));
-        gamma_d = (tau_g * factorial(exponent - 1));
-        irfs.gamma = repmat({rectify(gamma_n ./ gamma_d)}, 1, nsess);
-        % constants for calculating signal at 3T
-        params.k1 = 6.7; params.k2 = 2.73; params.k3 = 0.57;
     case '1ch-balloon'
         params.tau_p = tau_p;   % viscoelastic time constant for inflation
         params.tau_n = tau_n;   % viscoelastic time constant for deflation
@@ -82,13 +63,6 @@ switch model_type
         irfs.gamma = repmat({rectify(gamma_n ./ gamma_d)}, 1, nsess);
         % constants for calculating signal at 3T
         params.k1 = 6.7; params.k2 = 2.73; params.k3 = 0.57;
-    case 'cts-pow'
-        params.epsilon = repmat({epsilon}, 1, nsess);
-        params.tau1 = repmat({tau1}, 1, nsess);
-        nrfS = (0:999) .* exp(-(0:999) / tau1);
-        nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
     case '1ch-pow'
         params.epsilon = repmat({epsilon}, 1, nsess);
         params.tau1 = repmat({tau1}, 1, nsess);
@@ -96,26 +70,9 @@ switch model_type
         nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
         irfs.nrfS = repmat({nrfS}, 1, nsess);
         irfs.hrf = repmat({hrf}, 1, nsess);
-    case 'cts-div'
-        params.tau1 = repmat({tau1}, 1, nsess);
-        params.sigma = repmat({sigma}, 1, nsess);
-        nrfS = (0:999) .* exp(-(0:999) / tau1);
-        nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
     case '1ch-div'
         params.tau1 = repmat({tau1}, 1, nsess);
         params.sigma = repmat({sigma}, 1, nsess);
-        nrfS = (0:999) .* exp(-(0:999) / tau1);
-        nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
-    case 'dcts'
-        params.tau1 = repmat({tau1}, 1, nsess);
-        params.tau2 = repmat({tau2}, 1, nsess);
-        params.sigma = repmat({sigma}, 1, nsess);
-        lpf = exp(-(0:999) / tau2); lpf = lpf / sum(lpf);
-        irfs.lpf = repmat({lpf}, 1, nsess);
         nrfS = (0:999) .* exp(-(0:999) / tau1);
         nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
         irfs.nrfS = repmat({nrfS}, 1, nsess);
@@ -243,48 +200,6 @@ switch model_type
         irfs.hrf = repmat({hrf}, 1, nsess);
         adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsess);
-    case '3ch-lin-quad'
-        params.tau_d = repmat({tau_d}, 1, nsess);
-        params.kappa = repmat({kappa}, 1, nsess);
-        nrfS = tch_irfs('S', tau_s, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tch_irfs('T', tau_t, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tch_irfs('D', tau_d, kappa, fs);
-        irfs.nrfD = repmat({nrfD}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
-    case '3ch-lin-rect'
-        params.tau_d = repmat({tau_d}, 1, nsess);
-        params.kappa = repmat({kappa}, 1, nsess);
-        nrfS = tch_irfs('S', tau_s, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tch_irfs('T', tau_t, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tch_irfs('D', tau_d, kappa, fs);
-        irfs.nrfD = repmat({nrfD}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
-    case '3ch-pow-quad'
-        params.epsilon = repmat({epsilon}, 1, nsess);
-        params.tau_d = repmat({tau_d}, 1, nsess);
-        params.kappa = repmat({kappa}, 1, nsess);
-        nrfS = tch_irfs('S', tau_s, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tch_irfs('T', tau_t, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tch_irfs('D', tau_d, kappa, fs);
-        irfs.nrfD = repmat({nrfD}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
-    case '3ch-pow-rect'
-        params.epsilon = repmat({epsilon}, 1, nsess);
-        params.tau_d = repmat({tau_d}, 1, nsess);
-        params.kappa = repmat({kappa}, 1, nsess);
-        nrfS = tch_irfs('S', tau_s, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsess);
-        nrfT = tch_irfs('T', tau_t, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsess);
-        nrfD = tch_irfs('D', tau_d, kappa, fs);
-        irfs.nrfD = repmat({nrfD}, 1, nsess);
-        irfs.hrf = repmat({hrf}, 1, nsess);
     case '3ch-opt'
         params.tau_s = repmat({tau_s}, 1, nsess);
         params.tau_t = repmat({tau_t}, 1, nsess);

@@ -102,22 +102,6 @@ switch model.type
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model, 'cexp');
-    case '3ch-lin-quad'
-        nrfD = cellfun(@(X, Y) tch_irfs('D', X, Y, model.fs), ...
-            model.params.tau_d, model.params.kappa, 'uni', false);
-        model.irfs.nrfD = nrfD;
-    case '3ch-lin-rect'
-        nrfD = cellfun(@(X, Y) tch_irfs('D', X, Y, model.fs), ...
-            model.params.tau_d, model.params.kappa, 'uni', false);
-        model.irfs.nrfD = nrfD;
-    case '3ch-pow-quad'
-        nrfD = cellfun(@(X, Y) tch_irfs('D', X, Y, model.fs), ...
-            model.params.tau_d, model.params.kappa, 'uni', false);
-        model.irfs.nrfD = nrfD;
-    case '3ch-pow-rect'
-        nrfD = cellfun(@(X, Y) tch_irfs('D', X, Y, model.fs), ...
-            model.params.tau_d, model.params.kappa, 'uni', false);
-        model.irfs.nrfD = nrfD;
     case '3ch-opt'
         model.irfs.nrfS = cellfun(@(X, Y) tch_irfs('S', X, Y, model.fs), ...
             model.params.tau_s, model.params.kappa, 'uni', false);

@@ -1,5 +1,5 @@
 function [rois, models] = tch_grid_search(iroi, imodel, session_num, nseeds)
-% Performs a grid search to find seeds for model optimization. 
+% Performs a grid search to find seeds for further model optimization. 
 % 
 % INPUTS
 %   1) iroi: tchROI object fitted with default model parameters

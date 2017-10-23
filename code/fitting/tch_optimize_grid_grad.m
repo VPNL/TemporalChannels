@@ -1,6 +1,6 @@
 function [roi, model] = tch_optimize_grid_grad(roi, model, fit_exps)
-% Custom two-stage optimization prodcedure consisting of grid search
-% followed by iterative gradident descent from multiple seed points. 
+% Custom two-stage nonlinear optimization prodcedure consisting of grid 
+% search followed by iterative gradident descent from multiple seed points. 
 
 param_names = fieldnames(model.params); sessions = roi.sessions;
 grid_stem = 'grid_search_results_'; grad_stem = 'grad_desc_results_';

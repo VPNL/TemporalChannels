@@ -3,7 +3,7 @@ function tc = tch_psc(tc, detrend)
 %
 % INPUTS
 %   1) tc: TR by voxel data matrix of fMRI time series
-%   2) detrend:
+%   2) detrend: stages of detrending to perform on each voxel
 %      1 = normaliztion without trend removal
 %      2 = normalization with linear trend removal
 %      3 = normalization with linear + quadratic trend removal
@@ -12,18 +12,15 @@ function tc = tch_psc(tc, detrend)
 % OUTPUT
 %   tc: preprocessed TR by voxel data matrix
 %
-% adapted from vistaoft (http://github.com/vistalab/vistasoft/)
+% Adapted from vistaoft (http://github.com/vistalab/vistasoft/)
 % AS 2/2017
 
-if nargin == 1
-    detrend = 3;
-end
+if nargin == 1; detrend = 3; end
 
 if isempty(tc)
     tc = [];
 else
     [num_frames, num_vox] = size(tc);
-    
     % divide by mean of each voxel
     if detrend >= 1
         dc = nanmean(tc);
@@ -34,7 +31,6 @@ else
             tc = zeros(size(tc));
         end
     end
-    
     % remove linear trends
     if detrend >= 2
         model = [(1:num_frames); ones(1, num_frames)]';
@@ -43,7 +39,6 @@ else
         b = model * w;
         tc = tc - b;
     end
-    
     % remove quadratic trends
     if detrend >= 3
         fl = 1:num_frames;
@@ -53,7 +48,6 @@ else
         b = model * w;
         tc = tc - b;
     end
-    
     % remove low frequency baseline drifts
     if detrend >= 4
         frame_win = 20; k = ones(frame_win, 1) / frame_win;
@@ -79,14 +73,11 @@ else
         baseline = baseline(frame_win + 1:frame_win + num_frames, :);
         tc = tc - baseline;
     end
-    
     % subtract mean and convert to percent signal change
     tc = tc - ones(num_frames, 1) * mean(tc);
     tc = tc * 100;
-    
     % remove spikes
     tc = medfilt1(tc, 5);
-    
 end
 
 end

@@ -1,4 +1,18 @@
 function obj_fun = tch_obj_fun_3ch_exp_quad_exp(roi, model)
+% Generates anonymous objective function that can be passed to fmincon for
+% the 3ch-exp-quad-exp model (3-channel model with adapted sustained,
+% quadratic transient, and exponential delay channels).
+% 
+% INPUTS:
+%   1) roi: tchROI object containing single session
+%   2) model: tchModel object for the same session
+% 
+% OUTPUTS:
+%   obj_fun: anonymous objective function in the form of y = f(x0), where
+%   x0 is a vector of parameters to evaluate and y is the sum of squared
+%   residual error between model predictions and run response time series
+% 
+% AS 10/2017
 
 if ~strcmp(model.type, '3ch-exp-quad-exp'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); npreds = size(stim{1}, 2);

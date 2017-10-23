@@ -1,4 +1,17 @@
 function obj_fun = tch_obj_fun_1ch_exp(roi, model)
+% Generates anonymous objective function that can be passed to fmincon for
+% the 1ch-exp model (single channel with exponential adaptation decay)
+% 
+% INPUTS:
+%   1) roi: tchROI object containing single session
+%   2) model: tchModel object for the same session
+% 
+% OUTPUTS:
+%   obj_fun: anonymous objective function in the form of y = f(x0), where
+%   x0 is a vector of parameters to evaluate and y is the sum of squared
+%   residual error between model predictions and run response time series
+% 
+% AS 10/2017
 
 if ~strcmp(model.type, '1ch-exp'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); npreds = size(stim{1}, 2);

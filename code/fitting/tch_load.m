@@ -1,5 +1,6 @@
-function data = tch_load(filename,field)
-% Helper function that loads .mat files with error handling.
+function data = tch_load(filename, field)
+% Helper function that loads .mat files containing time series data with 
+% error handling when data is not found.
 % 
 % INPUTS
 % filename: path to *.mat file containing data (can be [])

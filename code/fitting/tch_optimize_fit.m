@@ -3,12 +3,12 @@ function [oroi, omodel] = tch_optimize_fit(iroi, imodel)
 % to optimize model fit for a given ROI.
 % 
 % INPUTS
-%   1) iroi: ROI object fitted with seed points from grid seach
-%   2) imodel: tchModel object with models used to fit roi_init
+%   1) iroi: initial ROI object fitted with seed points from grid seach
+%   2) imodel: inital tchModel object with model used to fit iroi
 % 
 % OUTPUTS
 %   1) oroi: updated tchROI object fit with optimized model parameters
-%   2) omodel: updated tchModel object used to fit ROI
+%   2) omodel: updated tchModel object with parameters used to fit oroi
 % 
 % AS 5/2017
 
@@ -20,7 +20,7 @@ sessions = model_iter(1).sessions; nsess = length(sessions);
 params_init = cell(length(param_names), nsess);
 step_sizes_init = zeros(length(param_names), 1);
 
-% get inital step size for the each parameter
+% get inital step size for each parameter
 for pp = 1:length(param_names)
     params_init(pp, :) = model_iter(1).params.(param_names{pp});
     switch param_names{pp}

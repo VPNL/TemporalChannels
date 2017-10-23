@@ -1,7 +1,7 @@
-function obj_fun = tch_obj_fun_3ch_lin_quad_exp(roi, model)
+function obj_fun = tch_obj_fun_3ch_lin_rect_exp(roi, model)
 % Generates anonymous objective function that can be passed to fmincon for
-% the 3ch-lin-quad-exp model (3-channel model with linear sustained,
-% quadratic transient, and exponential delay channels).
+% the 3ch-lin-rect-exp model (3-channel model with linear sustained, 
+% rectified transient, and exponential delay channels).
 % 
 % INPUTS:
 %   1) roi: tchROI object containing single session
@@ -23,7 +23,7 @@ param_names = fieldnames(model.params); nparams = length(param_names);
 delay_fun = @(y) exp(-(1:12000) / y);
 conv_snS = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfS{1}, 1, 1), ...
     x, 'uni', false);
-conv_snT = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfT{1}, 1, 1) .^ 2, ...
+conv_snT = @(x) cellfun(@(X) rectify(convolve_vecs(X, irfs.nrfT{1}, 1, 1), 'positive'), ...
     x, 'uni', false);
 doffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
 conv_snD = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
