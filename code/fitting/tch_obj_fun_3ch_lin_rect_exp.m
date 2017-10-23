@@ -14,7 +14,7 @@ function obj_fun = tch_obj_fun_3ch_lin_rect_exp(roi, model)
 % 
 % AS 10/2017
 
-if ~strcmp(model.type, '3ch-lin-quad-exp'); error('Incompatible model type'); end
+if ~strcmp(model.type, '3ch-lin-rect-exp'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); npreds = size(stim{1}, 2);
 irfs = model.irfs; fs = model.fs; tr = model.tr;
 run_avgs = roi.run_avgs; baseline = roi.baseline;
