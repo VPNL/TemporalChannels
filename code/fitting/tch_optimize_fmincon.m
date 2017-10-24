@@ -9,7 +9,6 @@ for ss = 1:length(sessions)
     if exist(fpath_opt, 'file') == 2
         load(fpath_opt); fprintf('Loading gradient descent results. \n');
         omodel = code_stim(tchModel(model.type, roi.experiments, sessions{ss}));
-        omodel.normT = model.normT; omodel.normD = model.normD;
         for pp = 1:length(param_names)
             pn = param_names{pp}; omodel.params.(pn){1} = params.(pn){1};
         end
@@ -17,6 +16,7 @@ for ss = 1:length(sessions)
     else
         sroi = tch_runs(tchROI(roi.name, roi.experiments, sessions{ss}));
         omodel = code_stim(tchModel(model.type, roi.experiments, sessions{ss}));
+        omodel.normT = model.normT; omodel.normD = model.normD;
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
         npreds = size(sroi.model.betas{1}, 2);
@@ -26,7 +26,7 @@ for ss = 1:length(sessions)
             case '1ch-pow'
                 obj_fun = tch_obj_fun_1ch_pow(sroi, omodel);
                 x_init = [.05 .1 sroi.model.betas{1}];
-                lb = [.001 .001 -Inf(1, npreds)];
+                lb = [.01 .001 -Inf(1, npreds)];
                 ub = [.5 1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], lb, ub, [], fmin_options);
@@ -39,12 +39,12 @@ for ss = 1:length(sessions)
                 ub = [60 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], lb, ub, [], fmin_options);
-                params.tau_ae{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(1) * 1000;
             case '2ch-pow-quad'
                 obj_fun = tch_obj_fun_2ch_pow_quad(sroi, omodel);
                 x_init = [.1 sroi.model.betas{1}];
                 lb = [.001 -Inf(1, npreds)];
-                ub = [1 Inf(1, npreds)];
+                ub = [.5 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], lb, ub, [], fmin_options);
                 params.epsilon{1} = x_opt(1);
@@ -137,7 +137,7 @@ for ss = 1:length(sessions)
         pn = param_names{pp}; model.params.(pn){ss} = omodel.params.(pn){1};
     end
 end
-model = update_param(model, param_names{pp}, 0); model = norm_model(model, 1);
+model = update_param(model, param_names{pp}, 0);
 model = pred_runs(model); model = pred_trials(model);
 [roi, model] = tch_fit(roi, model, 0);
 
