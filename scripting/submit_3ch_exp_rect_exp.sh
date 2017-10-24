@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=optimize_3ch_exp_rect_exp
+#SBATCH --job-name=o3ch_exp_rect_exp
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1

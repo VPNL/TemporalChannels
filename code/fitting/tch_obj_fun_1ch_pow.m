@@ -19,7 +19,7 @@ irfs = model.irfs; fs = model.fs; tr = model.tr;
 run_avgs = roi.run_avgs; baseline = roi.baseline;
 param_names = fieldnames(model.params); nparams = length(param_names);
 
-irf_fun = @(x) (0:999) .* exp(-(0:999) / x);
+irf_fun = @(x) (0:999) .* exp(-(0:999) / (x * 1000));
 conv_sn = @(x, y, z) cellfun(@(X, Y, Z) convolve_vecs(X, Y, 1, 1) .^ Z, ...
     x, repmat({irf_fun(y)}, nruns, 1), repmat({z}, nruns, 1), 'uni', false);
 conv_nb = @(x, y, z) cellfun(@(N) convolve_vecs(N, irfs.hrf{1}, fs, 1 / tr), ...

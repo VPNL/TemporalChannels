@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=o3ch_lin_rect_exp
+#SBATCH --job-name=o1ch_pow
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
@@ -8,4 +8,4 @@
 #SBATCH --mem-per-cpu=2GB
 
 module load matlab/R2017a
-matlab -nodisplay < optimize_3ch_lin_rect_exp.m
+matlab -nodisplay < optimize_1ch_pow.m

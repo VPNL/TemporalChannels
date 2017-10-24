@@ -20,17 +20,17 @@ for ss = 1:length(sessions)
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
         npreds = size(sroi.model.betas{1}, 2);
-        fmin_options = optimoptions('fmincon', 'Display', 'iter', ...
+        fmin_options = optimoptions('fmincon', 'Display', 'final', ...
             'StepTolerance', 1e-2, 'UseParallel', true);
         switch model.type
             case '1ch-pow'
                 obj_fun = tch_obj_fun_1ch_pow(sroi, omodel);
-                x_init = [50 .1 sroi.model.betas{1}];
-                lb = [10 .001 -Inf(1, npreds)];
-                ub = [1000 1 Inf(1, npreds)];
+                x_init = [.05 .1 sroi.model.betas{1}];
+                lb = [.001 .001 -Inf(1, npreds)];
+                ub = [.5 1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], lb, ub, [], fmin_options);
-                params.tau1{1} = x_opt(1);
+                params.tau1{1} = x_opt(1) * 1000;
                 params.epsilon{1} = x_opt(2);
             case '1ch-exp'
                 obj_fun = tch_obj_fun_1ch_exp(sroi, omodel);
@@ -51,7 +51,7 @@ for ss = 1:length(sessions)
             case '2ch-pow-rect'
                 obj_fun = tch_obj_fun_2ch_pow_rect(sroi, omodel);
                 x_init = [.1 sroi.model.betas{1}];
-                lb = [.01 -Inf(1, npreds)];
+                lb = [.001 -Inf(1, npreds)];
                 ub = [1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], lb, ub, [], fmin_options);

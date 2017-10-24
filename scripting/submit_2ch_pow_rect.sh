@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=optimize_2ch_pow_rect
+#SBATCH --job-name=o2ch_pow_rect
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
