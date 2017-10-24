@@ -20,7 +20,7 @@ irfs = model.irfs; fs = model.fs; tr = model.tr;
 run_avgs = roi.run_avgs; baseline = roi.baseline;
 param_names = fieldnames(model.params); nparams = length(param_names);
 
-delay_fun = @(z) exp(-(1:12000) / z);
+delay_fun = @(z) exp(-(1:12000) / (z * 1000));
 conv_snS = @(x, y) cellfun(@(X, Y) convolve_vecs(X, irfs.nrfS{1}, 1, 1) .^ Y, ...
     x, repmat({y}, nruns, 1), 'uni', false);
 conv_snT = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfT{1}, 1, 1) .^ 2, ...

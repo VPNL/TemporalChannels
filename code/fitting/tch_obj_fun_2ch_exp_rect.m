@@ -20,7 +20,7 @@ fs = model.fs; tr = model.tr; irfs = model.irfs;
 run_avgs = roi.run_avgs; baseline = roi.baseline;
 param_names = fieldnames(model.params); nparams = length(param_names);
 
-adapt_fun = @(y) exp(-(1:60000) / y);
+adapt_fun = @(y) exp(-(1:60000) / (y * 1000));
 conv_snS = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
     cellfun(@(XX) convolve_vecs(XX, irfs.nrfS{1}, 1, 1), x, 'uni', false), ...
     repmat({adapt_fun(y)}, nruns, 1), model.onsets, model.offsets, 'uni', false);
