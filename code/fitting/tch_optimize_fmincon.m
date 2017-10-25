@@ -19,9 +19,10 @@ for ss = 1:length(sessions)
         omodel.normT = model.normT; omodel.normD = model.normD;
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
-        npreds = size(sroi.model.betas{1}, 2);
-        fmin_options = optimoptions('fmincon', 'Display', 'final', ...
+        npreds = size(sroi.model.betas{1}, 2); pout = cell(1, length(param_names));
+        fmin_options = optimoptions('fmincon', 'Display', 'off', ...
             'StepTolerance', 1e-2, 'UseParallel', true);
+        fprintf('Optimizing parameters for %s ...\n', roi.session_ids{ss});
         switch model.type
             case '1ch-pow'
                 obj_fun = tch_obj_fun_1ch_pow(sroi, omodel);
@@ -126,11 +127,11 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(2) * 1000;
         end
         for pp = 1:length(param_names)
-            pn = param_names{pp};
-            omodel.params.(pn){1} = params.(pn){1};
+            pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);
+            omodel.params.(pn){1} = pv; pout{pp} = [pn ': ' pstr];
         end
         omodel = update_param(omodel, param_names{pp}, 0);
-        save(fpath_opt, 'params', '-v7.3');
+        save(fpath_opt, 'params', '-v7.3'); fprintf([strjoin(pout, ', ') '\n']);
     end
     % copy optimized parameters from session to group model objects
     for pp = 1:length(param_names)
