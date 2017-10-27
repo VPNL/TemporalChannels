@@ -26,7 +26,8 @@ for ss = 1:length(sessions)
         switch model.type
             case '1ch-pow'
                 obj_fun = tch_obj_fun_1ch_pow(sroi, omodel);
-                x_init = [.1 .1 sroi.model.betas{1}];
+                tau1 = omodel.params.tau1{1} / 1000;
+                x_init = [tau1 omodel.params.epsilon{1} sroi.model.betas{1}];
                 lb = [.01 .001 -Inf(1, npreds)];
                 ub = [.5 1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -35,7 +36,7 @@ for ss = 1:length(sessions)
                 params.epsilon{1} = x_opt(2);
             case '1ch-exp'
                 obj_fun = tch_obj_fun_1ch_exp(sroi, omodel);
-                x_init = [10 sroi.model.betas{1}];
+                x_init = [omodel.params.tau_ae{1} / 1000 sroi.model.betas{1}];
                 lb = [1 -Inf(1, npreds)];
                 ub = [60 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -43,7 +44,7 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(1) * 1000;
             case '2ch-pow-quad'
                 obj_fun = tch_obj_fun_2ch_pow_quad(sroi, omodel);
-                x_init = [.1 sroi.model.betas{1}];
+                x_init = [omodel.params.epsilon{1} sroi.model.betas{1}];
                 lb = [.001 -Inf(1, npreds)];
                 ub = [.5 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -51,7 +52,7 @@ for ss = 1:length(sessions)
                 params.epsilon{1} = x_opt(1);
             case '2ch-pow-rect'
                 obj_fun = tch_obj_fun_2ch_pow_rect(sroi, omodel);
-                x_init = [.1 sroi.model.betas{1}];
+                x_init = [omodel.params.epsilon{1} sroi.model.betas{1}];
                 lb = [.001 -Inf(1, npreds)];
                 ub = [1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -59,7 +60,7 @@ for ss = 1:length(sessions)
                 params.epsilon{1} = x_opt(1);
             case '2ch-exp-quad'
                 obj_fun = tch_obj_fun_2ch_exp_quad(sroi, omodel);
-                x_init = [10 sroi.model.betas{1}];
+                x_init = [omodel.params.tau_ae{1} / 1000 sroi.model.betas{1}];
                 lb = [1 -Inf(1, npreds)];
                 ub = [60 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -67,7 +68,7 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(1) * 1000;
             case '2ch-exp-rect'
                 obj_fun = tch_obj_fun_2ch_exp_rect(sroi, omodel);
-                x_init = [10 sroi.model.betas{1}];
+                x_init = [omodel.params.tau_ae{1} / 1000 sroi.model.betas{1}];
                 lb = [1 -Inf(1, npreds)];
                 ub = [60 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -75,7 +76,7 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(1) * 1000;
             case '3ch-lin-quad-exp'
                 obj_fun = tch_obj_fun_3ch_lin_quad_exp(sroi, omodel);
-                x_init = [1 sroi.model.betas{1}];
+                x_init = [omodel.params.tau_de{1} / 1000 sroi.model.betas{1}];
                 lb = [.1 -Inf(1, npreds)];
                 ub = [12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -83,7 +84,7 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(1) * 1000;
             case '3ch-lin-rect-exp'
                 obj_fun = tch_obj_fun_3ch_lin_rect_exp(sroi, omodel);
-                x_init = [1 sroi.model.betas{1}];
+                x_init = [omodel.params.tau_de{1} / 1000 sroi.model.betas{1}];
                 lb = [.1 -Inf(1, npreds)];
                 ub = [12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -91,7 +92,8 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(1) * 1000;
             case '3ch-pow-quad-exp'
                 obj_fun = tch_obj_fun_3ch_pow_quad_exp(sroi, omodel);
-                x_init = [.1 1 sroi.model.betas{1}];
+                tau_de = omodel.params.tau_de{1} / 1000;
+                x_init = [omodel.params.epsilon{1} tau_de sroi.model.betas{1}];
                 lb = [.001 .1 -Inf(1, npreds)];
                 ub = [1 12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -100,7 +102,8 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(2) * 1000;
             case '3ch-pow-rect-exp'
                 obj_fun = tch_obj_fun_3ch_pow_rect_exp(sroi, omodel);
-                x_init = [.1 1 sroi.model.betas{1}];
+                tau_de = omodel.params.tau_de{1} / 1000;
+                x_init = [omodel.params.epsilon{1} tau_de sroi.model.betas{1}];
                 lb = [.001 .1 -Inf(1, npreds)];
                 ub = [1 12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -109,7 +112,9 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(2) * 1000;
             case '3ch-exp-quad-exp'
                 obj_fun = tch_obj_fun_3ch_exp_quad_exp(sroi, omodel);
-                x_init = [10 1 sroi.model.betas{1}];
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                tau_de = omodel.params.tau+de{1} / 1000;
+                x_init = [tau_ae tau_de sroi.model.betas{1}];
                 lb = [1 .1 -Inf(1, npreds)];
                 ub = [60 12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
@@ -118,7 +123,9 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(2) * 1000;
             case '3ch-exp-rect-exp'
                 obj_fun = tch_obj_fun_3ch_exp_rect_exp(sroi, omodel);
-                x_init = [10 1 sroi.model.betas{1}];
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                tau_de = omodel.params.tau+de{1} / 1000;
+                x_init = [tau_ae tau_de sroi.model.betas{1}];
                 lb = [1 .1 -Inf(1, npreds)];
                 ub = [60 12 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
