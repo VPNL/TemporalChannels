@@ -1,11 +1,12 @@
 *.mat
 *.fig
+*.jpg
 *.eps
 *.espc
 *.m~
 *.asv
 my_*.m
-figures/*.m
-figures/*/*
+figures/*
+!figures/readme_data.txt
 data/*
 !data/readme_data.txt
