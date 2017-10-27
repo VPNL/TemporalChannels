@@ -3,12 +3,12 @@ function [params, irfs] = tch_init_params(model_type, nsess, fs)
 % 
 % INPUTS
 %   1) model_type: descriptor for type of model initialize
-%     'glm'     -- irfs = hrf
-%     'htd'     -- irfs = hrf, dhrf
-%     'balloon' -- params = tauMTT, tau_n, tau_p, E0, V0, alpha
-%     'cts-pow' -- params = tau1, epsilon; irfs = nrfS, hrf
-%     'cts-div' -- params = tau1, sigma; irfs = nrfS, hrf
-%     'dcts'    -- params = tau1, tau2, sigma; irfs = lpf, nrfS, hrf
+%     '1ch-pow'      -- irfs = hrf
+%     '2ch-lin-htd'  -- irfs = hrf, dhrf
+%     '1ch-balloon'  -- params = tauMTT, tau_n, tau_p, E0, V0, alpha
+%     '1ch-pow'      -- params = tau1, epsilon; irfs = nrfS, hrf
+%     '1ch-div'      -- params = tau1, sigma; irfs = nrfS, hrf
+%     '1ch-dcts'     -- params = tau1, tau2, sigma; irfs = lpf, nrfS, hrf
 %     '2ch-lin-lin'  -- irfs = nrfS, nrfT, hrf
 %     '2ch-lin-quad' -- irfs = nrfS, nrfT, hrf
 %     '2ch-lin-rect' -- irfs = nrfS, nrfT, hrf
@@ -38,7 +38,7 @@ epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for multi-channel moddels
 tau_s = 4.93; tau_t = 4.93; tau_d = 4.93; kappa = 1.33;
 % exponential time constants for decay
-tau_de = 500; tau_ae = 30000;
+tau_de = 500; tau_ae = 10000;
 % default paramters for balloon model (see Chen & Glover, 2015)
 tau_p = 25; tau_n = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
 % parameters of gamma IRF for balloon model

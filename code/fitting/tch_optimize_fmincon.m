@@ -26,7 +26,7 @@ for ss = 1:length(sessions)
         switch model.type
             case '1ch-pow'
                 obj_fun = tch_obj_fun_1ch_pow(sroi, omodel);
-                x_init = [.05 .1 sroi.model.betas{1}];
+                x_init = [.1 .1 sroi.model.betas{1}];
                 lb = [.01 .001 -Inf(1, npreds)];
                 ub = [.5 1 Inf(1, npreds)];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
