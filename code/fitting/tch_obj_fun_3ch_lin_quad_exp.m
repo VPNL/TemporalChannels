@@ -15,10 +15,8 @@ function obj_fun = tch_obj_fun_3ch_lin_quad_exp(roi, model)
 % AS 10/2017
 
 if ~strcmp(model.type, '3ch-lin-quad-exp'); error('Incompatible model type'); end
-stim = model.stim; nruns = size(stim, 1); npreds = size(stim{1}, 2);
-irfs = model.irfs; fs = model.fs; tr = model.tr;
-run_avgs = roi.run_avgs; baseline = roi.baseline;
-param_names = fieldnames(model.params); nparams = length(param_names);
+stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
+run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 
 delay_fun = @(y) exp(-(1:12000) / (y * 1000));
 conv_snS = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfS{1}, 1, 1), ...
@@ -35,18 +33,16 @@ conv_nbT = @(x) cellfun(@(NT) convolve_vecs(NT, irfs.hrf{1}, fs, 1 / tr), ...
     conv_snT(x), 'uni', false);
 conv_nbD = @(x, y) cellfun(@(ND) convolve_vecs(ND, irfs.hrf{1}, fs, 1 / tr), ...
     conv_snD(x, y), 'uni', false);
-pred_bsS = @(x, b) cellfun(@(PS, BS) PS .* repmat(BS, size(PS, 1), 1), ...
-    conv_nbS(x), repmat({b}, nruns, 1), 'uni', false);
-pred_bsT = @(x, b) cellfun(@(PT, BT) PT .* repmat(BT, size(PT, 1), 1), ...
-    conv_nbT(x), repmat({b}, nruns, 1), 'uni', false);
-pred_bsD = @(x, y, b) cellfun(@(PD, BD) PD .* repmat(BD, size(PD, 1), 1), ...
-    conv_nbD(x, y), repmat({b}, nruns, 1), 'uni', false);
+conv_nb = @(x, y) cellfun(@(S, T, D) [S T D], ...
+    conv_nbS(x), conv_nbT(x), conv_nbD(x, y), 'uni', false);
 comp_bs = @(m, b0) cellfun(@(M, B0) M - repmat(B0, size(M, 1), 1), ...
     m, b0, 'uni', false);
-calc_br = @(x, y, b, m, b0) cellfun(@(SS, ST, SD, M) (sum([SS ST SD], 2) - M) .^ 2, ...
-    pred_bsS(x, b(1:npreds)), pred_bsT(x, b([1:npreds] + npreds)), ...
-    pred_bsD(x, y, b([1:npreds] + 2 * npreds)), comp_bs(m, b0), 'uni', false);
-calc_me = @(x, y, b, m, b0) sum(cell2mat(calc_br(x, y, b, m, b0)));
-obj_fun = @(x) calc_me(stim, x(1), x([1:npreds * 3] + nparams), run_avgs, baseline);
+comp_ws = @(x, y, m, b0) cell2mat(conv_nb(x, y)) \ cell2mat(comp_bs(m, b0));
+pred_bs = @(x, y, m, b0) cellfun(@(P, W) P .* repmat(W, size(P, 1), 1), ...
+    conv_nb(x, y), repmat({comp_ws(x, y, m, b0)'}, nruns, 1), 'uni', false);
+calc_br = @(x, y, m, b0) cellfun(@(S, M) (sum(S, 2) - M) .^ 2, ...
+    pred_bs(x, y, m, b0), comp_bs(m, b0), 'uni', false);
+calc_me = @(x, y, m, b0) sum(cell2mat(calc_br(x, y, m, b0)));
+obj_fun = @(x) calc_me(stim, x(1), run_avgs, baseline);
 
 end
