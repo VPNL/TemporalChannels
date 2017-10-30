@@ -114,7 +114,7 @@ for ss = 1:length(sessions)
             case '3ch-lin-rect-exp-opt'
                 obj_fun = tch_obj_fun_3ch_lin_rect_exp_opt(sroi, omodel);
                 tau_de = omodel.params.tau_de{1} / 1000;
-                x_init = [omodel.params.tau_d{1} omodel.params.kappa{1} tau_de]; 
+                x_init = [omodel.params.tau_s{1} omodel.params.kappa{1} tau_de]; 
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [4 1 .1], [50 10 12], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
