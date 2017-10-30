@@ -1,7 +1,7 @@
-function obj_fun = tch_obj_fun_3ch_lin_rect_exp_opt(roi, model)
+function obj_fun = tch_obj_fun_3ch_lin_quad_exp_opt(roi, model)
 % Generates anonymous objective function that can be passed to fmincon for
 % the 3ch-lin-quad-exp model (3-channel model with optimized linear 
-% sustained, rectified transient, and exponential delay channels).
+% sustained, quadratic transient, and exponential delay channels).
 % 
 % INPUTS:
 %   1) roi: tchROI object containing single session
@@ -14,7 +14,7 @@ function obj_fun = tch_obj_fun_3ch_lin_rect_exp_opt(roi, model)
 % 
 % AS 10/2017
 
-if ~strcmp(model.type, '3ch-lin-rect-exp-opt'); error('Incompatible model type'); end
+if ~strcmp(model.type, '3ch-lin-quad-exp-opt'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 
@@ -23,7 +23,7 @@ nrfT_fun = @(x, y) tch_irfs('T', x, y, fs);
 delay_fun = @(z) exp(-(1:12000) / (z * 1000));
 conv_snS = @(s, x, y) cellfun(@(X, Y) convolve_vecs(X, Y, 1, 1), ...
     s, repmat({nrfS_fun(x, y)}, nruns, 1), 'uni', false);
-conv_snT = @(s, x, y) cellfun(@(X, Y) rectify(convolve_vecs(X, Y, 1, 1)), ...
+conv_snT = @(s, x, y) cellfun(@(X, Y) convolve_vecs(X, Y, 1, 1) .^ 2, ...
     s, repmat({nrfT_fun(x, y)}, nruns, 1), 'uni', false);
 doffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
 conv_snD = @(s, z) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
