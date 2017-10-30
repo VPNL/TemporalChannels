@@ -91,14 +91,15 @@ classdef tchModel
         % descriptors for each model implemented
         types = {'1ch-lin' '2ch-lin-htd' '1ch-balloon' ...
             '1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' '1ch-cexp' ...
-            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect'  ...
+            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect' ...
             '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
             '2ch-exp-quad' '2ch-exp-rect' ...
             '2ch-cexp-quad' '2ch-cexp-rect' ...
             '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
             '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
             '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
-            '3ch-cexp-quad-exp' '3ch-cexp-rect-exp'};
+            '3ch-cexp-quad-exp' '3ch-cexp-rect-exp' ...
+            '2ch-lin-quad-opt' '3ch-lin-rect-exp-opt'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -377,6 +378,10 @@ classdef tchModel
                     model = pred_runs_3ch_cexp_quad_exp(model);
                 case '3ch-cexp-rect-exp'
                     model = pred_runs_3ch_cexp_rect_exp(model);
+                case '2ch-lin-quad-opt'
+                    model = pred_runs_2ch_lin_quad_opt(model);
+                case '3ch-lin-rect-exp-opt'
+                    model = pred_runs_3ch_lin_rect_exp_opt(model);
             end
         end
         
@@ -435,6 +440,10 @@ classdef tchModel
                     model = pred_trials_3ch_cexp_quad_exp(model);
                 case '3ch-cexp-rect-exp'
                     model = pred_trials_3ch_cexp_rect_exp(model);
+                case '2ch-lin-quad-opt'
+                    model = pred_trials_2ch_lin_quad_opt(model);
+                case '3ch-lin-rect-exp-opt'
+                    model = pred_trials_3ch_lin_rect_exp_opt(model);
             end
         end
         

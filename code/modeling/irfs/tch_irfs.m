@@ -5,7 +5,7 @@ function irf = tch_irfs(channel, tau, kappa, fs)
 % INPUT
 %   1) channel: 'S' (sustained), 'T' (transient), or 'D' (delay)
 %   2) tau: time constant of excitatory mechanism (ms)
-%   3) kappa: ratio of time constants (inhibitory / excitatory)
+%   3) kappa: ratio of time constants for primary/secondary filters
 %   4) fs: sampling rate of IRF (Hz)
 % 
 % OUTPUT
@@ -37,20 +37,25 @@ end
 % derive sustained and transient IRFs
 irfS = f1;
 irfT = f1 - f2;
-% normalize max of S and T IRFs
+irfD = f2 - f1;
+% normalize max of IRFs
 irfT = irfT * (max(irfS) / max(irfT));
+irfD = irfD * (max(irfS) / max(irfD));
 
 % output sustained or transient IRF
-if strcmp(channel,'S')
-    irf = resample(irfS, 1, 1000 / fs)';
-elseif sum(strcmp(channel,{'T' 'D'}))
-    irf = resample(irfT, 1, 1000 / fs)';
-else
-    error('Unexpected channel input.');
+switch channel
+    case 'S'
+        irf = resample(irfS, 1, 1000 / fs)';
+    case 'T'
+        irf = resample(irfT, 1, 1000 / fs)';
+    case 'D'
+        irf = resample(irfD, 1, 1000 / fs)';
+    otherwise
+        error('Unexpected channel input.');
 end
 
 % clip values from end that are close to zero for efficiency
-zclip = length(irf); zthresh = max(irf) / 1000;
+zclip = length(irf); zthresh = max(abs(irf)) / 1000;
 while abs(irf(zclip)) < zthresh
     zclip = zclip - 1;
 end

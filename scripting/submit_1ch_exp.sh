@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=o1ch_exp
+#SBATCH --job-name=c1e
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1

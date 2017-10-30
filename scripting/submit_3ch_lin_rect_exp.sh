@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=o3ch_lin_rect_exp
+#SBATCH --job-name=c3lre
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1

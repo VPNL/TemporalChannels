@@ -2,6 +2,9 @@ function [roi, model] = tch_optimize_fmincon(roi, model, fit_exps)
 % Nonlinear optimization prodcedure using built-in fmincon algorithm.
 
 param_names = fieldnames(model.params); sessions = roi.sessions;
+if length(param_names) <= 1; fprec = 1e-4; end
+if length(param_names) == 2; fprec = 1e-3; end
+if length(param_names) >= 2; fprec = 1e-2; end;
 for ss = 1:length(sessions)
     fname_opt = ['optimization_results_' model.type '_fit' [fit_exps{:}] '.mat'];
     fpath_opt = fullfile(sessions{ss}, 'ROIs', roi.name, fname_opt);
@@ -19,9 +22,9 @@ for ss = 1:length(sessions)
         omodel.normT = model.normT; omodel.normD = model.normD;
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
-        npreds = size(sroi.model.betas{1}, 2); pout = cell(1, length(param_names));
+        pout = cell(1, length(param_names));
         fmin_options = optimoptions('fmincon', 'Display', 'off', ...
-            'StepTolerance', 1e-2, 'UseParallel', true);
+            'StepTolerance', fprec, 'UseParallel', true);
         fprintf('Optimizing parameters for %s ...\n', roi.session_ids{ss});
         switch model.type
             case '1ch-pow'
@@ -101,6 +104,22 @@ for ss = 1:length(sessions)
                     [], [], [1 .1], [60 12], [], fmin_options);
                 params.tau_ae{1} = x_opt(1) * 1000;
                 params.tau_de{1} = x_opt(2) * 1000;
+            case '2ch-lin-quad-opt'
+                obj_fun = tch_obj_fun_2ch_lin_quad_opt(sroi, omodel);
+                x_init = [omodel.params.tau_s{1} omodel.params.kappa{1}]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1], [50 10], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.kappa{1} = x_opt(2);
+            case '3ch-lin-rect-exp-opt'
+                obj_fun = tch_obj_fun_3ch_lin_rect_exp_opt(sroi, omodel);
+                tau_de = omodel.params.tau_de{1} / 1000;
+                x_init = [omodel.params.tau_d{1} omodel.params.kappa{1} tau_de]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1 .1], [50 10 12], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.kappa{1} = x_opt(2);
+                params.tau_de{1} = x_opt(3) * 1000;
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=o2ch_exp_quad
+#SBATCH --job-name=c2eq
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
