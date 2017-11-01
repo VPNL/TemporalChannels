@@ -106,10 +106,11 @@ for ss = 1:length(sessions)
                 params.tau_de{1} = x_opt(2) * 1000;
             case '2ch-lin-quad-opt'
                 obj_fun = tch_obj_fun_2ch_lin_quad_opt(sroi, omodel);
-                x_init = [omodel.params.tau_s{1} omodel.params.kappa{1}]; 
+                x_init = [omodel.params.tau_s{1} omodel.params.tau_t{1} omodel.params.kappa{1}]; 
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 1], [50 10], [], fmin_options);
+                    [], [], [4 4 1], [50 50 10], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
+                params.tau_t{1} = x_opt(2);
                 params.kappa{1} = x_opt(2);
             case '3ch-lin-quad-exp-opt'
                 obj_fun = tch_obj_fun_3ch_lin_quad_exp_opt(sroi, omodel);

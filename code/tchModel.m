@@ -275,6 +275,7 @@ classdef tchModel
             nruns_max = size(model.onsets, 1); rds = model.run_durs;
             fs = model.fs; empty_cells = cellfun(@isempty, model.onsets);
             ons = model.onsets; offs = model.offsets;
+            % offs = cellfun(@(X) X + 1 / 30, offs, 'uni', false);
             ons = cellfun(@(X, Y) [X(2:end) Y], ons, rds, 'uni', false);
             delays = cellfun(@code_delay_act, model.stim, 'uni', false);
             delay_exps = repmat(model.irfs.delay_exp, nruns_max, 1);

@@ -283,10 +283,11 @@ switch model_type
         irfs.delay_exp = repmat({delay_exp}, 1, nsessions);
     case '2ch-lin-quad-opt'
         params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_t = repmat({tau_t}, 1, nsessions);
         params.kappa = repmat({kappa}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, kappa, fs);
+        nrfT = tch_irfs('T', tau_t, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '3ch-lin-quad-exp-opt'
