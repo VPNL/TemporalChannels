@@ -11,7 +11,15 @@ function tch_axes(names, xlab, ylab, xlims, ylims)
 % AS 8/2017
 
 % find overall range of plotting area and format axes
-names = force_cell(names); xrange = [min([min(xlims(:)) 0]) max(xlims(:))];
+if isempty(names)
+    names = repmat({''}, 1, size(xlims, 1));
+else
+    names = force_cell(names);
+end
+if length(names) ~= size(xlims, 1)
+    error('A name is required for each subplot');
+end
+xrange = [min([min(xlims(:)) 0]) max(xlims(:))];
 xlim(xrange); ylim([ylims(1) ylims(2)]); hold on;
 set(gca, 'XColor', 'w', 'TickDir', 'out', 'YMinorTick', 'on', 'FontSize', 7);
 

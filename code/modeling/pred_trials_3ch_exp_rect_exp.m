@@ -29,11 +29,13 @@ for ee = 1:nexps
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
+            adapt_exp = model.irfs.adapt_exp{ss};
+            adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
             predTr = rectify(convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs));
             delay_exp = model.irfs.delay_exp{ss};
             delay_act = code_exp_decay(cdelay, dstarts, dstops, delay_exp, fs);
             % convolve neural predictors with HRF
-            fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
+            fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTr, irfs.hrf{ss}, fs, 1 / tr);
             fmriD = convolve_vecs(delay_act, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
