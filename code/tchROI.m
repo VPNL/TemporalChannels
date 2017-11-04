@@ -422,7 +422,7 @@ classdef tchROI
                 for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
                 b0 = cell2mat(b0_cell); predictors = [run_preds b0];
                 tc_cell = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
-                tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
+                tc = vertcat(tc_cell{:, ss}); roi.model.run_tcs{ss} = tc;
                 beta_vec = zeros(1, npreds + nruns);
                 beta_vec(1:npreds) = fit.betas{ss};
                 beta_vec(npreds + 1:npreds + nruns) = roi.model.rbetas{ss};

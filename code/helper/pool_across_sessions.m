@@ -25,6 +25,7 @@ end
 
 % pool trial predictions and responses
 for subject = 1:length(subjects)
+    roi_pool.sessions{subject} = subjects{subject};
     for ee = 1:length(roi.experiments)
         empty_preds = cellfun(@(X) zeros(size(X)), roi.pred(:, subject_idxs{subject}(1), ee), 'uni', false);
         [predS, predT, predD, pred] = deal(empty_preds);
@@ -78,6 +79,7 @@ roi_pool.model.cat_list = roi.model.cat_list;
 roi_pool.model.pre_dur = roi.model.pre_dur;
 roi_pool.model.post_dur = roi.model.post_dur;
 roi_pool.model.fit_exps = roi.model.fit_exps;
+roi_pool.model.num_channels = roi.model.num_channels;
 
 for subject = 1:length(subjects)
     betas = zeros(size(roi.model.betas{subject_idxs{subject}(1)}));
@@ -105,4 +107,4 @@ for subject = 1:length(subjects)
     roi_pool.model.params = params;
 end
 
-
+end
