@@ -9,11 +9,7 @@ valid_types = {'1ch-lin' '1ch-balloon' '1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' 
 if sum(strcmp(model_type, valid_types)) == 0; error('Invalid model'); end
 
 optimize_flag = 0;
-if contains(model_type, '-opt'); optimize_flag = 1; end
-if contains(model_type, '-exp'); optimize_flag = 1; end
-if contains(model_type, '-pow'); optimize_flag = 1; end
-if contains(model_type, '-quad'); optimize_flag = 1; end
-if contains(model_type, '-div'); optimize_flag = 1; end
-if contains(model_type, '-dcts'); optimize_flag = 1; end
+opt_strs = {'-opt' '-exp' '-pow' '-div' '-dcts'};
+if contains(model_type, opt_strs); optimize_flag = 1; end
 
 end
