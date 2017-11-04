@@ -57,20 +57,17 @@ roi(1) = tch_runs(roi(1));
 
 % setup tchModel object to apply to tchROI
 model(1) = tchModel(type, fit_exps, roi(1).sessions);
+model(1) = norm_model(model(1), 1); nch = model(1).num_channels;
 fprintf('Coding the stimulus for %s ...\n', strjoin(fit_exps, ', '));
 model(1) = code_stim(model(1));
 fprintf('Generating predictors for %s model...\n', type)
-model(1) = pred_runs(model(1));
-model(1) = pred_trials(model(1));
+model(1) = pred_runs(model(1)); model(1) = pred_trials(model(1));
 
 % fit tchModel to tchROI
 fprintf('Extracting trial time series...\n');
 roi(1) = tch_trials(roi(1), model(1));
 fprintf('Fitting the %s model...\n', model(1).type);
 [roi(1), model(1)] = tch_fit(roi(1), model(1), opt_proc);
-if model(1).num_channels > 1
-    model(1) = norm_model(model(1), 1);
-end
 [roi(1), model(1)] = tch_fit(roi(1), model(1));
 roi(1) = tch_pred(roi(1), model(1));
 
@@ -80,14 +77,13 @@ roi(1) = tch_pred(roi(1), model(1));
 if cv_flag
     num_vals = size(val_exps, 1);
     for vv = 1:num_vals
-        fprintf('Performing validation for %s...\n', strjoin(val_exps(vv, :), ', '))
-        vn = 1 + vv;
+        vn = vv + 1; exps_str = strjoin(val_exps(vv, :), ', ');
+        fprintf('Performing validation for %s...\n', exps_str)
         % setup tchROI and tchModel objects for validation
-        roi(vn) = tchROI(name, val_exps(vv, :), roi(1).sessions);
-        roi(vn) = tch_runs(roi(vn));
+        roi(vn) = tch_runs(tchROI(name, val_exps(vv, :), roi(1).sessions));
         model(vn) = tchModel(type, val_exps(vv, :), roi(vn).sessions);
-        if model(vn).num_channels > 1 model(vn).normT = model(1).normT; end
-        if model(vn).num_channels > 2 model(vn).normD = model(1).normD; end
+        if nch > 1; model(vn).normT = model(1).normT; end
+        if nch > 2; model(vn).normD = model(1).normD; end
         model(vn).params = roi(1).model.params; model(vn) = code_stim(model(vn));
         model(vn) = pred_runs(model(vn)); model(vn) = pred_trials(model(vn));
         % setup model struct by first fitting model to validation data

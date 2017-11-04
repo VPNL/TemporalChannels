@@ -278,40 +278,31 @@ classdef tchModel
         
         % compute custom normalization parameters using run predictors
         function model = norm_model(model, custom_norm)
-            if nargin == 1
-                custom_norm = 0;
-            end
-            % if using a multi-channel model
-            if custom_norm && model.num_channels > 1
+            if nargin == 1; custom_norm = 0; end
+            % only normalize if using a multi-channel model
+            if custom_norm == 1 && model.num_channels > 1
                 % code run_preds for all fitting experiments
                 imodel = tchModel(model.type, model.experiments, model.sessions);
-                imodel = code_stim(imodel);
-                imodel.normT = 1; imodel.normD = 1;
-                imodel = pred_runs(imodel);
-                [normTs, normDs] = deal(cell(1, size(imodel.run_preds, 2)));
-                cat_list = unique([imodel.cats{:}]);
-                npreds = length(cat_list) * imodel.num_channels;
+                imodel.normT = 1; imodel.normD = 1; nch = imodel.num_channels;
+                imodel = code_stim(imodel); imodel = pred_runs(imodel); 
+                [normTs, normDs] = deal(zeros(1, length(imodel.sessions)));
+                ncats = length(unique([imodel.cats{:}]));
                 for ss = 1:length(imodel.sessions)
                     % get predictors for all runs in this session
                     spreds = cell2mat(imodel.run_preds(:, ss));
-                    % find max of predictors
-                    if model.num_channels == 2
-                        maxS = max(max(spreds(:, 1:npreds / 2)));
-                        maxT = max(max(spreds(:, npreds / 2 + 1:npreds)));
-                    elseif model.num_channels == 3
-                        maxS = max(max(spreds(:, 1:npreds / 3)));
-                        maxT = max(max(spreds(:, npreds / 3 + 1:2 * npreds / 3)));
-                        maxD = max(max(spreds(:, 2 * npreds / 3 + 1:npreds)));
-                        normDs{ss} = maxS / maxD;
+                    % find max of each set of channels
+                    maxS = max(max(spreds(:, 0 * ncats + 1:1 * ncats)));
+                    maxT = max(max(spreds(:, 1 * ncats + 1:2 * ncats)));
+                    % compute scalars to normalize max heights to sustained
+                    normTs(ss) = maxS / maxT;
+                    if nch > 2
+                        maxD = max(max(spreds(:, 2 * ncats + 1:3 * ncats)));
+                        normDs(ss) = maxS / maxD;
                     end
-                    % compute scalars to normalize max heights
-                    normTs{ss} = maxS / maxT;
                 end
                 % set normalization constant to average across sessions
-                model.normT = mean([normTs{:}]);
-                if model.num_channels > 2
-                    model.normD = mean([normDs{:}]);
-                end
+                model.normT = mean(normTs);
+                if nch > 2; model.normD = mean(normDs); end
             end
         end
         

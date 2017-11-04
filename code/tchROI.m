@@ -276,37 +276,38 @@ classdef tchROI
         
         % estimate noise ceiling for each ROI using inter-trial variability
         function roi = tch_noise_ceil(roi)
+            % find average response in for each trial type per session
             trials_avg = cellfun(@(X) mean(X, 2), roi.trials, 'uni', false);
+            % calculate residual between individual trials and means
             trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), ...
                 roi.trials, trials_avg, 'uni', false);
             trials_err = cellfun(@(X) sum(sum(X .^ 2)), trials_err, 'uni', false);
+            % calculate varianced explained by mean trial responses
             for ss = 1:size(roi.trials, 2)
-                total_err = sum([trials_err{:, ss}]);
-                trial_mean = mean(mean(vertcat(roi.trials{:, ss})));
-                trials_var = vertcat(roi.trials{:, ss}) - trial_mean;
+                total_err = sum(cell2mat(trials_err(:, ss)));
+                trial_mean = mean(mean(cell2mat(roi.trials(:, ss))));
+                trials_var = cell2mat(roi.trials(:, ss)) - trial_mean;
                 total_var = sum(sum(trials_var .^ 2));
                 roi.noise_ceils{ss} = 1 - (total_err / total_var);
             end
         end
         
-        % use GLM to fit weights for each predictor in model
+        % use GLM to fit channel weights for each predictor in model
         function [roi, model] = tch_fit(roi, model, optim_proc, fit_exps)
             if nargin < 3; optim_proc = 0; end
             if nargin < 4; fit_exps = model.experiments; end
-            check_model(roi, model);
+            check_model(roi, model); npreds = size(model.run_preds{1, 1}, 2);
+            % subtract baseline estimates from centered time series
+            tcs = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
             % concatenate data and preds across all runs in each session
-            npreds = size(vertcat(model.run_preds{:, 1}), 2);
             for ss = 1:length(roi.sessions)
-                run_preds = vertcat(model.run_preds{:, ss}); 
-                run_durs = model.run_durs(:, ss); nruns = sum(cell2mat(run_durs) > 0);
-                % code nuisance regressors and merge with predictors
-                b0_cell = cellfun(@(X) zeros(X, nruns), run_durs, 'uni', false);
-                for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
-                b0 = cell2mat(b0_cell); predictors = [run_preds b0];
-                tc_cell = cellfun(@(X, Y) X - Y, ...
-                    roi.run_avgs(:, ss), roi.baseline(:, ss), 'uni', false);
-                tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
+                nruns = sum(model.num_runs(:, ss));
+                % construct nuisance regressors and merge with predictors
+                b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
+                    model.run_durs(:, ss), num2cell(1:nruns)', 'uni', false));
+                predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % fit GLM and store betas, SEMs, and variance explained
+                tc = cell2mat(tcs(:, ss)); roi.model.run_tcs{ss} = tc;
                 mm = tch_glm(tc, predictors);
                 roi.model.run_preds{ss} = predictors * mm.betas';
                 roi.model.betas{ss} = mm.betas(1:npreds);
@@ -412,24 +413,21 @@ classdef tchROI
         % recompute model performance given specified weights
         function roi = recompute(roi, model, fit)
             check_model(roi, model);
-            [~, nsubs] = size(model.run_preds);
-            npreds = size(vertcat(model.run_preds{:, 1}), 2);
-            for ss = 1:nsubs
-                run_durs = model.run_durs(:, ss);
-                nruns = sum(cell2mat(run_durs) > 0);
+            % subtract baseline estimates from centered time series
+            tcs = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
+            for ss = 1:length(roi.sessions)
+                nruns = sum(model.num_runs(:, ss));
                 % construct nuisance regressors and merge with predictors
-                b0_cell = cellfun(@(X) zeros(X, nruns), run_durs, 'uni', false);
-                for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
-                predictors = [cell2mat(model.run_preds(:, ss)) cell2mat(b0_cell)];
-                tc_cell = cellfun(@(X, Y) X - Y, ...
-                    roi.run_avgs(:, ss), roi.baseline(:, ss), 'uni', false);
+                b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
+                    model.run_durs(:, ss), num2cell(1:nruns)', 'uni', false));
+                predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % predict fMRI responses for each run
-                tc = vertcat(tc_cell{:, ss}); roi.model.run_tcs{ss} = tc;
+                tc = cell2mat(tcs(:, ss));
                 beta_vec = [fit.betas{ss} roi.model.rbetas{ss}];
                 run_pred = predictors * beta_vec';
+                % calculate cross-validated model performance
                 roi.model.run_preds{ss} = run_pred; res = tc - run_pred;
                 res_var = sum(res .^ 2) / sum((tc - mean(tc)) .^ 2);
-                % calculate cross-validated model performance
                 roi.model.varexp{ss} = 1 - res_var;
             end
             % store new fit in roi structure
