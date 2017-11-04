@@ -415,22 +415,21 @@ classdef tchROI
             [~, nsubs] = size(model.run_preds);
             npreds = size(vertcat(model.run_preds{:, 1}), 2);
             for ss = 1:nsubs
-                run_preds = vertcat(model.run_preds{:, ss});
-                run_durs = model.run_durs(:, ss); nruns = sum(cell2mat(run_durs) > 0);
+                run_durs = model.run_durs(:, ss);
+                nruns = sum(cell2mat(run_durs) > 0);
                 % construct nuisance regressors and merge with predictors
                 b0_cell = cellfun(@(X) zeros(X, nruns), run_durs, 'uni', false);
                 for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
-                b0 = cell2mat(b0_cell); predictors = [run_preds b0];
-                tc_cell = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
+                predictors = [cell2mat(model.run_preds(:, ss)) cell2mat(b0_cell)];
+                tc_cell = cellfun(@(X, Y) X - Y, ...
+                    roi.run_avgs(:, ss), roi.baseline(:, ss), 'uni', false);
+                % predict fMRI responses for each run
                 tc = vertcat(tc_cell{:, ss}); roi.model.run_tcs{ss} = tc;
-                beta_vec = zeros(1, npreds + nruns);
-                beta_vec(1:npreds) = fit.betas{ss};
-                beta_vec(npreds + 1:npreds + nruns) = roi.model.rbetas{ss};
-                % predict predict fMRI responses for each run
+                beta_vec = [fit.betas{ss} roi.model.rbetas{ss}];
                 run_pred = predictors * beta_vec';
                 roi.model.run_preds{ss} = run_pred; res = tc - run_pred;
                 res_var = sum(res .^ 2) / sum((tc - mean(tc)) .^ 2);
-                % calculate model performance
+                % calculate cross-validated model performance
                 roi.model.varexp{ss} = 1 - res_var;
             end
             % store new fit in roi structure
