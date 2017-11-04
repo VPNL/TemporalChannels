@@ -66,7 +66,8 @@ classdef tchModel
     end
     
     properties (Hidden)
-        num_exps        % number of experiments in model
+        types = {};     % list of all valid model types
+        num_exps = [];  % number of experiments in model
         tonsets = {};   % trial onset times (s)
         toffsets = {};  % trial offset times (s)
         tconds = {};    % condition number of each element in tonsets
@@ -88,18 +89,6 @@ classdef tchModel
     properties (Constant, Hidden)
         % path to project directory
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
-        % descriptors for each model implemented
-        types = {'1ch-lin' '2ch-lin-htd' '1ch-balloon' ...
-            '1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' '1ch-cexp' ...
-            '2ch-lin-lin' '2ch-lin-quad' '2ch-lin-rect' ...
-            '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
-            '2ch-exp-quad' '2ch-exp-rect' ...
-            '2ch-cexp-quad' '2ch-cexp-rect' ...
-            '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
-            '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
-            '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
-            '3ch-cexp-quad-exp' '3ch-cexp-rect-exp' ...
-            '2ch-lin-quad-opt' '3ch-lin-quad-exp-opt' '3ch-lin-rect-exp-opt'};
         % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
@@ -109,9 +98,10 @@ classdef tchModel
     end
     
     properties (Dependent, Hidden)
-        num_runs     % numer of runs per experiment per session
-        stimfiles    % paths to stimulus history files for each run
-        num_channels % number of channels in model (1-3 per condition)
+        num_runs      % numer of runs per experiment per session
+        stimfiles     % paths to stimulus history files for each run
+        num_channels  % number of channels in model (1-3 per condition)
+        optimize_flag % whether model requires nonlinear optimization
     end
     
     methods
@@ -130,12 +120,8 @@ classdef tchModel
             else
                 error('Incorrect number of input arguments.');
             end
-            % check for unexpected model type
-            if sum(strcmp(model.type, model.types)) ~= 1
-                error('Unexpected model type argument.');
-            end
-            % initialize model parameters
-            nsess = length(model.sessions);
+            % check for invalid model type and initialize model parameters
+            check_model_type(model.type); nsess = length(model.sessions);
             [params, irfs] = tch_init_params(type, nsess, model.fs);
             model.params = params; model.irfs = irfs;
             model.num_exps = length(model.experiments);
@@ -186,6 +172,11 @@ classdef tchModel
                 otherwise
                     num_channels = 1;
             end
+        end
+        
+        % Determine number of channels in model
+        function optimize_flag = get.optimize_flag(model)
+            optimize_flag = check_model_type(model.type);
         end
         
         % code onset, offset, and category of each stimulus in experiments

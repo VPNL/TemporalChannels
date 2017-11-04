@@ -1,9 +1,9 @@
-function tc = tch_psc(tc, detrend)
+function tc = tch_psc(tc, detrend_option)
 % Preprocess voxel time series and convert to precent signal change.
 %
 % INPUTS
 %   1) tc: TR by voxel data matrix of fMRI time series
-%   2) detrend: stages of detrending to perform on each voxel
+%   2) detrend_option: stages of detrending to perform on each voxel
 %      1 = normaliztion without trend removal
 %      2 = normalization with linear trend removal
 %      3 = normalization with linear + quadratic trend removal
@@ -15,14 +15,14 @@ function tc = tch_psc(tc, detrend)
 % Adapted from vistaoft (http://github.com/vistalab/vistasoft/)
 % AS 2/2017
 
-if nargin == 1; detrend = 3; end
+if nargin == 1; detrend_option = 3; end
 
 if isempty(tc)
     tc = [];
 else
     [num_frames, num_vox] = size(tc);
     % divide by mean of each voxel
-    if detrend >= 1
+    if detrend_option >= 1
         dc = nanmean(tc);
         dc(dc == 0 | isnan(dc)) = Inf;
         if sum(dc ~= Inf) > 0
@@ -32,7 +32,7 @@ else
         end
     end
     % remove linear trends
-    if detrend >= 2
+    if detrend_option > 1
         model = [(1:num_frames); ones(1, num_frames)]';
         model = bsxfun(@rdivide, model, max(model));
         w = model \ tc;
@@ -40,7 +40,7 @@ else
         tc = tc - b;
     end
     % remove quadratic trends
-    if detrend >= 3
+    if detrend_option > 2
         fl = 1:num_frames;
         model = [fl .* fl; fl; ones(1, num_frames)]';
         model = bsxfun(@rdivide, model, max(model));
@@ -49,7 +49,7 @@ else
         tc = tc - b;
     end
     % remove low frequency baseline drifts
-    if detrend >= 4
+    if detrend_option > 3
         frame_win = 20; k = ones(frame_win, 1) / frame_win;
         pad_frames = num_frames + 2 * frame_win;  niter = 2;
         % initialize baseline array for single period
@@ -74,8 +74,7 @@ else
         tc = tc - baseline;
     end
     % subtract mean and convert to percent signal change
-    tc = tc - ones(num_frames, 1) * mean(tc);
-    tc = tc * 100;
+    tc = (tc - ones(num_frames, 1) * mean(tc)) * 100;
     % remove spikes
     tc = medfilt1(tc, 5);
 end

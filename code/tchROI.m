@@ -182,20 +182,18 @@ classdef tchROI
         
         % find set of all_sessions with current ROI
         function roi = select_sessions(roi)
-            sessions = {}; all_sessions = roi.all_sessions; scnt = 0;
-            for ss = 1:length(all_sessions)
-                [~, session_id] = fileparts(all_sessions{ss});
+            sessions = {}; scnt = 0;
+            for ss = 1:length(roi.all_sessions)
+                [~, session_id] = fileparts(roi.all_sessions{ss});
                 spath = fullfile(roi.project_dir, 'data', session_id);
-                cpath = fullfile(spath, 'ROIs', roi.name);
-                ecnt = 0;
+                cpath = fullfile(spath, 'ROIs', roi.name); ecnt = 0;
                 for ee = 1:length(roi.experiments)
                     if exist(fullfile(cpath, roi.experiments{ee}), 'dir') == 7
                         ecnt = ecnt + 1;
                     end
                 end
                 if ecnt == length(roi.experiments)
-                    scnt = scnt + 1;
-                    sessions{scnt} = spath;
+                    scnt = scnt + 1; sessions{scnt} = spath;
                 end
             end
             % error if no sessions with ROI are found
@@ -207,14 +205,19 @@ classdef tchROI
         end
         
         % preprocess and store run timeseries of each voxel
-        function roi = tch_runs(roi, detrend)
+        function roi = tch_runs(roi, detrend_option)
             if nargin == 1
-                detrend = 4;
+                % use option 3 for regions with high SNR
+                if sum(strcmp(roi.name, {'V1' 'V2' 'V3'}))
+                    detrend_option = 3;
+                else
+                    detrend_option = 4;
+                end
             end
-            roi = select_sessions(roi); % select sessions with region
-            fpaths = roi.filenames;     % find paths to data files
+            % select sessions with region and find paths to data files
+            roi = select_sessions(roi); fpaths = roi.filenames;
             raw_runs = cellfun(@(X) tch_load(X, 'tSeries'), fpaths, 'uni', false);
-            roi.runs = cellfun(@(X) tch_psc(X, detrend), raw_runs, 'uni', false);
+            roi.runs = cellfun(@(X) tch_psc(X, detrend_option), raw_runs, 'uni', false);
         end
         
         % check dimensionality of roi time series and model predictions
@@ -233,8 +236,7 @@ classdef tchROI
             check_model(roi, model);
             sessions = roi.sessions; nsess = length(sessions);
             nconds = max(cellfun(@length, model.cond_list));
-            nexps = length(roi.experiments);
-            nruns_max = size(model.run_preds, 1); nruns = model.num_runs;
+            nexps = length(roi.experiments); nruns = model.num_runs;
             % compile all trial time series for each session and experiment
             onsets = model.tonsets; offsets = model.toffsets;
             trials = cell(nconds, nsess, nexps); conds = model.tconds;
@@ -278,32 +280,31 @@ classdef tchROI
             trials_err = cellfun(@(X, Y) X - repmat(Y, 1, size(X, 2)), ...
                 roi.trials, trials_avg, 'uni', false);
             trials_err = cellfun(@(X) sum(sum(X .^ 2)), trials_err, 'uni', false);
-            total_err = []; total_var = [];
             for ss = 1:size(roi.trials, 2)
-                total_err(ss) = sum([trials_err{:, ss}]);
+                total_err = sum([trials_err{:, ss}]);
                 trial_mean = mean(mean(vertcat(roi.trials{:, ss})));
                 trials_var = vertcat(roi.trials{:, ss}) - trial_mean;
-                total_var(ss) = sum(sum(trials_var .^ 2));
+                total_var = sum(sum(trials_var .^ 2));
                 roi.noise_ceils{ss} = 1 - (total_err / total_var);
             end
         end
         
         % use GLM to fit weights for each predictor in model
-        function [roi, model] = tch_fit(roi, model, optimize_flag, fit_exps)
-            if nargin < 3; optimize_flag = 0; end
+        function [roi, model] = tch_fit(roi, model, optim_proc, fit_exps)
+            if nargin < 3; optim_proc = 0; end
             if nargin < 4; fit_exps = model.experiments; end
-            check_model(roi, model); sessions = roi.sessions;
-            nruns_max = size(model.run_preds, 1); % max number of runs
-            nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
+            check_model(roi, model);
             % concatenate data and preds across all runs in each session
-            for ss = 1:length(sessions)
-                run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
-                run_durs = model.run_durs(:, ss); num_runs = sum(cell2mat(run_durs) > 0);
-                b0_cell = cellfun(@(X) zeros(X, num_runs), run_durs, 'uni', false);
-                for rr = 1:num_runs; b0_cell{rr}(:, rr) = 1; end
+            npreds = size(vertcat(model.run_preds{:, 1}), 2);
+            for ss = 1:length(roi.sessions)
+                run_preds = vertcat(model.run_preds{:, ss}); 
+                run_durs = model.run_durs(:, ss); nruns = sum(cell2mat(run_durs) > 0);
+                % code nuisance regressors and merge with predictors
+                b0_cell = cellfun(@(X) zeros(X, nruns), run_durs, 'uni', false);
+                for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
                 b0 = cell2mat(b0_cell); predictors = [run_preds b0];
-                run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
-                tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
+                tc_cell = cellfun(@(X, Y) X - Y, ...
+                    roi.run_avgs(:, ss), roi.baseline(:, ss), 'uni', false);
                 tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
                 % fit GLM and store betas, SEMs, and variance explained
                 mm = tch_glm(tc, predictors);
@@ -311,27 +312,16 @@ classdef tchROI
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
                 roi.model.residual{ss} = mm.residual;
-                rbetas = mm.betas(npreds + 1:npreds + nruns(ss));
+                res_var = sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2);
+                roi.model.varexp{ss} = 1 - res_var;
                 % store paramters of nuisance regressors
-                roi.model.rbetas{ss} = rbetas;
-                rstdevs = mm.stdevs(npreds + 1:npreds + nruns(ss));
-                roi.model.rstdevs{ss} = rstdevs;
-                ve = 1 - (sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2));
-                roi.model.varexp{ss} = ve;
+                roi.model.rbetas{ss} = mm.betas(npreds + 1:npreds + nruns);
+                roi.model.rstdevs{ss} = mm.stdevs(npreds + 1:npreds + nruns);
             end
             % optimize model parameters if applicable
-            omodels = {'1ch-pow' '1ch-div' '1ch-dcts' '1ch-exp' '1ch-cexp' ...
-                '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
-                '2ch-exp-quad' '2ch-exp-rect' ...
-                '2ch-cexp-quad' '2ch-cexp-rect' ...
-                '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
-                '3ch-pow-quad-exp' '3ch-pow-rect-exp' ...
-                '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
-                '3ch-cexp-quad-exp' '3ch-cexp-rect-exp' ...
-                '2ch-lin-quad-opt' '3ch-lin-quad-exp-opt' '3ch-lin-rect-exp-opt'};
-            if sum(strcmp(model.type, omodels)) > 0 && optimize_flag == 1
+            if model.optimize_flag == 1 && optim_proc == 1
                 [roi, model] = tch_optimize_fmincon(roi, model, fit_exps);
-            elseif sum(strcmp(model.type, omodels)) > 0 && optimize_flag == 2
+            elseif model.optimize_flag == 1 && optim_proc == 2
                 [roi, model] = tch_optimize_grid_grad(roi, model, fit_exps);
             end
             % carry over model parameters for all sessions to roi.model
@@ -366,7 +356,7 @@ classdef tchROI
             for ss = 1:nsubs
                 for ee = 1:nexps
                     for cc = 1:length(model.cond_list{ee})
-                        % if using a multi-channel model
+                        % if using a single-channel model
                         if model.num_channels == 1
                             amp = roi.model.betas{ss}(1:ncats);
                             % scale trial predictors by betas
@@ -375,6 +365,7 @@ classdef tchROI
                             % store trial predictors in roi
                             roi.pred{cc, ss, ee} = pred;
                         end
+                        % if using a mutli-channel model
                         if model.num_channels > 1
                             ampS = roi.model.betas{ss}(1:ncats);
                             ampT = roi.model.betas{ss}(ncats + 1:2 * ncats);
@@ -421,33 +412,30 @@ classdef tchROI
         % recompute model performance given specified weights
         function roi = recompute(roi, model, fit)
             check_model(roi, model);
-            [nruns, nsubs] = size(model.run_preds);
+            [~, nsubs] = size(model.run_preds);
+            npreds = size(vertcat(model.run_preds{:, 1}), 2);
             for ss = 1:nsubs
-                run_preds = vertcat(model.run_preds{:, ss}); npreds = size(run_preds, 2);
-                run_durs = model.run_durs(:, ss); num_runs = sum(cell2mat(run_durs) > 0);
-                b0_cell = cellfun(@(X) zeros(X, num_runs), run_durs, 'uni', false);
-                for rr = 1:num_runs
-                    b0_cell{rr}(:, rr) = 1;
-                end
+                run_preds = vertcat(model.run_preds{:, ss});
+                run_durs = model.run_durs(:, ss); nruns = sum(cell2mat(run_durs) > 0);
+                % construct nuisance regressors and merge with predictors
+                b0_cell = cellfun(@(X) zeros(X, nruns), run_durs, 'uni', false);
+                for rr = 1:nruns; b0_cell{rr}(:, rr) = 1; end
                 b0 = cell2mat(b0_cell); predictors = [run_preds b0];
-                run_avgs = roi.run_avgs(:, ss); baseline = roi.baseline(:, ss);
-                tc_cell = cellfun(@(X, Y) X - Y, run_avgs, baseline, 'uni', false);
+                tc_cell = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
                 tc = vertcat(tc_cell{:}); roi.model.run_tcs{ss} = tc;
-                beta_vec = zeros(1, npreds + num_runs);
+                beta_vec = zeros(1, npreds + nruns);
                 beta_vec(1:npreds) = fit.betas{ss};
-                beta_vec(npreds + 1:npreds + num_runs) = roi.model.rbetas{ss};
+                beta_vec(npreds + 1:npreds + nruns) = roi.model.rbetas{ss};
                 % predict predict fMRI responses for each run
                 run_pred = predictors * beta_vec';
-                roi.model.run_preds{ss} = run_pred;
-                res = tc - run_pred;
+                roi.model.run_preds{ss} = run_pred; res = tc - run_pred;
+                res_var = sum(res .^ 2) / sum((tc - mean(tc)) .^ 2);
                 % calculate model performance
-                roi.model.varexp{ss} = 1 - (sum(res.^2) / sum((tc - mean(tc)).^2));
+                roi.model.varexp{ss} = 1 - res_var;
             end
             % store new fit in roi structure
-            roi.model.betas = fit.betas;
-            roi.model.stdevs = fit.stdevs;
-            roi.model.fit_exps = fit.fit_exps;
-            roi = tch_pred(roi, model);
+            roi.model.betas = fit.betas; roi.model.stdevs = fit.stdevs;
+            roi.model.fit_exps = fit.fit_exps; roi = tch_pred(roi, model);
         end
         
     end
