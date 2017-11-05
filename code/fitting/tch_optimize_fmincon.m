@@ -2,9 +2,9 @@ function [roi, model] = tch_optimize_fmincon(roi, model, fit_exps)
 % Nonlinear optimization prodcedure using built-in fmincon algorithm.
 
 param_names = fieldnames(model.params); sessions = roi.sessions;
-if length(param_names) <= 1; fprec = 1e-4; end
-if length(param_names) == 2; fprec = 1e-3; end
-if length(param_names) >= 2; fprec = 1e-2; end;
+if length(param_names) <= 1; fprec = 1e-6; end
+if length(param_names) == 2; fprec = 1e-5; end
+if length(param_names) >= 2; fprec = 1e-4; end;
 for ss = 1:length(sessions)
     fname_opt = ['optimization_results_' model.type '_fit' [fit_exps{:}] '.mat'];
     fpath_opt = fullfile(sessions{ss}, 'ROIs', roi.name, fname_opt);
