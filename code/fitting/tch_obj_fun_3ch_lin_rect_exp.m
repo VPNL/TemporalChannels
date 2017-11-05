@@ -20,13 +20,13 @@ run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 
 % generate IRFs/filters for optimization
 delay_fun = @(y) exp(-(1:12000) / (y * 1000));
-% sustained response: stim * sustained IRF
+% sustained response: stimulus * sustained IRF
 conv_snS = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfS{1}, 1, 1), ...
     x, 'uni', false);
-% transient response: max(0, (stim * transient IRF)^2)
+% transient response: max(0, stimulus * transient IRF)
 conv_snT = @(x) cellfun(@(X) rectify(convolve_vecs(X, irfs.nrfT{1}, 1, 1), 'positive'), ...
     x, 'uni', false);
-% delay response: stim x exponential filter
+% delay response: stimulus x exponential[tau_de]
 doffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
 conv_snD = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
     cellfun(@code_delay_act, x, 'uni', false), repmat({delay_fun(y)}, nruns, 1), ...

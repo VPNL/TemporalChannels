@@ -1,6 +1,6 @@
-function obj_fun = tch_obj_fun_2ch_lin_quad_opt(roi, model)
+function obj_fun = tch_obj_fun_2ch_lin_rect_opt(roi, model)
 % Generates anonymous objective function that can be passed to fmincon for
-% the 2ch-opt model (2-channel model with optimized sustained and quadratic
+% the 2ch-opt model (2-channel model with optimized sustained and rectified
 % transient channels).
 % 
 % INPUTS:
@@ -14,7 +14,7 @@ function obj_fun = tch_obj_fun_2ch_lin_quad_opt(roi, model)
 % 
 % AS 10/2017
 
-if ~strcmp(model.type, '2ch-lin-quad-opt'); error('Incompatible model type'); end
+if ~strcmp(model.type, '2ch-lin-rect-opt'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 % generate IRFs/filters for optimization
@@ -23,7 +23,7 @@ nrfT_fun = @(y, z) tch_irfs('T', y, z, fs);
 % sustained response: stimulus * sustained IRF
 conv_snS = @(s, x, z) cellfun(@(X, Y) convolve_vecs(X, Y, 1, 1), ...
     s, repmat({nrfS_fun(x, z)}, nruns, 1), 'uni', false);
-% transient response: (stimulus * transient IRF)^2
+% transient response: max(0, stimulus * transient IRF)
 conv_snT = @(s, y, z) cellfun(@(X, Y) convolve_vecs(X, Y, 1, 1) .^ 2, ...
     s, repmat({nrfT_fun(y, z)}, nruns, 1), 'uni', false);
 % sustained BOLD: sustained response * HRF

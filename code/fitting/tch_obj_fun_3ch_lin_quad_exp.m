@@ -17,16 +17,15 @@ function obj_fun = tch_obj_fun_3ch_lin_quad_exp(roi, model)
 if ~strcmp(model.type, '3ch-lin-quad-exp'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
-
 % generate IRFs/filters for optimization
 delay_fun = @(y) exp(-(1:12000) / (y * 1000));
-% sustained response: stim * sustained IRF
+% sustained response: stimulus * sustained IRF
 conv_snS = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfS{1}, 1, 1), ...
     x, 'uni', false);
-% transient response: (stim * transient IRF)^2
+% transient response: (stimulus * transient IRF)^2
 conv_snT = @(x) cellfun(@(X) convolve_vecs(X, irfs.nrfT{1}, 1, 1) .^ 2, ...
     x, 'uni', false);
-% delay response: stim x exponential filter
+% delay response: delay function x exponential[tau_de]
 doffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
 conv_snD = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
     cellfun(@code_delay_act, x, 'uni', false), repmat({delay_fun(y)}, nruns, 1), ...
