@@ -18,7 +18,7 @@ stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 % generate IRFs/filters for optimization
 irf_fun = @(x) (0:999) .* exp(-(0:999) / (x * 1000));
-div_lpf = @(f) exp(-(0:999) / f) / sum(exp(-(0:999) / f));
+div_lpf = @(f) exp(-(0:1999) / f) / sum(exp(-(0:999) / f));
 % linear response: stim * IRF[tau1]
 conv_sn = @(x, y) cellfun(@(X, Y) convolve_vecs(X, Y, 1, 1), ...
     x, repmat({irf_fun(y)}, nruns, 1), 'uni', false);
