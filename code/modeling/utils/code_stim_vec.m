@@ -14,7 +14,10 @@ function stim_out = code_stim_vec(stim_in, idxs, cond, val)
 
 if nargin < 3; cond = 1; end
 if nargin < 4; val = 1; end
-stim_out = stim_in;
-stim_out(idxs, cond) = val;
+stim_out = [];
+if ~isempty(stim_in)
+    stim_out = stim_in;
+    stim_out(idxs, cond) = val;
+end
 
 end

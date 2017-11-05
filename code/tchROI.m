@@ -304,7 +304,7 @@ classdef tchROI
                 nruns = sum(model.num_runs(:, ss));
                 % construct nuisance regressors and merge with predictors
                 b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
-                    model.run_durs(:, ss), num2cell(1:nruns)', 'uni', false));
+                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
                 predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % fit GLM and store betas, SEMs, and variance explained
                 tc = cell2mat(tcs(:, ss)); roi.model.run_tcs{ss} = tc;
@@ -419,7 +419,7 @@ classdef tchROI
                 nruns = sum(model.num_runs(:, ss));
                 % construct nuisance regressors and merge with predictors
                 b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
-                    model.run_durs(:, ss), num2cell(1:nruns)', 'uni', false));
+                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
                 predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % predict fMRI responses for each run
                 tc = cell2mat(tcs(:, ss));

@@ -34,6 +34,22 @@ for ss = 1:length(sessions)
                     [], [], [.01 .001], [.5 1], [], fmin_options);
                 params.tau1{1} = x_opt(1) * 1000;
                 params.epsilon{1} = x_opt(2);
+            case '1ch-div'
+                obj_fun = tch_obj_fun_1ch_div(sroi, omodel);
+                x_init = [omodel.params.tau1{1} / 1000 omodel.params.sigma{1}];
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [.01 .001], [.5 1], [], fmin_options);
+                params.tau1{1} = x_opt(1) * 1000;
+                params.sigma{1} = x_opt(2);
+            case '1ch-dcts'
+                obj_fun = tch_obj_fun_1ch_dcts(sroi, omodel);
+                x_init = [omodel.params.tau1{1} / 1000 ...
+                    omodel.params.sigma{1} omodel.params.tau2{1} / 1000];
+                x_opt = fmincon(obj_fun, x_init, [1 0 -1], 0, ...
+                    [], [], [.01 .001 .01], [.5 1 1], [], fmin_options);
+                params.tau1{1} = x_opt(1) * 1000;
+                params.sigma{1} = x_opt(2);
+                params.tau2{1} = x_opt(3) * 1000;
             case '1ch-exp'
                 obj_fun = tch_obj_fun_1ch_exp(sroi, omodel);
                 x_init = omodel.params.tau_ae{1} / 1000;
