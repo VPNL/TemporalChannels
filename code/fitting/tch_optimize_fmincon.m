@@ -126,7 +126,7 @@ for ss = 1:length(sessions)
                     [], [], [4 4 1], [50 50 10], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_t{1} = x_opt(2);
-                params.kappa{1} = x_opt(2);
+                params.kappa{1} = x_opt(3);
             case '2ch-lin-rect-opt'
                 obj_fun = tch_obj_fun_2ch_lin_rect_opt(sroi, omodel);
                 x_init = [omodel.params.tau_s{1} omodel.params.tau_t{1} omodel.params.kappa{1}]; 
@@ -134,7 +134,7 @@ for ss = 1:length(sessions)
                     [], [], [4 4 1], [50 50 10], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_t{1} = x_opt(2);
-                params.kappa{1} = x_opt(2);
+                params.kappa{1} = x_opt(3);
             case '3ch-lin-quad-exp-opt'
                 obj_fun = tch_obj_fun_3ch_lin_quad_exp_opt(sroi, omodel);
                 tau_de = omodel.params.tau_de{1} / 1000;

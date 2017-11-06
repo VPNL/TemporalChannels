@@ -33,16 +33,16 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, 
 % [roi, model] = tch_model_roi('V1', '1ch-pow', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'}, [], );
 % 
 % Validate the fit of GLM on data separately for each validation experiment:
-% [roi, model] = tch_model_roi('V1', 'glm', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
+% [roi, model] = tch_model_roi('V1', '2ch-lin-quad', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
 % 
 % AS 2/2017
 
 
 %% Setup paths and check inputs
 mpath = fileparts(mfilename('fullpath')); addpath(genpath(mpath));
-if nargin < 4; cv_flag = 0; else; cv_flag = 1; end
-if nargin < 5; sessions = []; end
-if nargin < 6; opt_proc = 1; end
+if nargin < 4 || isempty(val_exps); cv_flag = 0; else; cv_flag = 1; end
+if nargin < 5; opt_proc = 1; end
+if nargin < 6; sessions = []; end
 
 %% Fit the model to fit_exps
 
