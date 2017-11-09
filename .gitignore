@@ -5,9 +5,6 @@
 *.espc
 *.m~
 *.asv
-code/modeling/pred_runs_3ch*.m
-code/modeling/pred_trials_3ch*.m
-code/fitting/tch_obj_fun_3ch*.m
 my_*.m
 figures/*
 !figures/readme_data.txt
