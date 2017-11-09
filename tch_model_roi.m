@@ -41,7 +41,7 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, 
 %% Setup paths and check inputs
 mpath = fileparts(mfilename('fullpath')); addpath(genpath(mpath));
 if nargin < 4 || isempty(val_exps); cv_flag = 0; else; cv_flag = 1; end
-if nargin < 5; opt_proc = 1; end
+if nargin < 5 || isempty(opt_proc); opt_proc = 1; end
 if nargin < 6; sessions = []; end
 
 %% Fit the model to fit_exps

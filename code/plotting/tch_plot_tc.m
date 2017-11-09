@@ -17,9 +17,11 @@ function [h, ymin, ymax] = tch_plot_tc(x, y, lw, lcol, ecol, err_type)
 % AS 5/2017
 
 % check inputs
-if nargin < 5 || size(y, 1) < 2
-    err_flag = 0;
-    err_type = 'std';
+if nargin < 3 || isempty(lw); lw = 2; end
+if nargin < 4 || isempty(lcol); lcol = [0 0 0]; end
+if nargin < 5 || isempty(ecol); ecol = [.5 .5 .5]; end
+if nargin < 6 || isempty(err_type) || size(y, 1) < 2
+    err_flag = 0; err_type = 'std';
 else
     err_flag = 1;
 end
@@ -28,7 +30,7 @@ end
 y_mean = mean(y, 1);
 if nargin > 4 && size(y, 1) > 1
     err = std(y);
-    if strcmp(lower(err_type), 'sem')
+    if strcmpi(err_type, 'sem')
         err = err / (sqrt(size(y, 1) - 1));
     end
 else
@@ -40,13 +42,8 @@ if err_flag
     xvec = [x fliplr(x)]; yvec = [y_mean + err fliplr(y_mean - err)];
     me = patch(xvec, yvec, ecol, 'LineStyle', 'none'); alpha(me, 0.5);
 end
-ma = plot(x, y_mean, 'Color', lcol, 'LineWidth', lw);
-ymin = min(y_mean - err);
-ymax = max(y_mean + err);
-if err_flag
-    h = me;
-else
-    h = ma;
-end
+hold on; ma = plot(x, y_mean, 'Color', lcol, 'LineWidth', lw);
+ymin = min(y_mean - err); ymax = max(y_mean + err);
+if err_flag == 1; h = me; else; h = ma; end
 
 end

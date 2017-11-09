@@ -24,7 +24,7 @@ switch v_align(1)
         va = 'middle';
 end
 
-txt = text(x, y, str, 'FontName', 'Helvatica', 'FontSize', fs, 'Color', col, ...
+txt = text(x, y, str, 'FontName', 'Helvetica', 'FontSize', fs, 'Color', col, ...
     'HorizontalAlignment', ha, 'VerticalAlignment', va, 'FontWeight', fw);
 
 

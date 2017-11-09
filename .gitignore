@@ -5,6 +5,9 @@
 *.espc
 *.m~
 *.asv
+pred_runs_3ch*.m
+pred_trials_3ch*.m
+tch_obj_fun_3ch*.m
 my_*.m
 figures/*
 !figures/readme_data.txt
