@@ -12,9 +12,8 @@ for ss = 1:length(sessions)
     % load optimization results if saved, otherwise compute
     if exist(fpath_grad, 'file') == 2
         load(fpath_grad); fprintf('Loading gradient descent results. \n');
-        sroi = tch_runs(tchROI(roi.name, roi.experiments, sessions{ss}));
         smodel = tchModel(model.type, roi.experiments, sessions{ss});
-        smodel.normT = model.normT; smodel.normD = model.normD;
+        smodel.tr = model.tr; smodel.normT = model.normT; smodel.normD = model.normD;
         for pp = 1:length(param_names)
             pn = param_names{pp}; smodel.params.(pn){1} = params.(pn){1};
         end
@@ -22,9 +21,10 @@ for ss = 1:length(sessions)
         smodel = pred_runs(smodel); smodel = pred_trials(smodel);
     elseif exist(fpath_grid, 'file') == 2
         load(fpath_grid); fprintf('Loading grid search results. \n');
-        sroi = tch_runs(tchROI(roi.name, roi.experiments, sessions{ss}));
+        sroi = tchROI(roi.name, roi.experiments, sessions{ss});
+        sroi.tr = roi.tr; sroi = tch_runs(sroi);
         smodel = tchModel(model.type, roi.experiments, sessions{ss});
-        smodel.normT = model.normT; smodel.normD = model.normD;
+        smodel.tr = model.tr; smodel.normT = model.normT; smodel.normD = model.normD;
         smodel = code_stim(smodel);
         for mm = 1:length(params)
             smodel(mm) = smodel(1); sroi(mm) = sroi(1);

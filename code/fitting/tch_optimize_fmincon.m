@@ -18,7 +18,7 @@ for ss = 1:length(sessions)
         omodel = update_param(omodel, pn, 0);
     else
         sroi = tchROI(roi.name, roi.experiments, sessions{ss});
-        sroi.tr = roi.tr; sroi = tch_runs(roi);
+        sroi.tr = roi.tr; sroi = tch_runs(sroi);
         omodel = tchModel(model.type, roi.experiments, sessions{ss});
         omodel.tr = model.tr; omodel = code_stim(omodel);
         omodel.normT = model.normT; omodel.normD = model.normD;
