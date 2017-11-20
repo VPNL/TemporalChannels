@@ -15,7 +15,7 @@ fit_str = strrep(fit_str, '_', '-'); val_str = strrep(val_str, '_', '-');
 
 % setup figure
 fig_name = [roi.nickname ' - ' roi.model.type ' model'];
-fig = tch_fig(fig_name, [.1 0 .8 .3 + nexps * .2]);
+fig = tch_fig(fig_name, [.1 0 .8 .2 + nexps * .15]);
 
 % plot model weights
 subplot(1 + nexps, 2, 1); hold on; tch_set_axes;
