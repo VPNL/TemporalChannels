@@ -13,8 +13,7 @@ function data = tch_load(filename, field)
 
 if ~isempty(filename)
     try
-        oo = load(filename, field);
-        data = getfield(oo, field);
+        data = double(getfield(load(filename, field), field));
     catch
         data = [];
     end

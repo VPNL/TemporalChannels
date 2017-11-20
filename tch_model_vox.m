@@ -79,7 +79,7 @@ if cv_flag
     [vox(2), model(2)] = tch_fit(vox(2), model(2));
     vox(2) = tch_pred(vox(2), model(2));
     % use model fit to data from exps_fit to predict data in exps_val
-    vox(2) = recompute(vox(2), model(2), vox(1).model);
+    vox(2) = tch_recompute(vox(2), model(2), vox(1).model);
 end
 
 %% Save results

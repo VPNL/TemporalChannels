@@ -84,17 +84,12 @@ classdef tchModel
         adapt_act = {}; % sustained activity with adaptation decay
         normT = 10;     % transient channel normalization scalar
         normD = 2;      % delay channel normalization scalar
-    end
-    
-    properties (Constant, Hidden)
-        % path to project directory
-        project_dir = fileparts(fileparts(which(mfilename, 'class')));
-        % experimental parameters
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
         pre_dur = 4;    % pre-stimulus baseline period (s)
         post_dur = 12;  % post-stimulus baseline duration (s)
         fs = 1000;      % stimulus/neural sampling rate (Hz)
+        project_dir = fileparts(fileparts(which(mfilename, 'class')));
     end
     
     properties (Dependent, Hidden)

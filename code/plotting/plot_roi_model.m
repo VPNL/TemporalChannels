@@ -10,7 +10,8 @@ amps = reshape([roi.model.betas{:}], npreds, [])';
 R2 = [roi.model.varexp{:}]; R2_str = num2str(mean(R2), 3);
 fit_str = [roi.model.type ' fit to ' strjoin(roi.model.fit_exps, '/')];
 val_str = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' R2_str];
-xlabs = label_preds(roi.model); xlabs = xlabs(1:npreds);
+xlabs = label_preds(roi.model); xlabs = strrep(xlabs(1:npreds), '_', '-');
+fit_str = strrep(fit_str, '_', '-'); val_str = strrep(val_str, '_', '-');
 
 % setup figure
 fig_name = [roi.nickname ' - ' roi.model.type ' model'];

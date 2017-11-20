@@ -21,6 +21,8 @@ for ee = 1:nexps
         cstim_start = round(fs * (ton(idx) - model.pre_dur)) + 1;
         cstim_stop = round(fs * (ton(idx) + td + model.post_dur));
         cstim = model.stim{rcnt, 1}(cstim_start:cstim_stop, :);
+        cstim(1:fs * model.pre_dur, :) = 0;
+        cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         dcstim = diff(sum(cstim, 2));
         starts = find(dcstim == 1) / fs; stops = find(dcstim == -1) / fs;
         % generate trial predictor per session

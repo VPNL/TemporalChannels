@@ -91,7 +91,7 @@ if cv_flag
         [roi(vn), model(vn)] = tch_fit(roi(vn), model(vn), opt_proc, fit_exps);
         roi(vn) = tch_pred(roi(vn), model(vn));
         % use model fit from fit_exps to predict data in val_exps
-        roi(vn) = recompute(roi(vn), model(vn), roi(1).model);
+        roi(vn) = tch_recompute(roi(vn), model(vn), roi(1).model);
     end
 end
 

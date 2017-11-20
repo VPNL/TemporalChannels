@@ -20,6 +20,8 @@ for ee = 1:model.num_exps
         ion = ton(ii); ioff = ceil(toff(ii) - .001); td = ioff - ion;
         % extract stimulus vector from condition time window
         cstim = istim(fs * (ion - model.pre_dur) + 1:round(fs * (ion + td + model.post_dur)), :);
+        cstim(1:fs * model.pre_dur, :) = 0;
+        cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);

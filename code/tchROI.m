@@ -12,10 +12,8 @@
 %   tch_trials -- compiles trial-level time series sorted by experiment
 %   tch_fit -- fits tchModel object to the mean time series of each ROI
 %   tch_pred -- predicts trial responses using model solutoin
-%   plot_runs -- plots measured vs. predicted responses for each run
-%   plot_exps -- plots comparison of trial responses across experiments
 %   plot_roi -- plots various components of ROI analysis
-%   recompute -- validates model solution on indpendent data
+%   tch_recompute -- validates model solution on indpendent data
 %
 % Example model fitting steps ("model" is a tchModel object):
 %   roi = tchROI('V1', {'Exp1' 'Exp2'})
@@ -46,11 +44,8 @@ classdef tchROI
         baseline = {};    % mean baseline response across all trial types
         noise_ceils = {}; % estiamte of noice ceiling for each experiment
         isessions = {};   % user-specified session list (optional)
-    end
-    
-    properties (Constant, Hidden)
+        tr = 1;           % fMRI TR (s)
         project_dir = fileparts(fileparts(which(mfilename, 'class')));
-        tr = 1; % fMRI TR (s)
     end
     
     properties (Dependent)
@@ -64,10 +59,10 @@ classdef tchROI
         filenames    % paths to data files from sessions
         nickname     % ROI nickname
         session_ids  % session nicknames
-        pred_sum     % sum of preds across all channels
-        predS_sum    % sum of preds across S channels
-        predT_sum    % sum of preds across T channels
-        predD_sum    % sum of preds across D channels
+        pred_sum     % sum of predictors across all channels
+        predS_sum    % sum of predictors across S channels
+        predT_sum    % sum of predictors across T channels
+        predD_sum    % sum of predictors across D channels
     end
     
     
@@ -98,10 +93,9 @@ classdef tchROI
         
         % find the number of runs per experiment for each session
         function num_runs = get.num_runs(roi)
-            sessions = roi.sessions; nsess = length(sessions);
-            num_runs = zeros(length(roi.experiments), nsess);
-            for ss = 1:nsess
-                spath = fullfile(sessions{ss}, 'ROIs', roi.name);
+            num_runs = zeros(length(roi.experiments), length(roi.sessions));
+            for ss = 1:length(roi.sessions)
+                spath = fullfile(roi.sessions{ss}, 'ROIs', roi.name);
                 % find paths to data files for each experiment
                 for ee = 1:length(roi.experiments)
                     d = dir(fullfile(spath, roi.experiments{ee}, 'Run*.mat'));
@@ -115,15 +109,13 @@ classdef tchROI
             nruns = roi.num_runs; filenames = {};
             % for each session
             for ss = 1:length(roi.sessions)
-                rcnt = 0;
-                spath = fullfile(roi.sessions{ss}, 'ROIs', roi.name);
+                spath = fullfile(roi.sessions{ss}, 'ROIs', roi.name); rcnt = 0;
                 % for each experiment
                 for ee = 1:length(roi.experiments)
                     % store paths to data file for each run
                     for rr = 1:nruns(ee, ss)
-                        rcnt = rcnt + 1;
                         edir = fullfile(spath, roi.experiments{ee});
-                        fname = ['Run' num2str(rr) '.mat'];
+                        fname = ['Run' num2str(rr) '.mat']; rcnt = rcnt + 1;
                         filenames{rcnt, ss} = fullfile(edir, fname);
                     end
                 end
@@ -152,11 +144,9 @@ classdef tchROI
         
         % label each session with an ID string
         function session_ids = get.session_ids(roi)
-            sessions = roi.sessions;
-            session_ids = cell(1, length(sessions));
-            for ss = 1:length(sessions)
-                [~, session_id] = fileparts(sessions{ss});
-                session_ids{ss} = session_id;
+            session_ids = cell(1, length(roi.sessions));
+            for ss = 1:length(roi.sessions)
+                [~, session_ids{ss}] = fileparts(roi.sessions{ss});
             end
         end
         
@@ -224,9 +214,10 @@ classdef tchROI
         function check_model(roi, model)
             empty_cells = cellfun(@isempty, model.run_durs);
             rds = model.run_durs; rds(empty_cells) = {0};
+            rds = cellfun(@(X) X / roi.tr, rds, 'uni', false);
             comp = cellfun(@length, roi.run_avgs) ~= cell2mat(rds);
             if sum(comp(:)) > 0
-                error('dimensions of data and model do not match');
+                error('Dimensions of data and model do not match');
             end
         end
         
@@ -234,38 +225,36 @@ classdef tchROI
         function roi = tch_trials(roi, model)
             % check model and get design parameters
             check_model(roi, model);
-            sessions = roi.sessions; nsess = length(sessions);
             nconds = max(cellfun(@length, model.cond_list));
             nexps = length(roi.experiments); nruns = model.num_runs;
             % compile all trial time series for each session and experiment
             onsets = model.tonsets; offsets = model.toffsets;
-            trials = cell(nconds, nsess, nexps); conds = model.tconds;
-            for ss = 1:nsess
+            trials = cell(nconds, length(roi.sessions), nexps);
+            for ss = 1:length(roi.sessions)
                 rcnt = 0;
                 for ee = 1:nexps
                     cnts = zeros(1, length(model.cond_list{ee}));
                     for rr = 1:nruns(ee, ss)
                         rcnt = rcnt + 1;
                         % estimate prestimulus baseline response for run
-                        oframes = repmat(onsets{rcnt, ss}, model.pre_dur, 1);
-                        b = repmat([1:model.pre_dur]', 1, length(oframes));
-                        psf = oframes - b; bf = psf(:);
+                        npsfs = round(model.pre_dur / model.tr);
+                        oframes = repmat(onsets{rcnt, ss}, npsfs, 1) / model.tr;
+                        psf = oframes - repmat((1:npsfs)', 1, length(oframes));
                         % calculate mean baseline response to subtract
-                        bs = mean(roi.run_avgs{rcnt, ss}(bf));
+                        bs = mean(roi.run_avgs{rcnt, ss}(psf(:)), 1);
                         roi.baseline{rcnt, ss} = bs;
                         % store peri-stimulus time series sorted by trial
                         for tt = 1:length(onsets{rcnt, ss})
                             % get condition number of this trial
-                            cond = conds{rcnt, ss}(tt);
+                            cond = model.tconds{rcnt, ss}(tt);
                             cond_idx = find(strcmp(cond, model.cond_list{ee}));
                             cnts(cond_idx) = cnts(cond_idx) + 1;
                             % get TR corresponding to onset of pre_dur
-                            on_idxs = onsets{rcnt, ss}(tt) - model.pre_dur;
-                            onset = on_idxs / roi.tr + 1;
-                            off_idxs = offsets{rcnt, ss}(tt) - model.gap_dur / 2;
-                            offset = (floor(off_idxs) + model.post_dur) / roi.tr + 1;
+                            on_idx = (onsets{rcnt, ss}(tt) - model.pre_dur) / roi.tr + 1;
+                            off_time = offsets{rcnt, ss}(tt) - model.gap_dur / 2;
+                            off_idx = (floor(off_time) + model.post_dur + 1) / roi.tr;
                             % extract the peri-stimulus time window
-                            trial_avg = roi.run_avgs{rcnt, ss}(onset:offset) - bs;
+                            trial_avg = roi.run_avgs{rcnt, ss}(on_idx:off_idx) - bs;
                             trials{cond_idx, ss, ee}(:, cnts(cond_idx)) = trial_avg;
                         end
                     end
@@ -299,12 +288,13 @@ classdef tchROI
             check_model(roi, model); npreds = size(model.run_preds{1, 1}, 2);
             % subtract baseline estimates from centered time series
             tcs = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
+            rfs = cellfun(@(X) X / model.tr, model.run_durs, 'uni', false);
             % concatenate data and preds across all runs in each session
             for ss = 1:length(roi.sessions)
                 nruns = sum(model.num_runs(:, ss));
                 % construct nuisance regressors and merge with predictors
                 b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
-                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
+                    rfs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
                 predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % fit GLM and store betas, SEMs, and variance explained
                 tc = cell2mat(tcs(:, ss)); roi.model.run_tcs{ss} = tc;
@@ -313,7 +303,7 @@ classdef tchROI
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
                 roi.model.residual{ss} = mm.residual;
-                res_var = sum(mm.residual .^ 2) / sum((tc - mean(tc)) .^ 2);
+                res_var = sum(mm.residual .^ 2) ./ sum((tc - mean(tc)) .^ 2);
                 roi.model.varexp{ss} = 1 - res_var;
                 % store paramters of nuisance regressors
                 roi.model.rbetas{ss} = mm.betas(npreds + 1:npreds + nruns);
@@ -411,15 +401,16 @@ classdef tchROI
         end
         
         % recompute model performance given specified weights
-        function roi = recompute(roi, model, fit)
+        function roi = tch_recompute(roi, model, fit)
             check_model(roi, model);
             % subtract baseline estimates from centered time series
             tcs = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
+            rfs = cellfun(@(X) X / model.tr, model.run_durs, 'uni', false);
             for ss = 1:length(roi.sessions)
                 nruns = sum(model.num_runs(:, ss));
                 % construct nuisance regressors and merge with predictors
                 b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
-                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
+                    rfs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
                 predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % predict fMRI responses for each run
                 tc = cell2mat(tcs(:, ss));

@@ -10,7 +10,7 @@
 %   tch_runs -- preprocesses and stores time series of all voxels
 %   tch_trials -- compiles trial-level time series sorted by experiment
 %   tch_fit -- fits tchModel object to the mean time series of each voxel
-%   recompute -- validates model solution on indpendent data
+%   tch_recompute -- validates model solution on indpendent data
 % 
 % Example model fitting steps ("model" is a tchModel object):
 %   vox = tchVoxel({'Exp1' 'Exp2'})
@@ -32,6 +32,7 @@ classdef tchVoxel
         runs = {};      % voxel responses for each run (TRs, voxels)
         trials = {};    % voxel responses for each trial type (TRs, voxels)
         baseline = {}   % mean baseline response across all trial types
+        noise_ceils = {}; % estiamte of noice ceiling for each experiment
         isessions = {}; % user-specified session list (optional)
     end
     
@@ -45,10 +46,6 @@ classdef tchVoxel
         num_runs     % number of runs per experiment
         filenames    % paths to data files from sessions
         session_ids  % session nicknames
-        pred_sum     % sum of preds across all channels
-        predS_sum    % sum of preds across S channels
-        predT_sum    % sum of preds across T channels
-        predD_sum    % sum of preds across D channels
     end
     
     
@@ -90,18 +87,16 @@ classdef tchVoxel
         
         % find the paths to the data files for each session
         function filenames = get.filenames(vox)
-            sessions = vox.sessions; nsess = length(sessions);
             filenames = {}; nruns = vox.num_runs;
             % for each session
-            for ss = 1:nsess
-                rcnt = 0;
-                spath = fullfile(sessions{ss}, 'Voxels');
+            for ss = 1:length(vox.sessions)
+                spath = fullfile(vox.sessions{ss}, 'Voxels'); rcnt = 0;
                 % for each experiment
                 for ee = 1:length(vox.experiments)
                     % store paths to data file for each run
                     for rr = 1:nruns(ee, ss)
-                        rcnt = rcnt + 1;
-                        filenames{rcnt, ss} = fullfile(spath, vox.experiments{ee}, ['Run' num2str(rr) '.mat']);
+                        fname = ['Run' num2str(rr) '.mat']; rcnt = rcnt + 1;
+                        filenames{rcnt, ss} = fullfile(spath, vox.experiments{ee}, fname);
                     end
                 end
             end
@@ -109,32 +104,10 @@ classdef tchVoxel
         
         % label each session with an ID string
         function session_ids = get.session_ids(vox)
-            sessions = vox.sessions;
-            session_ids = cell(1, length(sessions));
-            for ss = 1:length(sessions)
-                [~, session_id] = fileparts(sessions{ss});
-                session_ids{ss} = session_id;
+            session_ids = cell(1, length(vox.sessions));
+            for ss = 1:length(vox.sessions)
+                [~, session_ids{ss}] = fileparts(vox.sessions{ss});
             end
-        end
-        
-        % sum trial predictors across all channels
-        function pred_sum = get.pred_sum(vox)
-            pred_sum = cellfun(@(X) sum(X, 2), vox.pred, 'uni', false);
-        end
-        
-        % sum trial predictors across sustained channels
-        function predS_sum = get.predS_sum(vox)
-            predS_sum = cellfun(@(X) sum(X, 2), vox.predS, 'uni', false);
-        end
-        
-        % sum trial predictors across transient channels
-        function predT_sum = get.predT_sum(vox)
-            predT_sum = cellfun(@(X) sum(X, 2), vox.predT, 'uni', false);
-        end
-        
-        % sum trial predictors across all delay channels
-        function predD_sum = get.predD_sum(vox)
-            predD_sum = cellfun(@(X) sum(X, 2), vox.predD, 'uni', false);
         end
         
         % find set of all_sessions with experiments
@@ -164,11 +137,11 @@ classdef tchVoxel
         end
         
         % preprocess and store run timeseries of each voxel
-        function vox = tch_runs(vox)
-            vox = select_sessions(vox); % sessions with all experiments
-            fpaths = vox.filenames;     % paths to data files
+        function vox = tch_runs(vox, detrend_option)
+            if nargin == 1; detrend_option = 3; end
+            vox = select_sessions(vox); fpaths = vox.filenames;
             raw_runs = cellfun(@(X) tch_load(X, 'tSeries'), fpaths, 'uni', false);
-            vox.runs = cellfun(@(X) tch_psc(X), raw_runs, 'uni', false);
+            vox.runs = cellfun(@(X) tch_psc(X, detrend_option), raw_runs, 'uni', false);
         end
         
         % check dimensionality of vox time series and model predictions
@@ -177,49 +150,45 @@ classdef tchVoxel
             rds = model.run_durs; rds(empty_cells) = {0};
             comp = cellfun(@(X) size(X, 1), vox.runs) ~= cell2mat(rds);
             if sum(comp(:)) > 0
-                error('dimensions of data and model do not match');
+                error('Dimensions of data and model do not match');
             end
         end
         
         % compile time series for each trial type
         function vox = tch_trials(vox, model)
             % check model and get design parameters
-            check_model(vox, model);
-            sessions = vox.sessions; nsess = length(sessions);
+            check_model(vox, model); nruns = model.num_runs;
             nconds = max(cellfun(@length, model.cond_list));
-            nexps = length(vox.experiments);
-            nruns_max = size(model.run_preds, 1);
-            nruns = model.num_runs;
             % get onsets, offsets, and trial orders
-            onsets = model.tonsets;
-            offsets = model.toffsets;
-            conds = model.tconds;
+            onsets = model.tonsets; offsets = model.toffsets;
             % compile all trial time series for each session and experiment
-            trials = cell(nconds, nsess, nexps);
-            for ss = 1:nsess
+            trials = cell(nconds, length(vox.sessions), length(vox.experiments));
+            for ss = 1:length(vox.sessions)
                 rcnt = 0;
-                for ee = 1:nexps
+                for ee = 1:length(vox.experiments)
                     cnts = zeros(1, length(model.cond_list{ee}));
                     for rr = 1:nruns(ee, ss)
                         rcnt = rcnt + 1;
                         % estimate prestimulus baseline response for run
                         oframes = repmat(onsets{rcnt, ss}, model.pre_dur, 1);
-                        psf = oframes - repmat([1:model.pre_dur]', 1, length(oframes));
-                        bf = psf(:);
+                        psf = oframes - repmat((1:model.pre_dur)', 1, length(oframes));
                         % calculate mean baseline response to subtract
-                        bs = mean(vox.runs{rcnt, ss}(bf, :));
+                        bs = mean(vox.runs{rcnt, ss}(psf(:), :));
                         vox.baseline{rcnt, ss} = bs;
                         % store peri-stimulus time series sorted by trial
                         for tt = 1:length(onsets{rcnt, ss})
                             % get condition number of this trial
-                            cond = conds{rcnt, ss}(tt);
+                            cond = model.tconds{rcnt, ss}(tt);
                             cond_idx = find(strcmp(cond, model.cond_list{ee}));
                             cnts(cond_idx) = cnts(cond_idx) + 1;
                             % get TR corresponding to onset of pre_dur
                             onset = (onsets{rcnt, ss}(tt) - model.pre_dur) / vox.tr + 1;
-                            offset = (floor(offsets{rcnt, ss}(tt) - model.gap_dur / 2) + model.post_dur) / vox.tr + 1;
+                            off_idxs = offsets{rcnt, ss}(tt) - model.gap_dur / 2;
+                            offset = (floor(off_idxs) + model.post_dur) / vox.tr + 1;
                             % extract the peri-stimulus time window
-                            trials{cond_idx, ss, ee}(:, :, cnts(cond_idx)) = vox.runs{rcnt, ss}(onset:offset, :) - repmat(bs, length(onset:offset), 1);
+                            bsm = repmat(bs, length(onset:offset), 1);
+                            trial = vox.runs{rcnt, ss}(onset:offset, :) - bsm;
+                            trials{cond_idx, ss, ee}(:, :, cnts(cond_idx)) = trial;
                         end
                     end
                 end
@@ -228,79 +197,35 @@ classdef tchVoxel
         end
         
         % use GLM to fit weights for each predictor in model
-        function [vox, model] = tch_fit(vox, model, optimize_flag, fit_exps)
-            if nargin < 3; optimize_flag = 0; end
-            if nargin < 4; fit_exps = model.experiments; end
-            check_model(vox, model); sessions = vox.sessions;
-            nruns_max = size(model.run_preds, 1);
-            nruns = nruns_max - sum(cellfun(@isempty, model.run_preds));
+        function [vox, model] = tch_fit(vox, model)
+            check_model(vox, model); npreds = size(model.run_preds{1, 1}, 2);
+            % subtract baseline estimates from centered time series
+            bsm = cellfun(@(X, Y) repmat(X, size(Y, 1), 1), ...
+                vox.baseline, vox.runs, 'uni', false);
+            tcs = cellfun(@(X, Y) X - Y, vox.runs, bsm, 'uni', false);
             % concatenate data and preds across all runs in each session
-            for ss = 1:length(sessions)
-                predictors = []; tc = [];
-                for rr = 1:nruns(ss)
-                    [nframes, npreds] = size(model.run_preds{rr, ss});
-                    pred = zeros(nframes, npreds + nruns(ss)); 
-                    pred(:, 1:npreds) = model.run_preds{rr, ss};
-                    pred(:, npreds + rr) = 1; % add nuisance run regressors
-                    predictors = [predictors; pred];
-                    tc = [tc; vox.runs{rr, ss} - repmat(vox.baseline{rr, ss}, size(vox.runs{rr, ss}, 1), 1)];
-                end
-                vox.model.run_tcs{ss} = tc;
+            for ss = 1:length(vox.sessions)
+                nruns = sum(model.num_runs(:, ss));
+                % construct nuisance regressors and merge with predictors
+                b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
+                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
+                predictors = [cell2mat(model.run_preds(:, ss)) b0];
                 % fit GLM and store betas, SEMs, and variance explained
+                tc = cell2mat(tcs(:, ss)); vox.model.run_tcs{ss} = tc;
                 mm = tch_glm(tc, predictors);
                 vox.model.run_preds{ss} = predictors * squeeze(mm.betas);
                 vox.model.betas{ss} = mm.betas(:, 1:npreds, :);
                 vox.model.stdevs{ss} = mm.stdevs(:, 1:npreds, :);
-                vox.model.rbetas{ss} = mm.betas(:, npreds + 1:npreds + nruns(ss), :); % nuisance regressor betas
-                vox.model.rstdevs{ss} = mm.stdevs(:, npreds + 1:npreds + nruns(ss), :); % nuisance regressor stdevs
-                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(mm.residual .^ 2, 1) ./ ...
-                    sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
-            end
-            % optimize model parameters if applicable
-            omodels = {'1ch-pow' '1ch-div' '1ch-dcts' ...
-                '2ch-pow-quad' '2ch-pow-rect' '2ch-div-quad' ...
-                '2ch-exp-quad' '2ch-exp-rect' ...
-                '2ch-cexp-quad' '2ch-cexp-rect' ...
-                '3ch-lin-quad-exp' '3ch-lin-rect-exp' ...
-                '3ch-exp-quad-exp' '3ch-exp-rect-exp' ...
-                '3ch-cexp-quad-exp' '3ch-cexps-rect-exp'};
-            if optimize_flag && sum(strcmp(model.type, omodels))
-                param_names = fieldnames(model.params);
-                for ss = 1:length(sessions)
-                    fname_grid = ['grid_search_results_' model.type ...
-                        '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grid = fullfile(sessions{ss}, 'Voxels', fname_grid);
-                    fname_grad = ['grad_desc_results_' model.type ...
-                        '_fit' [fit_exps{:}] '.mat'];
-                    fpath_grad = fullfile(sessions{ss}, 'Voxels', fname_grad);
-                    % load optimization results if saved, otherwise compute
-                    if exist(fpath_grad, 'file') == 2
-                        fprintf('Loading gradient descent results. \n');
-                        load(fpath_grad);
-                    elseif exist(fpath_grid, 'file') == 2
-                        fprintf('Loading grid search results. \n');
-                        load(fpath_grid);
-                        [voxels, models] = tch_optimize_fit(voxels, models);
-                        save(fpath_grad, 'voxels', 'models', '-v7.3');
-                    else
-                        [voxels, models] = tch_grid_search(vox, model, ss, 5);
-                        save(fpath_grid, 'voxels', 'models', '-v7.3');
-                        [rois, models] = tch_optimize_fit(rois, models);
-                        save(fpath_grad, 'voxels', 'models', '-v7.3');
-                    end
-                    % copy optimized parameters for session
-                    for pp = 1:length(param_names)
-                        opt_params = models.params.(param_names{pp}){1};
-                        model.params.(param_names{pp}){ss} = opt_params;
-                        model = update_param(model, param_names{pp}, 0);
-                    end
-                    model = pred_runs(model);
-                    model = pred_trials(model);
-                    [vox, model] = tch_fit(vox, model, 0);
-                end
+                vox.model.residual{ss} = mm.residual;
+                res_var = sum(mm.residual .^ 2) ./ sum((tc - mean(tc)) .^ 2);
+                vox.model.varexp{ss} = ones(1, size(tc, 2)) - res_var;
+                % store parameters of nuisance regressors
+                vox.model.rbetas{ss} = mm.betas(:, npreds + 1:npreds + nruns(ss), :);
+                vox.model.rstdevs{ss} = mm.stdevs(:, npreds + 1:npreds + nruns(ss), :);
             end
             % carry over model parameters to vox model struct
             vox.model.type = model.type;
+            vox.model.num_channels = model.num_channels;
             vox.model.cond_list = model.cond_list;
             vox.model.cat_list = unique([model.cats{:}]);
             vox.model.pre_dur = model.pre_dur;
@@ -311,37 +236,28 @@ classdef tchVoxel
         end
         
         % recompute model performance given indepdendently-fit weights
-        function vox = recompute(vox, model, fit)
+        function vox = tch_recompute(vox, model, fit)
             check_model(vox, model);
-            [nruns, nsubs] = size(model.run_preds);
-            for ss = 1:nsubs
-                run_preds = []; tc = [];
-                npreds = size(model.run_preds{1, ss}, 2);
-                nsruns = size(vox.model.rbetas{ss}, 2);
-                for rr = 1:nsruns
-                    nframes = size(model.run_preds{rr, ss}, 1);
-                    pm = zeros(nframes, npreds + nsruns);
-                    pm(:, 1:npreds) = model.run_preds{rr, ss};
-                    pm(:, npreds + rr) = 1;
-                    run_preds = [run_preds; pm];
-                    tc = [tc; vox.runs{rr, ss} - repmat(vox.baseline{rr, ss}, size(vox.runs{rr, ss}, 1), 1)];
-                end
-                vox.model.run_tcs{ss} = tc;
-                beta_vecs = zeros(1, npreds + nsruns, size(tc, 2));
-                beta_vecs(1, 1:npreds, :) = fit.betas{ss};
-                beta_vecs(1, npreds + 1:npreds + nsruns, :) = vox.model.rbetas{ss};
-                % rectify negative weights for cross-validation
-                beta_vecs(1, beta_vecs(1:npreds, :) < 0) = 0;
-                % predict predict fMRI responses for each run
-                run_pred = run_preds * squeeze(beta_vecs);
-                vox.model.run_preds{ss} = run_pred;
-                res = tc - run_pred;
-                % calculate model performance
-                vox.model.varexp{ss} = ones(1, size(tc, 2)) - (sum(res .^ 2, 1) ./ sum((tc - repmat(mean(tc, 1), size(tc, 1), 1)) .^ 2, 1));
+            bsm = cellfun(@(X, Y) repmat(X, size(Y, 1), 1), ...
+                vox.baseline, vox.run_avgs, 'uni', false);
+            tcs = cellfun(@(X, Y) X - Y, vox.run_avgs, bsm, 'uni', false);
+            for ss = 1:length(model.sessions)
+                nruns = sum(model.num_runs(:, ss));
+                % construct nuisance regressors and merge with predictors
+                b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
+                    model.run_durs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
+                predictors = [cell2mat(model.run_preds(:, ss)) b0];
+                % predict fMRI responses for each run
+                tc = cell2mat(tcs(:, ss));
+                beta_vecs = [fit.betas{ss} vox.model.rbetas{ss}];
+                run_preds = predictors * squeeze(beta_vecs);
+                % calculate cross-validated model performance
+                vox.model.run_preds{ss} = run_preds; res = tc - run_preds;
+                res_var = sum(res .^ 2) ./ sum((tc - mean(tc)) .^ 2);
+                vox.model.varexp{ss} = ones(1, size(tc, 2)) - res_var;
             end
             % store new fit in vox structure
-            vox.model.betas = fit.betas;
-            vox.model.stdevs = fit.stdevs;
+            vox.model.betas = fit.betas; vox.model.stdevs = fit.stdevs;
             vox.model.fit_exps = fit.fit_exps;
         end
         

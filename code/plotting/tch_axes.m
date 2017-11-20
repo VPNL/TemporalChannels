@@ -21,7 +21,8 @@ if length(names) ~= size(xlims, 1)
 end
 xrange = [min([min(xlims(:)) 0]) max(xlims(:))];
 xlim(xrange); ylim([ylims(1) ylims(2)]); hold on;
-set(gca, 'XColor', 'w', 'TickDir', 'out', 'YMinorTick', 'on', 'FontSize', 7);
+set(gca, 'XColor', 'w', 'YColor', 'k', 'TickDir', 'out', 'YMinorTick', 'on', ...
+    'FontSize', 7, 'FontName', 'Helvetica');
 
 % set title, x-axes, and axis labels
 for xx = 1:size(xlims, 1)
