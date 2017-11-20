@@ -10,3 +10,4 @@ figures/*
 !figures/readme_data.txt
 data/*
 !data/readme_data.txt
+private/*
