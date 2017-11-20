@@ -254,7 +254,7 @@ classdef tchROI
                             off_time = offsets{rcnt, ss}(tt) - model.gap_dur / 2;
                             off_idx = (floor(off_time) + model.post_dur) / roi.tr + 1;
                             % extract the peri-stimulus time window
-                            trial_avg = roi.run_avgs{rcnt, ss}(on_idx:off_idx) - bs;
+                            trial_avg = roi.run_avgs{rcnt, ss}(floor(on_idx):floor(off_idx)) - bs;
                             trials{cond_idx, ss, ee}(:, cnts(cond_idx)) = trial_avg;
                         end
                     end
