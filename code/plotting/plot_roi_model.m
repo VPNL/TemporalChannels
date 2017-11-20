@@ -6,7 +6,7 @@ if nargin < 2; save_flag = 0; end
 
 % get design parameters, data, and predictor names
 nexps = size(roi.experiments, 2); npreds = size(roi.model.betas{1}, 2);
-amps = reshape([roi.model.betas{:}], npreds, [])';
+amps = reshape([roi.model.betas{:}], npreds, [])'; TR = roi.tr;
 R2 = [roi.model.varexp{:}]; R2_str = num2str(mean(R2), 3);
 fit_str = [roi.model.type ' fit to ' strjoin(roi.model.fit_exps, '/')];
 val_str = ['R^{2} in ' strjoin(roi.experiments, '/') ' = ' R2_str];
@@ -58,10 +58,10 @@ for ee = 1:nexps
             dp = tch_plot_tc(x, [roi.predD_sum{cc, :, ee}]', 1, [0 1 0]);
         end
         % plot stimulus
-        stim = [xcnt + roi.model.pre_dur xcnt + tl - roi.model.post_dur];
+        stim = [xcnt + roi.model.pre_dur / TR xcnt + tl - roi.model.post_dur / TR];
         cond_name = roi.model.cond_list{ee}(cc);
         plot(stim, [-.5 -.5], 'k-', 'LineWidth', 4);
-        text(xcnt + roi.model.pre_dur - 1, -1, cond_name, 'FontSize', 8);
+        text(xcnt + roi.model.pre_dur / TR - 1, -1, cond_name, 'FontSize', 8);
         xcnt = xcnt + tl + 3; zlc = xcnt;
     end
     % set legend and format plot
