@@ -73,7 +73,7 @@ niters = size(params_list, 1);
 fname = ['grid_search_models_' imodel.type '_fit' [iroi.experiments{:}] '.mat'];
 fpath = fullfile(session, 'Stimuli', fname);
 ss_model = tchModel(imodel.type, imodel.experiments, session);
-ss_model = code_stim(ss_model);
+ss_model.tr = imodel.tr; ss_model = code_stim(ss_model);
 if ~(exist(fpath, 'file') == 2)
     fprintf('Generating %s model grid for %s...\n', ...
         imodel.type, iroi.session_ids{session_num});
@@ -97,7 +97,7 @@ end
 % fit each model in grid and find the best fitting parameter sets
 fprintf('Performing %s grid search for %s...\n', ...
     imodel.type, iroi.session_ids{session_num}); var_exp = {};
-ss_roi = tchROI(iroi.name, iroi.experiments, session);
+ss_roi = tchROI(iroi.name, iroi.experiments, session); ss_roi.tr = iroi.tr;
 ss_roi = tch_runs(ss_roi); ss_roi = tch_trials(ss_roi, ss_model);
 for ii = 1:niters
     ii_roi = ss_roi; ii_model = ss_model; fprintf([num2str(ii) ' ']);
