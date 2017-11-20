@@ -10,14 +10,17 @@ for ss = 1:length(sessions)
     % load optimization results if saved, otherwise compute
     if exist(fpath_opt, 'file') == 2
         load(fpath_opt); fprintf('Loading gradient descent results. \n');
-        omodel = code_stim(tchModel(model.type, roi.experiments, sessions{ss}));
+        omodel = tchModel(model.type, roi.experiments, sessions{ss});
+        omodel.tr = model.tr; omodel = code_stim(omodel);
         for pp = 1:length(param_names)
             pn = param_names{pp}; omodel.params.(pn){1} = params.(pn){1};
         end
         omodel = update_param(omodel, pn, 0);
     else
-        sroi = tch_runs(tchROI(roi.name, roi.experiments, sessions{ss}));
-        omodel = code_stim(tchModel(model.type, roi.experiments, sessions{ss}));
+        sroi = tchROI(roi.name, roi.experiments, sessions{ss});
+        sroi.tr = roi.tr; sroi = tch_runs(roi);
+        omodel = tchModel(model.type, roi.experiments, sessions{ss});
+        omodel.tr = model.tr; omodel = code_stim(omodel);
         omodel.normT = model.normT; omodel.normD = model.normD;
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
