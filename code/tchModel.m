@@ -82,7 +82,7 @@ classdef tchModel
         adapt = {};     % sustained activity without adaptation decay
         delay_act = {}; % delay activity with decay
         adapt_act = {}; % sustained activity with adaptation decay
-        normT = 10;     % transient channel normalization scalar
+        normT = 20;     % transient channel normalization scalar
         normD = 2;      % delay channel normalization scalar
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)

@@ -3,7 +3,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
 * * *
 *Notes:*
 - The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions. It
-- An example dataset is available [here](http://vpnl.stanford.edu/TemporalChannels/TemporalChannels_data.tar.gz) (archive is **20 GB**). 
+- An example dataset is available [here](https://osf.io/mw5pk) (archive is **20 GB**). 
 * * *
 *Contents:*
 1. [Instructions](#instructions)
@@ -25,7 +25,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
  
 ### Organizing the data directory
  
-To work with the example dataset, download the [archive](http://vpnl.stanford.edu/TemporalChannels/TemporalChannels_data.tar.gz) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
+To work with the example dataset, download the [data archives](https://osf.io/mw5pk) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
  
 To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.). Therefore, a single participant can have multiple session directories (e.g., from experiments on different days). 
  
@@ -112,7 +112,6 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
 1. *name* — name of a region of interest (e.g., `'V1'`) in session ROI directories (`~/TemporalChannels/data/*/ROIs/`).
  
 2. *type* — label indicating which model to use for predicting responses.
-1. *type* — label indicating which model to use for predicting responses.
     1. Hemodynamic models (solved analytically)
         1. `‘1ch-lin’` — general linear model for fMRI data (Boynton et al., 1996)
         2. `‘2ch-lin-htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
@@ -190,36 +189,7 @@ The `tch_model_vox` wrapper function can be used to fit a model in each voxel us
  
 Fitting models to each voxel using the `tch_model_vox` function requires passing at least two input arguments:
  
-1. *type* — label indicating which model to use for predicting responses.
-    1. Hemodynamic models (solved analytically)
-        1. `‘1ch-lin’` — general linear model for fMRI data (Boynton et al., 1996)
-        2. `‘2ch-lin-htd’` — hemodynamic temporal derivative model (Henson et al., 2002)
-        3. `‘1ch-balloon’` — nonlinear hemodynamic balloon model (Buxton et al., 1998)
-    2. Single-channel models (solved with optimized time/compression parameters)
-        1. `‘1ch-pow’` — compressive temporal summation (CTS) model with power law (CTS-p; Zhou et al., 2017)
-        2. `‘1ch-div’` — CTS model with divisive normalization (CTS-n; Zhou et al., 2017)
-        3. `‘1ch-dcts’` — dynaminc CTS model (dCTS; Zhou et al., 2017)
-        4. `‘1ch-exp’` — adaptation model with exponential decay
-    3. Two-channel models (solved analytically)
-        1. `‘2ch-lin-quad’` — linear sustained and quadratic transient channels (Stigliani et al., 2017)
-        2. `‘2ch-lin-rect’` — linear sustained and rectified transient channels
-        3. `‘2ch-lin-lin’` — linear sustained and linear transient channels
-    4. Two-channel models (solved with optimized time/compression parameters)
-        1. `‘2ch-pow-quad’` — sustained with CTS-p and quadratic transient channels
-        2. `‘2ch-pow-rect’` — sustained with CTS-p and rectified transient channels
-        3. `‘2ch-exp-quad’` — sustained with adaptation and quadratic transient channels
-        4. `‘2ch-exp-rect’` — sustained with adaptation and rectified transient channels
-        5. `‘2ch-lin-quad-opt’` — linear sustained and quadratic transient channels with optimized time constants
-        6. `‘2ch-lin-rect-opt’` — linear sustained and rectified transient channels with optimized time constants
-    5. Three-channel models (solved with optimized time/compression parameters)
-        1. `‘3ch-lin-quad-exp’` — linear sustained, quadratic transient, and delay channels
-        2. `‘3ch-lin-rect-exp’` — linear sustained, rectified transient, and delay channels
-        3. `‘3ch-pow-quad-exp’` — sustained with CTS-p, quadratic transient, and delay channels
-        4. `‘3ch-pow-rect-exp’` — sustained with CTS-p, rectified transient, and delay channels
-        5. `‘3ch-exp-quad-exp’` — sustained with adaptation, quadratic transient, and delay channels
-        6. `‘3ch-exp-rect-exp’` — sustained with adaptation, rectified transient, and delay channels
-        7. `‘3ch-lin-quad-exp-opt’` — linear sustained, quadratic transient, and delay channels with optimized time constants
-        8. `‘3ch-lin-rect-exp-opt’` — linear sustained, rectified transient, and delay channels with optimized time constants
+1. *type* — label indicating which model to use for predicting responses (see documentation above).
  
 2. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
