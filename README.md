@@ -2,7 +2,7 @@
 Code for modeling fMRI responses to time-varying stimuli using a temporal channels approach
 * * *
 *Notes:*
-- The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions. It
+- The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions. It calls functions from the Optimization Toolbox and the Symbolic Math Toolbox.
 - An example dataset is available [here](https://osf.io/mw5pk) (archive is **20 GB**). 
 * * *
 *Contents:*
