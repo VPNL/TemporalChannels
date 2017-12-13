@@ -24,14 +24,14 @@
 %        '2ch-cexp-quad' -- compressed/adapted sustained and quadratic transient
 %        '2ch-cexp-rect' -- compressed/adapted sustained and rectified transient
 %      Multi-channel models:
-%        '3ch-lin-quad-exp'  -- linear sustained, quadratic transient, and delay
-%        '3ch-lin-rect-exp'  -- linear sustained, rectified transient, and delay
-%        '3ch-pow-quad-exp'  -- CTS-p on sustained, quadratic transient, and delay
-%        '3ch-pow-rect-exp'  -- CTS-p on sustained, rectified transient, and delay
-%        '3ch-exp-quad-exp'  -- adapted sustained, quadratic transient, and delay
-%        '3ch-exp-rect-exp'  -- adapted sustained, rectified transient, and delay
-%        '3ch-cexp-quad-exp' -- compressed/adapted sustained, quadratic transient, and delay
-%        '3ch-cexp-rect-exp' -- compressed/adapted sustained, rectified transient, and delay
+%        '3ch-lin-quad-exp'  -- linear sustained, quadratic transient, and persistent
+%        '3ch-lin-rect-exp'  -- linear sustained, rectified transient, and persistent
+%        '3ch-pow-quad-exp'  -- CTS-p on sustained, quadratic transient, and persistent
+%        '3ch-pow-rect-exp'  -- CTS-p on sustained, rectified transient, and persistent
+%        '3ch-exp-quad-exp'  -- adapted sustained, quadratic transient, and persistent
+%        '3ch-exp-rect-exp'  -- adapted sustained, rectified transient, and persistent
+%        '3ch-cexp-quad-exp' -- compressed/adapted sustained, quadratic transient, and persistent
+%        '3ch-cexp-rect-exp' -- compressed/adapted sustained, rectified transient, and persistent
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of names or paths to session data directories
 %
@@ -78,12 +78,12 @@ classdef tchModel
         cond_list = {}; % list of condition names in each experiment
         run_durs = {};  % run durations (s)
         stim = {};      % stimulus step function
-        delay = {};     % delay activity step function
+        persist = {};   % persistent activity step function
         adapt = {};     % sustained activity without adaptation decay
-        delay_act = {}; % delay activity with decay
+        persist_act = {}; % persistent activity with decay
         adapt_act = {}; % sustained activity with adaptation decay
         normT = 20;     % transient channel normalization scalar
-        normD = 2;      % delay channel normalization scalar
+        normP = 2;      % persistent channel normalization scalar
         tr = 1;         % fMRI TR (s)
         gap_dur = 1/60; % forced gap between stimuli (s)
         pre_dur = 4;    % pre-stimulus baseline period (s)
@@ -230,7 +230,7 @@ classdef tchModel
                 model = code_adapt_decay(model, 'cexp');
             end
             if model.num_channels > 2 && ~isempty(strfind(model.type, '-exp'))
-                model = code_delay_decay(model);
+                model = code_persist_decay(model);
             end
         end
                 
@@ -240,7 +240,7 @@ classdef tchModel
             % get session and stimulus information
             nruns_max = size(model.onsets, 1); fs = model.fs;
             empty_cells = cellfun(@isempty, model.onsets);
-            % find frame indices of delay onsets and offsets for each cat
+            % find frame indices of persistent onsets and offsets for each cat
             adapt_exps = repmat(model.irfs.adapt_exp, nruns_max, 1);
             nrfS = repmat(model.irfs.nrfS, nruns_max, 1);
             adapt_exps(empty_cells) = {[]}; nrfS(empty_cells) = {[]};
@@ -255,20 +255,20 @@ classdef tchModel
             model.adapt = adapts; model.adapt_act = adapt_acts;
         end
         
-        % code decay of activity in delay channels
-        function model = code_delay_decay(model)
+        % code decay of activity in persistent channels
+        function model = code_persist_decay(model)
             % get session and stimulus information
             nruns_max = size(model.onsets, 1); rds = model.run_durs;
             fs = model.fs; empty_cells = cellfun(@isempty, model.onsets);
             ons = model.onsets; offs = model.offsets;
             % offs = cellfun(@(X) X + 1 / 30, offs, 'uni', false);
             ons = cellfun(@(X, Y) [X(2:end) Y], ons, rds, 'uni', false);
-            delays = cellfun(@code_delay_act, model.stim, 'uni', false);
-            delay_exps = repmat(model.irfs.delay_exp, nruns_max, 1);
-            delay_exps(empty_cells) = {[]};
-            delay_acts = cellfun(@(X, Y, Z, F) code_exp_decay(X, Y, Z, F, fs), ...
-                delays, offs, ons, delay_exps, 'uni', false);
-            model.delay = delays; model.delay_act = delay_acts;
+            persists = cellfun(@code_persist_act, model.stim, 'uni', false);
+            persist_exps = repmat(model.irfs.persist_exp, nruns_max, 1);
+            persist_exps(empty_cells) = {[]};
+            persist_acts = cellfun(@(X, Y, Z, F) code_exp_decay(X, Y, Z, F, fs), ...
+                persists, offs, ons, persist_exps, 'uni', false);
+            model.persist = persists; model.persist_act = persist_acts;
         end
         
         % compute custom normalization parameters using run predictors
@@ -278,9 +278,9 @@ classdef tchModel
             if custom_norm == 1 && model.num_channels > 1
                 % code run_preds for all fitting experiments
                 imodel = tchModel(model.type, model.experiments, model.sessions);
-                imodel.normT = 1; imodel.normD = 1; nch = imodel.num_channels;
+                imodel.normT = 1; imodel.normP = 1; nch = imodel.num_channels;
                 imodel = code_stim(imodel); imodel = pred_runs(imodel); 
-                [normTs, normDs] = deal(zeros(1, length(imodel.sessions)));
+                [normTs, normPs] = deal(zeros(1, length(imodel.sessions)));
                 ncats = length(unique([imodel.cats{:}]));
                 for ss = 1:length(imodel.sessions)
                     % get predictors for all runs in this session
@@ -291,13 +291,13 @@ classdef tchModel
                     % compute scalars to normalize max heights to sustained
                     normTs(ss) = maxS / maxT;
                     if nch > 2
-                        maxD = max(max(spreds(:, 2 * ncats + 1:3 * ncats)));
-                        normDs(ss) = maxS / maxD;
+                        maxP = max(max(spreds(:, 2 * ncats + 1:3 * ncats)));
+                        normPs(ss) = maxS / maxP;
                     end
                 end
                 % set normalization constant to average across sessions
                 model.normT = mean(normTs);
-                if nch > 2; model.normD = mean(normDs); end
+                if nch > 2; model.normP = mean(normPs); end
             end
         end
         

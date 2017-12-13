@@ -42,7 +42,7 @@ for pp = 1:length(param_names)
             step_sizes_init(pp) = .1;
         case 'tau_ae'
             step_sizes_init(pp) = 500;
-        case 'tau_de'
+        case 'tau_pe'
             step_sizes_init(pp) = 50;
     end
 end

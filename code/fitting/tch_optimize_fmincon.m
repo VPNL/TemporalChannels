@@ -21,7 +21,7 @@ for ss = 1:length(sessions)
         sroi.tr = roi.tr; sroi = tch_runs(sroi);
         omodel = tchModel(model.type, roi.experiments, sessions{ss});
         omodel.tr = model.tr; omodel = code_stim(omodel);
-        omodel.normT = model.normT; omodel.normD = model.normD;
+        omodel.normT = model.normT; omodel.normP = model.normP;
         omodel = pred_runs(omodel); omodel = pred_trials(omodel);
         sroi = tch_trials(sroi, omodel); sroi = tch_fit(sroi, omodel);
         pout = cell(1, length(param_names));
@@ -84,81 +84,92 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(1) * 1000;
             case '3ch-lin-quad-exp'
                 obj_fun = tch_obj_fun_3ch_lin_quad_exp(sroi, omodel);
-                x_init = omodel.params.tau_de{1} / 1000;
+                x_init = omodel.params.tau_pe{1} / 1000;
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], .1, 12, [], fmin_options);
-                params.tau_de{1} = x_opt(1) * 1000;
+                params.tau_pe{1} = x_opt(1) * 1000;
             case '3ch-lin-rect-exp'
                 obj_fun = tch_obj_fun_3ch_lin_rect_exp(sroi, omodel);
-                x_init = omodel.params.tau_de{1} / 1000;
+                x_init = omodel.params.tau_pe{1} / 1000;
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], .1, 12, [], fmin_options);
-                params.tau_de{1} = x_opt(1) * 1000;
+                params.tau_pe{1} = x_opt(1) * 1000;
             case '3ch-pow-quad-exp'
                 obj_fun = tch_obj_fun_3ch_pow_quad_exp(sroi, omodel);
-                x_init = [omodel.params.epsilon{1} omodel.params.tau_de{1} / 1000];
+                x_init = [omodel.params.epsilon{1} omodel.params.tau_pe{1} / 1000];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [.001 .1], [1 12], [], fmin_options);
                 params.epsilon{1} = x_opt(1);
-                params.tau_de{1} = x_opt(2) * 1000;
+                params.tau_pe{1} = x_opt(2) * 1000;
             case '3ch-pow-rect-exp'
                 obj_fun = tch_obj_fun_3ch_pow_rect_exp(sroi, omodel);
-                x_init = [omodel.params.epsilon{1} omodel.params.tau_de{1} / 1000];
+                x_init = [omodel.params.epsilon{1} omodel.params.tau_pe{1} / 1000];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [.001 .1], [1 12], [], fmin_options);
                 params.epsilon{1} = x_opt(1);
-                params.tau_de{1} = x_opt(2) * 1000;
+                params.tau_pe{1} = x_opt(2) * 1000;
              case '3ch-exp-quad-exp'
                 obj_fun = tch_obj_fun_3ch_exp_quad_exp(sroi, omodel);
-                x_init = [omodel.params.tau_ae{1} omodel.params.tau_de{1}] / 1000;
+                x_init = [omodel.params.tau_ae{1} omodel.params.tau_pe{1}] / 1000;
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [1 .1], [60 12], [], fmin_options);
                 params.tau_ae{1} = x_opt(1) * 1000;
-                params.tau_de{1} = x_opt(2) * 1000;
+                params.tau_pe{1} = x_opt(2) * 1000;
             case '3ch-exp-rect-exp'
                 obj_fun = tch_obj_fun_3ch_exp_rect_exp(sroi, omodel);
-                x_init = [omodel.params.tau_ae{1} omodel.params.tau_de{1}] / 1000;
+                x_init = [omodel.params.tau_ae{1} omodel.params.tau_pe{1}] / 1000;
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [1 .1], [60 12], [], fmin_options);
                 params.tau_ae{1} = x_opt(1) * 1000;
-                params.tau_de{1} = x_opt(2) * 1000;
+                params.tau_pe{1} = x_opt(2) * 1000;
             case '2ch-lin-quad-opt'
                 obj_fun = tch_obj_fun_2ch_lin_quad_opt(sroi, omodel);
-                x_init = [omodel.params.tau_s{1} omodel.params.tau_t{1} omodel.params.kappa{1}]; 
-                x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 4 1], [50 50 10], [], fmin_options);
+                tau_s = omodel.params.tau_s{1}; kappa = omodel.params.kappa{1};
+                n1 = omodel.params.n1{1}; n2 = omodel.params.n2{1};
+                x_init = [tau_s n1 n2 kappa]; 
+                x_opt = fmincon(obj_fun, x_init, [0 1 -1 0], 0, ...
+                    [], [], [4 9 10 1], [50 19 20 10], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
-                params.tau_t{1} = x_opt(2);
-                params.kappa{1} = x_opt(3);
+                params.n1{1} = x_opt(2);
+                params.n2{1} = x_opt(3);
+                params.kappa{1} = x_opt(4);
             case '2ch-lin-rect-opt'
                 obj_fun = tch_obj_fun_2ch_lin_rect_opt(sroi, omodel);
-                x_init = [omodel.params.tau_s{1} omodel.params.tau_t{1} omodel.params.kappa{1}]; 
-                x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 4 1], [50 50 10], [], fmin_options);
+                tau_s = omodel.params.tau_s{1}; kappa = omodel.params.kappa{1};
+                n1 = omodel.params.n1{1}; n2 = omodel.params.n2{1};
+                x_init = [tau_s n1 n2 kappa]; 
+                x_opt = fmincon(obj_fun, x_init, [0 1 -1 0], 0, ...
+                    [], [], [4 9 10 1], [50 19 20 10], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
-                params.tau_t{1} = x_opt(2);
-                params.kappa{1} = x_opt(3);
+                params.n1{1} = x_opt(2);
+                params.n2{1} = x_opt(3);
+                params.kappa{1} = x_opt(4);
             case '3ch-lin-quad-exp-opt'
                 obj_fun = tch_obj_fun_3ch_lin_quad_exp_opt(sroi, omodel);
-                tau_s = omodel.params.tau_s{1};
-                tau_t = omodel.params.tau_t{1};
-                tau_de = omodel.params.tau_de{1} / 1000;
-                x_init = [tau_s tau_t omodel.params.kappa{1} tau_de]; 
-                x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 4 1 .1], [50 50 10 12], [], fmin_options);
+                tau_s = omodel.params.tau_s{1}; kappa = omodel.params.kappa{1};
+                n1 = omodel.params.n1{1}; n2 = omodel.params.n2{1};
+                tau_pe = omodel.params.tau_pe{1} / 1000;
+                x_init = [tau_s n1 n2 kappa tau_pe]; 
+                x_opt = fmincon(obj_fun, x_init, [0 1 -1 0 0], 0, ...
+                    [], [], [4 9 10 1 .1], [50 19 20 10 12], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
-                params.tau_t{1} = x_opt(2);
-                params.kappa{1} = x_opt(3);
-                params.tau_de{1} = x_opt(4) * 1000;
+                params.n1{1} = x_opt(2);
+                params.n2{1} = x_opt(3);
+                params.kappa{1} = x_opt(4);
+                params.tau_pe{1} = x_opt(5) * 1000;
             case '3ch-lin-rect-exp-opt'
                 obj_fun = tch_obj_fun_3ch_lin_rect_exp_opt(sroi, omodel);
-                tau_de = omodel.params.tau_de{1} / 1000;
-                x_init = [omodel.params.tau_s{1} omodel.params.kappa{1} tau_de]; 
-                x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 1 .1], [50 10 12], [], fmin_options);
+                tau_s = omodel.params.tau_s{1}; kappa = omodel.params.kappa{1};
+                n1 = omodel.params.n1{1}; n2 = omodel.params.n2{1};
+                tau_pe = omodel.params.tau_pe{1} / 1000;
+                x_init = [tau_s n1 n2 kappa tau_pe]; 
+                x_opt = fmincon(obj_fun, x_init, [0 1 -1 0 0], 0, ...
+                    [], [], [4 9 10 1 .1], [50 19 20 10 12], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
-                params.kappa{1} = x_opt(2);
-                params.tau_de{1} = x_opt(3) * 1000;
+                params.n1{1} = x_opt(2);
+                params.n2{1} = x_opt(3);
+                params.kappa{1} = x_opt(4);
+                params.tau_pe{1} = x_opt(5) * 1000;
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);

@@ -30,11 +30,15 @@ switch param
         param_min = 1;
     case 'tau_d'
         param_min = 1;
+    case 'n1'
+        param_min = 9;
+    case 'n2'
+        param_min = 10;
     case 'kappa'
         param_min = 1;
     case 'tau_ae'
         param_min = 100;
-    case 'tau_de'
+    case 'tau_pe'
         param_min = 10;
     otherwise
         error('Input param is not recognized as valid parameter name.');
@@ -98,75 +102,75 @@ switch model.type
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model, 'cexp');
     case '3ch-lin-quad-exp'
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-lin-rect-exp'
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-pow-quad-exp'
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-pow-rect-exp'
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-exp-quad-exp'
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-exp-rect-exp'
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-cexp-quad-exp'
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-cexp-rect-exp'
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '2ch-lin-quad-opt'
-        model.irfs.nrfS = cellfun(@(X, Y) tch_irfs('S', X, Y, model.fs), ...
-            model.params.tau_s, model.params.kappa, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X, Y) tch_irfs('T', X, Y, model.fs), ...
-            model.params.tau_t, model.params.kappa, 'uni', false);
+        model.irfs.nrfS = cellfun(@(X, N1, N2, Y) tch_irfs('S', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X, N1, N2, Y) tch_irfs('T', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
     case '2ch-lin-rect-opt'
-        model.irfs.nrfS = cellfun(@(X, Y) tch_irfs('S', X, Y, model.fs), ...
-            model.params.tau_s, model.params.kappa, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X, Y) tch_irfs('T', X, Y, model.fs), ...
-            model.params.tau_t, model.params.kappa, 'uni', false);
+        model.irfs.nrfS = cellfun(@(X, N1, N2, Y) tch_irfs('S', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X, N1, N2, Y) tch_irfs('T', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
     case '3ch-lin-quad-exp-opt'
-        model.irfs.nrfS = cellfun(@(X, Y) tch_irfs('S', X, Y, model.fs), ...
-            model.params.tau_s, model.params.kappa, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X, Y) tch_irfs('T', X, Y, model.fs), ...
-            model.params.tau_t, model.params.kappa, 'uni', false);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        model.irfs.nrfS = cellfun(@(X, N1, N2, Y) tch_irfs('S', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X, N1, N2, Y) tch_irfs('T', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
     case '3ch-lin-rect-exp-opt'
-        model.irfs.nrfS = cellfun(@(X, Y) tch_irfs('S', X, Y, model.fs), ...
-            model.params.tau_s, model.params.kappa, 'uni', false);
-        model.irfs.nrfT = cellfun(@(X, Y) tch_irfs('T', X, Y, model.fs), ...
-            model.params.tau_s, model.params.kappa, 'uni', false);
-        delay_exps = cellfun(@(X) exp(-(1:60000) / X), ...
-            model.params.tau_de, 'uni', false);
-        model.irfs.delay_exp = delay_exps; model = code_delay_decay(model);
+        model.irfs.nrfS = cellfun(@(X, N1, N2, Y) tch_irfs('S', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X, N1, N2, Y) tch_irfs('T', X, N1, N2, Y, model.fs), ...
+            model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
 end
 
 end

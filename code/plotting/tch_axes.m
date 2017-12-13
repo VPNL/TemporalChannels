@@ -28,6 +28,9 @@ set(gca, 'XColor', 'w', 'YColor', 'k', 'TickDir', 'out', 'YMinorTick', 'on', ...
 for xx = 1:size(xlims, 1)
     tch_text(mean(xlims(xx, :)), ylims(2), names{xx}, 7, [0 0 0], 'c', 'b');
     plot(xlims(xx, :), [0 0], 'k-', 'LineWidth', 0.5);
+    %for tt = xlims(xx, 1):xlims(xx, 2)
+    %    plot([tt tt], ylims(1) + [0 (ylims(2) - ylims(1)) / 50], 'k-');
+    %end
 end
 xlab_x = mean([min(xlims(:)) max(xlims(:))]); xlab_y = get(gca, 'XLabel');
 tch_text(xlab_x, xlab_y.Position(2), xlab, 7, [0 0 0], 'c', 'b');

@@ -34,7 +34,7 @@ classdef tchROI
         model = []; % data structure of models fits for each session
         predS = {}; % predicted sustained contributions per trial type
         predT = {}; % predicted transient contributions per trial type
-        predD = {}; % predicted delay channel contributions per trial type
+        predP = {}; % predicted persistent contributions per trial type
         pred = {};  % total predicted contributions for each trial type
     end
     
@@ -62,7 +62,7 @@ classdef tchROI
         pred_sum     % sum of predictors across all channels
         predS_sum    % sum of predictors across S channels
         predT_sum    % sum of predictors across T channels
-        predD_sum    % sum of predictors across D channels
+        predP_sum    % sum of predictors across P channels
     end
     
     
@@ -165,9 +165,9 @@ classdef tchROI
             predT_sum = cellfun(@(X) sum(X, 2), roi.predT, 'uni', false);
         end
         
-        % sum trial predictors across all delay channels
-        function predD_sum = get.predD_sum(roi)
-            predD_sum = cellfun(@(X) sum(X, 2), roi.predD, 'uni', false);
+        % sum trial predictors across all persistent channels
+        function predP_sum = get.predP_sum(roi)
+            predP_sum = cellfun(@(X) sum(X, 2), roi.predP, 'uni', false);
         end
         
         % find set of all_sessions with current ROI
@@ -341,7 +341,7 @@ classdef tchROI
                 roi.predT = cell(nconds, nsubs, nexps);
             end
             if model.num_channels > 2
-                roi.predD = cell(nconds, nsubs, nexps);
+                roi.predP = cell(nconds, nsubs, nexps);
             end
             % predict response for each session, experiment, and trial type
             for ss = 1:nsubs
@@ -372,11 +372,11 @@ classdef tchROI
                                 roi.pred{cc, ss, ee} = fmriS + fmriT;
                             end
                             if model.num_channels > 2
-                                ampD = roi.model.betas{ss}(2 * ncats + 1:3 * ncats);
-                                predD = model.trial_preds.D{cc, ss, ee};
-                                fmriD = predD .* repmat(ampD, size(predD, 1), 1);
-                                roi.predD{cc, ss, ee} = fmriD;
-                                roi.pred{cc, ss, ee} = fmriS + fmriT + fmriD;
+                                ampP = roi.model.betas{ss}(2 * ncats + 1:3 * ncats);
+                                predP = model.trial_preds.P{cc, ss, ee};
+                                fmriP = predP .* repmat(ampP, size(predP, 1), 1);
+                                roi.predP{cc, ss, ee} = fmriP;
+                                roi.pred{cc, ss, ee} = fmriS + fmriT + fmriP;
                             end
                         end
                     end

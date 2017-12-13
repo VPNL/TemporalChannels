@@ -2,8 +2,10 @@
 Code for modeling fMRI responses to time-varying stimuli using a temporal channels approach
 * * *
 *Notes:*
-- The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions. It calls functions from the Optimization Toolbox and the Symbolic Math Toolbox.
+- The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions.
+- Functions from the Optimization and Symbolic Math Toolboxes are used in some analyses. 
 - An example dataset is available [here](https://osf.io/mw5pk) (archive is **20 GB**). 
+- *Disclaimer:* It is important to vary experimental timing parameters (e.g., stimulus and ISI durations) in data used for model fitting to minimize collinearity between channel predictors and constrain the solution of the model. 
 * * *
 *Contents:*
 1. [Instructions](#instructions)
@@ -27,7 +29,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
  
 To work with the example dataset, download the [data archives](https://osf.io/mw5pk) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
  
-To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.). Therefore, a single participant can have multiple session directories (e.g., from experiments on different days). 
+To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.). Therefore, a single participant can have multiple session directories (e.g., from experiments on different days). Data used for model fitting should vary experimental timing parameters and ideally contain prolonged baseline periods (≥12 s) to allow consistent baseline subtraction across different conditions and experiments.  
  
 Each session directory should contain the following subdirectories: 
  
@@ -133,14 +135,14 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
         5. `‘2ch-lin-quad-opt’` — linear sustained and quadratic transient channels with optimized time constants
         6. `‘2ch-lin-rect-opt’` — linear sustained and rectified transient channels with optimized time constants
     5. Three-channel models (solved with optimized time/compression parameters)
-        1. `‘3ch-lin-quad-exp’` — linear sustained, quadratic transient, and delay channels
-        2. `‘3ch-lin-rect-exp’` — linear sustained, rectified transient, and delay channels
-        3. `‘3ch-pow-quad-exp’` — sustained with CTS-p, quadratic transient, and delay channels
-        4. `‘3ch-pow-rect-exp’` — sustained with CTS-p, rectified transient, and delay channels
-        5. `‘3ch-exp-quad-exp’` — sustained with adaptation, quadratic transient, and delay channels
-        6. `‘3ch-exp-rect-exp’` — sustained with adaptation, rectified transient, and delay channels
-        7. `‘3ch-lin-quad-exp-opt’` — linear sustained, quadratic transient, and delay channels with optimized time constants
-        8. `‘3ch-lin-rect-exp-opt’` — linear sustained, rectified transient, and delay channels with optimized time constants
+        1. `‘3ch-lin-quad-exp’` — linear sustained, quadratic transient, and persistent channels
+        2. `‘3ch-lin-rect-exp’` — linear sustained, rectified transient, and persistent channels
+        3. `‘3ch-pow-quad-exp’` — sustained with CTS-p, quadratic transient, and persistent channels
+        4. `‘3ch-pow-rect-exp’` — sustained with CTS-p, rectified transient, and persistent channels
+        5. `‘3ch-exp-quad-exp’` — sustained with adaptation, quadratic transient, and persistent channels
+        6. `‘3ch-exp-rect-exp’` — sustained with adaptation, rectified transient, and persistent channels
+        7. `‘3ch-lin-quad-exp-opt’` — linear sustained, quadratic transient, and persistent channels with optimized time constants
+        8. `‘3ch-lin-rect-exp-opt’` — linear sustained, rectified transient, and persistent channels with optimized time constants
  
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  

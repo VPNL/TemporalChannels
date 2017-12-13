@@ -1,7 +1,7 @@
 function obj_fun = tch_obj_fun_3ch_exp_rect_exp(roi, model)
 % Generates anonymous objective function that can be passed to fmincon for
 % the 3ch-exp-rect-exp model (3-channel model with adapted sustained,
-% rectified transient, and exponential delay channels).
+% rectified transient, and exponential persistent channels).
 % 
 % INPUTS:
 %   1) roi: tchROI object containing single session
@@ -19,7 +19,7 @@ stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 % generate IRFs/filters for optimization
 adapt_fun = @(y) exp(-(1:60000) / (y * 1000));
-delay_fun = @(z) exp(-(1:12000) / (z * 1000));
+persist_fun = @(z) exp(-(1:12000) / (z * 1000));
 % neural response: (stimulus * IRF) x exponential[tau_ae]
 conv_snS = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), ...
     cellfun(@(XX) convolve_vecs(XX, irfs.nrfS{1}, 1, 1), x, 'uni', false), ...
@@ -27,23 +27,23 @@ conv_snS = @(x, y) cellfun(@(X, Y, ON, OFF) code_exp_decay(X, ON, OFF, Y, fs), .
 % transient response: max(0, stimulus * transient IRF)
 conv_snT = @(x) cellfun(@(X) rectify(convolve_vecs(X, irfs.nrfT{1}, 1, 1), 'positive'), ...
     x, 'uni', false);
-% delay response: delay function x exponential[tau_de]
-doffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
-conv_snD = @(x, z) cellfun(@(X, Z, ON, OFF) code_exp_decay(X, ON, OFF, Z, fs), ...
-    cellfun(@code_delay_act, x, 'uni', false), repmat({delay_fun(z)}, nruns, 1), ...
-    model.offsets, doffsets, 'uni', false);
+% persistent response: persistent function x exponential[tau_pe]
+poffsets = cellfun(@(X, Y) [X(2:end) Y], model.onsets, model.run_durs, 'uni', false);
+conv_snP = @(x, z) cellfun(@(X, Z, ON, OFF) code_exp_decay(X, ON, OFF, Z, fs), ...
+    cellfun(@code_persist_act, x, 'uni', false), repmat({persist_fun(z)}, nruns, 1), ...
+    model.offsets, poffsets, 'uni', false);
 % susatained BOLD: sustained response * HRF
 conv_nbS = @(x, y) cellfun(@(NS) convolve_vecs(NS, irfs.hrf{1}, fs, 1 / tr), ...
     conv_snS(x, y), 'uni', false);
 % transient BOLD: transient response * HRF
 conv_nbT = @(x) cellfun(@(NT) convolve_vecs(NT, irfs.hrf{1}, fs, 1 / tr), ...
     conv_snT(x), 'uni', false);
-% delay BOLD: delay response * HRF
-conv_nbD = @(x, z) cellfun(@(ND) convolve_vecs(ND, irfs.hrf{1}, fs, 1 / tr), ...
-    conv_snD(x, z), 'uni', false);
-% channel predictors: [sustained BOLD, transient BOLD, delay BOLD]
-conv_nb = @(x, y, z) cellfun(@(S, T, D) [S T D], ...
-    conv_nbS(x, y), conv_nbT(x), conv_nbD(x, z), 'uni', false);
+% persistent BOLD: persistent response * HRF
+conv_nbP = @(x, z) cellfun(@(NP) convolve_vecs(NP, irfs.hrf{1}, fs, 1 / tr), ...
+    conv_snP(x, z), 'uni', false);
+% channel predictors: [sustained BOLD, transient BOLD, persistent BOLD]
+conv_nb = @(x, y, z) cellfun(@(S, T, P) [S T P], ...
+    conv_nbS(x, y), conv_nbT(x), conv_nbP(x, z), 'uni', false);
 % measured signal: time series - baseline estimates
 comp_bs = @(m, b0) cellfun(@(M, B0) M - repmat(B0, size(M, 1), 1), ...
     m, b0, 'uni', false);

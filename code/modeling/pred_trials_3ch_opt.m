@@ -8,7 +8,7 @@ fs = model.fs; tr = model.tr; cond_list = model.cond_list;
 stimfiles = model.stimfiles; nruns = model.num_runs;
 model.trial_preds.S = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 model.trial_preds.T = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
-model.trial_preds.D = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
+model.trial_preds.P = cell(max(cellfun(@length, cond_list)), nsess, model.num_exps);
 
 rcnt = 1;
 for ee = 1:model.num_exps
@@ -27,16 +27,16 @@ for ee = 1:model.num_exps
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
             predT = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs);
             predTr = rectify(predT);
-            predD = convolve_vecs(cstim, irfs.nrfD{ss}, fs, fs);
-            predDr = rectify(predD, 'negative') .^ 2;
+            predP = convolve_vecs(cstim, irfs.nrfP{ss}, fs, fs);
+            predPr = rectify(predP, 'negative') .^ 2;
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTr, irfs.hrf{ss}, fs, 1 / tr);
-            fmriD = convolve_vecs(predDr, irfs.hrf{ss}, fs, 1 / tr);
+            fmriP = convolve_vecs(predPr, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmriS;
             model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;
-            model.trial_preds.D{cc, ss, ee} = fmriD * model.normD;
+            model.trial_preds.P{cc, ss, ee} = fmriP * model.normP;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

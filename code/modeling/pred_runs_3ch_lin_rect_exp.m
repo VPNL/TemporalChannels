@@ -1,6 +1,6 @@
 function model = pred_runs_3ch_lin_rect_exp(model)
 % Generates run predictors using the 3 temporal-channel model with linear
-% sustained, rectified transient, and optimized delay channel.
+% sustained, rectified transient, and optimized persistent channel.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -25,10 +25,10 @@ fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     predS, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     predTr, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
-fmriD = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    model.delay_act, irfs.hrf, 'uni', false); fmriD(empty_cells) = {[]};
-run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normD], ...
-    fmriS, fmriT, fmriD, 'uni', false); run_preds(empty_cells) = {[]};
+fmriP = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
+    model.persist_act, irfs.hrf, 'uni', false); fmriP(empty_cells) = {[]};
+run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normP], ...
+    fmriS, fmriT, fmriP, 'uni', false); run_preds(empty_cells) = {[]};
 model.run_preds = run_preds;
 
 end

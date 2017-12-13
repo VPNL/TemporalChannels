@@ -83,7 +83,7 @@ if cv_flag
         roi(vn) = tch_runs(tchROI(name, val_exps(vv, :), roi(1).sessions));
         model(vn) = tchModel(type, val_exps(vv, :), roi(vn).sessions);
         if nch > 1; model(vn).normT = model(1).normT; end
-        if nch > 2; model(vn).normD = model(1).normD; end
+        if nch > 2; model(vn).normP = model(1).normP; end
         model(vn).params = roi(1).model.params; model(vn) = code_stim(model(vn));
         model(vn) = pred_runs(model(vn)); model(vn) = pred_trials(model(vn));
         % setup model struct by first fitting model to validation data

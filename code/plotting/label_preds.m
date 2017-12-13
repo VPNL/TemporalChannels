@@ -10,8 +10,8 @@ else
 end
 
 if strcmp(model.type(1:3), '3ch')
-    xlabsD = cellfun(@(X) [X '-D'], model.cat_list, 'uni', false);
-    labels = [labels xlabsD];
+    xlabsP = cellfun(@(X) [X '-P'], model.cat_list, 'uni', false);
+    labels = [labels xlabsP];
 end
 
 end

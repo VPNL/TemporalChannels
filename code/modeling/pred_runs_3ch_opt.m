@@ -21,14 +21,14 @@ empty_cells = cellfun(@isempty, run_preds); run_preds(empty_cells) = {[]};
 predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfS, 'uni', false);
 predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfT, 'uni', false);
 predTr = cellfun(@(X) rectify(X), predT, 'uni', false);
-predD = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfD, 'uni', false);
-predDr = cellfun(@(X) rectify(X, 'negative') .^ 2, predD, 'uni', false);
-predS(empty_cells) = {1}; predTr(empty_cells) = {1}; predDr(empty_cells) = {1};
+predP = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), stim, irfs.nrfP, 'uni', false);
+predPr = cellfun(@(X) rectify(X, 'negative') .^ 2, predP, 'uni', false);
+predS(empty_cells) = {1}; predTr(empty_cells) = {1}; predPr(empty_cells) = {1};
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predS, irfs.hrf, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predTr, irfs.hrf, 'uni', false);
-fmriD = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predDr, irfs.hrf, 'uni', false);
-fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]}; fmriD(empty_cells) = {[]};
-run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normD], fmriS, fmriT, fmriD, 'uni', false);
+fmriP = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), predPr, irfs.hrf, 'uni', false);
+fmriS(empty_cells) = {[]}; fmriT(empty_cells) = {[]}; fmriP(empty_cells) = {[]};
+run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normP], fmriS, fmriT, fmriP, 'uni', false);
 model.run_preds = run_preds;
 
 end

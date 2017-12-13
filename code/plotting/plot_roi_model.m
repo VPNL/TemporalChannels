@@ -55,7 +55,7 @@ for ee = 1:nexps
             tp = tch_plot_tc(x, [roi.predT_sum{cc, :, ee}]', 1, [1 0 0]);
         end
         if roi.model.num_channels > 2
-            dp = tch_plot_tc(x, [roi.predD_sum{cc, :, ee}]', 1, [0 1 0]);
+            dp = tch_plot_tc(x, [roi.predP_sum{cc, :, ee}]', 1, [0 1 0]);
         end
         % plot stimulus
         stim = [xcnt + roi.model.pre_dur / TR xcnt + tl - roi.model.post_dur / TR];
@@ -71,7 +71,7 @@ for ee = 1:nexps
         leg(3:4) = {'Sustained' 'Transient'}; ptrs = [ptrs sp tp];
     end
     if roi.model.num_channels > 2
-        leg{5} = 'Delay'; ptrs = [ptrs dp];
+        leg{5} = 'Persistent'; ptrs = [ptrs dp];
     end
     legend(ptrs, leg, 'Location', 'NorthWestOutside'); legend boxoff;
     title([roi.experiments{ee}], 'FontSize', 8); ylabel('fMRI (% signal)');

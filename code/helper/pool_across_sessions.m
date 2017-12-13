@@ -28,7 +28,7 @@ for subject = 1:length(subjects)
     roi_pool.sessions{subject} = subjects{subject};
     for ee = 1:length(roi.experiments)
         empty_preds = cellfun(@(X) zeros(size(X)), roi.pred(:, subject_idxs{subject}(1), ee), 'uni', false);
-        [predS, predT, predD, pred] = deal(empty_preds);
+        [predS, predT, predP, pred] = deal(empty_preds);
         trials = cellfun(@(X) zeros(size(X)), roi.trials(:, subject_idxs{subject}(1), ee), 'uni', false);
         for session = 1:length(subject_idxs{subject})
             if ~isempty(roi.predS)
@@ -37,8 +37,8 @@ for subject = 1:length(subjects)
             if ~isempty(roi.predT)
                 predT = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predT, roi.predT(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
-            if ~isempty(roi.predD)
-                predD = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predD, roi.predD(:, subject_idxs{subject}(session), ee), 'uni', false);
+            if ~isempty(roi.predP)
+                predP = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predP, roi.predP(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
             if ~isempty(roi.pred)
                 pred = cellfun(@(X, Y) X + Y * vox_props{subject}(session), pred, roi.pred(:, subject_idxs{subject}(session), ee), 'uni', false);
@@ -53,8 +53,8 @@ for subject = 1:length(subjects)
         if ~isempty(roi.predT)
             roi_pool.predT(:, subject, ee) = predT;
         end
-        if ~isempty(roi.predD)
-            roi_pool.predD(:, subject, ee) = predD;
+        if ~isempty(roi.predP)
+            roi_pool.predP(:, subject, ee) = predP;
         end
         if ~isempty(roi.pred)
             roi_pool.pred(:, subject, ee) = pred;

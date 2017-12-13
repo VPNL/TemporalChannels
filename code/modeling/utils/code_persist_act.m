@@ -1,16 +1,16 @@
-function delay_act = code_delay_act(stim)
-% Helper function for coding delay activity step functions.
+function persist_act = code_persist_act(stim)
+% Helper function for coding persistent activity step functions.
 % 
 % INPUT
 %   stim: matrix of stimulus step functions (TR x category)
 % 
 % OUTPUT
-%   delay_act: matrix of delay activity step functions (TR x category)
+%   persist_act: matrix of persistent activity step functions (TR x category)
 % 
 % AS 10/2017
 
 stim_diffs = diff(stim); stim_idxs = find(diff(sum(stim, 2)) == 1);
-delay_act = zeros(size(stim));
+persist_act = zeros(size(stim));
 for cc = 1:size(stim, 2)
     donsets = find(stim_diffs(:, cc) == -1);
     for oo = 1:length(donsets)
@@ -20,7 +20,7 @@ for cc = 1:size(stim, 2)
         else
             doffset = size(stim, 1);
         end
-        delay_act(donsets(oo):doffset, cc) = 1;
+        persist_act(donsets(oo):doffset, cc) = 1;
     end
 end
 
