@@ -82,7 +82,7 @@ if ~(exist(fpath, 'file') == 2)
         ii_model = ss_model; fprintf([num2str(ii) ' ']);
         for pp = 1:length(param_names)
             ii_model.params.(param_names{pp}) = {params_list(ii, pp)};
-            ii_model = update_param(ii_model, param_names{pp}, 0);
+            ii_model = tch_update_param(ii_model, param_names{pp}, 0);
         end
         ii_model = pred_runs(ii_model);
         run_preds(:, ii) = ii_model.run_preds;
@@ -103,7 +103,7 @@ for ii = 1:niters
     ii_roi = ss_roi; ii_model = ss_model; fprintf([num2str(ii) ' ']);
     for pp = 1:length(param_names)
         ii_model.params.(param_names{pp}) = {params_list(ii, pp)};
-        ii_model = update_param(ii_model, param_names{pp}, 0);
+        ii_model = tch_update_param(ii_model, param_names{pp}, 0);
     end
     ii_model.run_preds = run_preds(:, ii);
     ii_roi = tch_fit(ii_roi, ii_model);
@@ -124,7 +124,7 @@ end
 % update IRFs and output results of nseeds best models
 for seed = 1:nseeds
     for pp = 1:length(param_names)
-        models(seed) = update_param(models(seed), param_names{pp}, 0);
+        models(seed) = tch_update_param(models(seed), param_names{pp}, 0);
     end
     models(seed) = pred_runs(models(seed));
     models(seed) = pred_trials(models(seed));

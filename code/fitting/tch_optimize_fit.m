@@ -59,14 +59,14 @@ for mm = 1:nseeds
             param_init = model_iter(mm).params.(param_names{pp});
             pn = param_names{pp};
             % take a step in positive direction and fit model
-            model_pos = update_param(model_iter(mm), pn, step_sizes(pp));
+            model_pos = tch_update_param(model_iter(mm), pn, step_sizes(pp));
             param_pos = model_pos.params.(param_names{pp});
             model_pos = pred_runs(model_pos);
             model_pos = pred_trials(model_pos);
             roi_pos = tch_fit(roi_iter(mm), model_pos);
             var_exp_pos = [roi_pos.model.varexp{:}];
             % take a step in negative direction and fit model
-            model_neg = update_param(model_iter(mm), pn, -step_sizes(pp));
+            model_neg = tch_update_param(model_iter(mm), pn, -step_sizes(pp));
             param_neg = model_neg.params.(param_names{pp});
             model_neg = pred_runs(model_neg);
             model_neg = pred_trials(model_neg);
@@ -79,7 +79,7 @@ for mm = 1:nseeds
             param_new{1} = param_ii{opt_idxs(1)};
             % update model_init to have best fitting parameters
             model_iter(mm).params.(param_names{pp}) = param_new;
-            model_iter(mm) = update_param(model_iter(mm), param_names{pp}, 0);
+            model_iter(mm) = tch_update_param(model_iter(mm), param_names{pp}, 0);
             model_iter(mm) = pred_runs(model_iter(mm));
             roi_iter(mm) = tch_fit(roi_iter(mm), model_iter(mm));
         end

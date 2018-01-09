@@ -327,6 +327,19 @@ switch model_type
         persist_exp = exp(-(1:12000) / tau_pe);
         irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '3ch-exp-quad-exp-opt'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
+        params.tau_pe = repmat({tau_pe}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        persist_exp = exp(-(1:12000) / tau_pe);
+        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
 end
 
 end

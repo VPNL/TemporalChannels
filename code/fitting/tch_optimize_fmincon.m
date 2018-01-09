@@ -15,7 +15,7 @@ for ss = 1:length(sessions)
         for pp = 1:length(param_names)
             pn = param_names{pp}; omodel.params.(pn){1} = params.(pn){1};
         end
-        omodel = update_param(omodel, pn, 0);
+        omodel = tch_update_param(omodel, pn, 0);
     else
         sroi = tchROI(roi.name, roi.experiments, sessions{ss});
         sroi.tr = roi.tr; sroi = tch_runs(sroi);
@@ -170,12 +170,23 @@ for ss = 1:length(sessions)
                 params.n2{1} = x_opt(3);
                 params.kappa{1} = x_opt(4);
                 params.tau_pe{1} = x_opt(5) * 1000;
+            case '3ch-exp-quad-exp-opt'
+                obj_fun = tch_obj_fun_3ch_exp_quad_exp_opt(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                tau_pe = omodel.params.tau_pe{1} / 1000;
+                x_init = [tau_s tau_ae tau_pe]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1 .1], [50 60 12], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
+                params.tau_pe{1} = x_opt(3) * 1000;
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);
             omodel.params.(pn){1} = pv; pout{pp} = [pn ': ' pstr];
         end
-        omodel = update_param(omodel, param_names{pp}, 0);
+        omodel = tch_update_param(omodel, param_names{pp}, 0);
         save(fpath_opt, 'params', '-v7.3'); fprintf([strjoin(pout, ', ') '\n']);
     end
     % copy optimized parameters from session to group model objects
@@ -183,7 +194,7 @@ for ss = 1:length(sessions)
         pn = param_names{pp}; model.params.(pn){ss} = omodel.params.(pn){1};
     end
 end
-model = update_param(model, param_names{pp}, 0);
+model = tch_update_param(model, param_names{pp}, 0);
 model = pred_runs(model); model = pred_trials(model);
 [roi, model] = tch_fit(roi, model, 0);
 

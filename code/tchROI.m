@@ -28,14 +28,14 @@
 classdef tchROI
     
     properties
-        name        % name of data directories for this region
-        experiments % array of experiments to model
-        sessions    % array of sessions that have data for this region
-        model = []; % data structure of models fits for each session
-        predS = {}; % predicted sustained contributions per trial type
-        predT = {}; % predicted transient contributions per trial type
-        predP = {}; % predicted persistent contributions per trial type
-        pred = {};  % total predicted contributions for each trial type
+        name               % name of ROI data directories for this region
+        experiments        % array of experiments to model
+        sessions           % array of sessions with specified region
+        model = [];        % data structure of models fits for each session
+        trial_predsS = {}; % predicted sustained contributions per trial
+        trial_predsT = {}; % predicted transient contributions per trial
+        trial_predsP = {}; % predicted persistent contributions per trial
+        trial_preds = {};  % total predicted contributions per trial
     end
     
     properties (Hidden)
@@ -54,15 +54,15 @@ classdef tchROI
     end
     
     properties (Dependent, Hidden)
-        all_sessions % paths to all session directories
-        num_runs     % number of runs per experiment
-        filenames    % paths to data files from sessions
-        nickname     % ROI nickname
-        session_ids  % session nicknames
-        pred_sum     % sum of predictors across all channels
-        predS_sum    % sum of predictors across S channels
-        predT_sum    % sum of predictors across T channels
-        predP_sum    % sum of predictors across P channels
+        all_sessions      % paths to all session directories
+        num_runs          % number of runs per experiment
+        filenames         % paths to data files from sessions
+        nickname          % ROI nickname
+        session_ids       % session nicknames
+        trial_preds_sum   % sum of predictors across all channels
+        trial_predsS_sum  % sum of predictors across S channels
+        trial_predsT_sum  % sum of predictors across T channels
+        trial_predsP_sum  % sum of predictors across P channels
     end
     
     
@@ -151,23 +151,23 @@ classdef tchROI
         end
         
         % sum trial predictors across all channels
-        function pred_sum = get.pred_sum(roi)
-            pred_sum = cellfun(@(X) sum(X, 2), roi.pred, 'uni', false);
+        function trial_preds_sum = get.trial_preds_sum(roi)
+            trial_preds_sum = cellfun(@(X) sum(X, 2), roi.trial_preds, 'uni', false);
         end
         
         % sum trial predictors across sustained channels
-        function predS_sum = get.predS_sum(roi)
-            predS_sum = cellfun(@(X) sum(X, 2), roi.predS, 'uni', false);
+        function trial_predsS_sum = get.trial_predsS_sum(roi)
+            trial_predsS_sum = cellfun(@(X) sum(X, 2), roi.trial_predsS, 'uni', false);
         end
         
         % sum trial predictors across transient channels
-        function predT_sum = get.predT_sum(roi)
-            predT_sum = cellfun(@(X) sum(X, 2), roi.predT, 'uni', false);
+        function trial_predsT_sum = get.trial_predsT_sum(roi)
+            trial_predsT_sum = cellfun(@(X) sum(X, 2), roi.trial_predsT, 'uni', false);
         end
         
         % sum trial predictors across all persistent channels
-        function predP_sum = get.predP_sum(roi)
-            predP_sum = cellfun(@(X) sum(X, 2), roi.predP, 'uni', false);
+        function trial_predsP_sum = get.trial_predsP_sum(roi)
+            trial_predsP_sum = cellfun(@(X) sum(X, 2), roi.trial_predsP, 'uni', false);
         end
         
         % find set of all_sessions with current ROI
@@ -334,14 +334,14 @@ classdef tchROI
             ncats = length(unique([model.cats{:}]));
             nsubs = length(roi.sessions);
             % preallocate predictor array for each trial type
-            roi.pred = cell(nconds, nsubs, nexps);
+            roi.trial_preds = cell(nconds, nsubs, nexps);
             % preallocate S and T predictors if using multi-channel model
             if model.num_channels > 1
-                roi.predS = cell(nconds, nsubs, nexps);
-                roi.predT = cell(nconds, nsubs, nexps);
+                roi.trial_predsS = cell(nconds, nsubs, nexps);
+                roi.trial_predsT = cell(nconds, nsubs, nexps);
             end
             if model.num_channels > 2
-                roi.predP = cell(nconds, nsubs, nexps);
+                roi.trial_predsP = cell(nconds, nsubs, nexps);
             end
             % predict response for each session, experiment, and trial type
             for ss = 1:nsubs
@@ -354,7 +354,7 @@ classdef tchROI
                             pred = model.trial_preds.pred{cc, ss, ee};
                             pred = pred .* repmat(amp, size(pred, 1), 1);
                             % store trial predictors in roi
-                            roi.pred{cc, ss, ee} = pred;
+                            roi.trial_preds{cc, ss, ee} = pred;
                         end
                         % if using a mutli-channel model
                         if model.num_channels > 1
@@ -366,17 +366,17 @@ classdef tchROI
                             fmriS = predS .* repmat(ampS, size(predS, 1), 1);
                             fmriT = predT .* repmat(ampT, size(predT, 1), 1);
                             % store trial predictors in roi
-                            roi.predS{cc, ss, ee} = fmriS;
-                            roi.predT{cc, ss, ee} = fmriT;
+                            roi.trial_predsS{cc, ss, ee} = fmriS;
+                            roi.trial_predsT{cc, ss, ee} = fmriT;
                             if model.num_channels == 2
-                                roi.pred{cc, ss, ee} = fmriS + fmriT;
+                                roi.trial_preds{cc, ss, ee} = fmriS + fmriT;
                             end
                             if model.num_channels > 2
                                 ampP = roi.model.betas{ss}(2 * ncats + 1:3 * ncats);
                                 predP = model.trial_preds.P{cc, ss, ee};
                                 fmriP = predP .* repmat(ampP, size(predP, 1), 1);
-                                roi.predP{cc, ss, ee} = fmriP;
-                                roi.pred{cc, ss, ee} = fmriS + fmriT + fmriP;
+                                roi.trial_predsP{cc, ss, ee} = fmriP;
+                                roi.trial_preds{cc, ss, ee} = fmriS + fmriT + fmriP;
                             end
                         end
                     end

@@ -1,4 +1,4 @@
-function model = update_param(model, param, param_step)
+function model = tch_update_param(model, param, param_step)
 % Updates a specified parameter in tchModel object
 % 
 % INPUTS
@@ -170,6 +170,17 @@ switch model.type
             model.params.tau_s, model.params.n1, model.params.n2, model.params.kappa, 'uni', false);
         persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_pe, 'uni', false);
+        model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
+    case '3ch-exp-quad-exp-opt'
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
+            model.params.tau_s, 'uni', false);
+        adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_ae, 'uni', false);
+        persist_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_pe, 'uni', false);
+        model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
         model.irfs.persist_exp = persist_exps; model = code_persist_decay(model);
 end
 

@@ -101,7 +101,7 @@ The `tch_model_roi` wrapper function is used to fit and validate various tempora
  
 4. Fitted β weights are used to predict responses to each trial type.
     1. The average response to each trial type is stored in a 3D cell array `roi(1).trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_avgs(:, N, K)` contains the average response to each trial type in the *K*-th experiment of the *N*-th session).
-    2. The predicted fMRI response to each trial type is stored in a 3D cell array `roi(1).pred` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).pred(:, N, K)` contains the predicted response to each trial type in the *K*-th experiment of the *N*-th session).
+    2. The predicted fMRI response to each trial type is stored in a 3D cell array `roi(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_preds(:, N, K)` contains the predicted response to each trial type in the *K*-th experiment of the *N*-th session).
  
 5. Model validation is performed using the fitted *β* weights to predict responses in independent data.
     1. *β* weights fitted to independent data are stored in a 1D cell array `roi(2).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(2).model.betas(N)` contains the *β* weights for the *N*-th session fitted to data in `roi(1)`).
@@ -121,7 +121,7 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
     2. Single-channel models (solved with optimized time/compression parameters)
         1. `‘1ch-pow’` — compressive temporal summation (CTS) model with power law (CTS-p; Zhou et al., 2017)
         2. `‘1ch-div’` — CTS model with divisive normalization (CTS-n; Zhou et al., 2017)
-        3. `‘1ch-dcts’` — dynaminc CTS model (dCTS; Zhou et al., 2017)
+        3. `‘1ch-dcts’` — dynamic CTS model (dCTS; Zhou et al., 2017)
         4. `‘1ch-exp’` — adaptation model with exponential decay
     3. Two-channel models (solved analytically)
         1. `‘2ch-lin-quad’` — linear sustained and quadratic transient channels (Stigliani et al., 2017)

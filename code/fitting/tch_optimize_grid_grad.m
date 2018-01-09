@@ -17,7 +17,7 @@ for ss = 1:length(sessions)
         for pp = 1:length(param_names)
             pn = param_names{pp}; smodel.params.(pn){1} = params.(pn){1};
         end
-        smodel = code_stim(smodel); smodel = update_param(smodel, pn, 0);
+        smodel = code_stim(smodel); smodel = tch_update_param(smodel, pn, 0);
         smodel = pred_runs(smodel); smodel = pred_trials(smodel);
     elseif exist(fpath_grid, 'file') == 2
         load(fpath_grid); fprintf('Loading grid search results. \n');
@@ -32,7 +32,7 @@ for ss = 1:length(sessions)
                 pn = param_names{pp};
                 smodel(mm).params.(pn){1} = params(mm).(pn){1};
             end
-            smodel(mm) = update_param(smodel(mm), pn, 0);
+            smodel(mm) = tch_update_param(smodel(mm), pn, 0);
             smodel(mm) = pred_runs(smodel(mm));
             smodel(mm) = pred_trials(smodel(mm));
             sroi(mm) = tch_trials(sroi(mm), smodel(mm));
@@ -53,7 +53,7 @@ for ss = 1:length(sessions)
         model.params.(param_names{pp}){ss} = smodel.params.(param_names{pp}){1};
     end
 end
-model = update_param(model, param_names{pp}, 0); model = norm_model(model, 1);
+model = tch_update_param(model, param_names{pp}, 0); model = norm_model(model, 1);
 model = pred_runs(model); model = pred_trials(model);
 [roi, model] = tch_fit(roi, model, 0);
 

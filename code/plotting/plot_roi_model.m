@@ -48,14 +48,14 @@ for ee = 1:nexps
         x = xcnt:xcnt + tl - 1; ym = [roi.trial_avgs{cc, :, ee}]';
         me = tch_plot_tc(x, ym, 1, [.9 .9 .9], [.7 .7 .7], 'std');
         % plot model prediction for peristimulus time window
-        pr = tch_plot_tc(x, [roi.pred_sum{cc, :, ee}]', 2, [0 0 0]);
+        pr = tch_plot_tc(x, [roi.trial_preds_sum{cc, :, ee}]', 2, [0 0 0]);
         % plot separate channel contributions if applicable
         if roi.model.num_channels > 1
-            sp = tch_plot_tc(x, [roi.predS_sum{cc, :, ee}]', 1, [0 0 1]);
-            tp = tch_plot_tc(x, [roi.predT_sum{cc, :, ee}]', 1, [1 0 0]);
+            sp = tch_plot_tc(x, [roi.trial_predsS_sum{cc, :, ee}]', 1, [0 0 1]);
+            tp = tch_plot_tc(x, [roi.trial_predsT_sum{cc, :, ee}]', 1, [1 0 0]);
         end
         if roi.model.num_channels > 2
-            dp = tch_plot_tc(x, [roi.predP_sum{cc, :, ee}]', 1, [0 1 0]);
+            dp = tch_plot_tc(x, [roi.trial_predsP_sum{cc, :, ee}]', 1, [0 1 0]);
         end
         % plot stimulus
         stim = [xcnt + roi.model.pre_dur / TR xcnt + tl - roi.model.post_dur / TR];

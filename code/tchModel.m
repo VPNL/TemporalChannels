@@ -364,6 +364,8 @@ classdef tchModel
                     model = pred_runs_3ch_lin_quad_exp_opt(model);
                 case '3ch-lin-rect-exp-opt'
                     model = pred_runs_3ch_lin_rect_exp_opt(model);
+                case '3ch-exp-quad-exp-opt'
+                    model = pred_runs_3ch_exp_quad_exp_opt(model);
             end
         end
         
@@ -430,6 +432,8 @@ classdef tchModel
                     model = pred_trials_3ch_lin_quad_exp_opt(model);
                 case '3ch-lin-rect-exp-opt'
                     model = pred_trials_3ch_lin_rect_exp_opt(model);
+                case '3ch-exp-quad-exp-opt'
+                    model = pred_trials_3ch_exp_quad_exp_opt(model);
             end
         end
         

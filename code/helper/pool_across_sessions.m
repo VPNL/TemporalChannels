@@ -27,37 +27,37 @@ end
 for subject = 1:length(subjects)
     roi_pool.sessions{subject} = subjects{subject};
     for ee = 1:length(roi.experiments)
-        empty_preds = cellfun(@(X) zeros(size(X)), roi.pred(:, subject_idxs{subject}(1), ee), 'uni', false);
+        empty_preds = cellfun(@(X) zeros(size(X)), roi.trial_preds(:, subject_idxs{subject}(1), ee), 'uni', false);
         [predS, predT, predP, pred] = deal(empty_preds);
         trials = cellfun(@(X) zeros(size(X)), roi.trials(:, subject_idxs{subject}(1), ee), 'uni', false);
         for session = 1:length(subject_idxs{subject})
-            if ~isempty(roi.predS)
-                predS = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predS, roi.predS(:, subject_idxs{subject}(session), ee), 'uni', false);
+            if ~isempty(roi.trial_predsS)
+                predS = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predS, roi.trial_predsS(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
-            if ~isempty(roi.predT)
-                predT = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predT, roi.predT(:, subject_idxs{subject}(session), ee), 'uni', false);
+            if ~isempty(roi.trial_predsT)
+                predT = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predT, roi.trial_predsT(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
-            if ~isempty(roi.predP)
-                predP = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predP, roi.predP(:, subject_idxs{subject}(session), ee), 'uni', false);
+            if ~isempty(roi.trial_predsP)
+                predP = cellfun(@(X, Y) X + Y * vox_props{subject}(session), predP, roi.trial_predsP(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
-            if ~isempty(roi.pred)
-                pred = cellfun(@(X, Y) X + Y * vox_props{subject}(session), pred, roi.pred(:, subject_idxs{subject}(session), ee), 'uni', false);
+            if ~isempty(roi.trial_preds)
+                pred = cellfun(@(X, Y) X + Y * vox_props{subject}(session), pred, roi.trial_preds(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
             if ~isempty(roi.trials)
                 trials = cellfun(@(X, Y) X + Y * vox_props{subject}(session), trials, roi.trials(:, subject_idxs{subject}(session), ee), 'uni', false);
             end
         end
-        if ~isempty(roi.predS)
-            roi_pool.predS(:, subject, ee) = predS;
+        if ~isempty(roi.trial_predsS)
+            roi_pool.trial_predsS(:, subject, ee) = predS;
         end
-        if ~isempty(roi.predT)
-            roi_pool.predT(:, subject, ee) = predT;
+        if ~isempty(roi.trial_predsT)
+            roi_pool.trial_predsT(:, subject, ee) = predT;
         end
-        if ~isempty(roi.predP)
-            roi_pool.predP(:, subject, ee) = predP;
+        if ~isempty(roi.trial_predsP)
+            roi_pool.trial_predsP(:, subject, ee) = predP;
         end
-        if ~isempty(roi.pred)
-            roi_pool.pred(:, subject, ee) = pred;
+        if ~isempty(roi.trial_preds)
+            roi_pool.trial_preds(:, subject, ee) = pred;
         end
         if ~isempty(roi.trials)
             roi_pool.trials(:, subject, ee) = trials;
