@@ -351,7 +351,7 @@ classdef tchROI
                         if model.num_channels == 1
                             amp = roi.model.betas{ss}(1:ncats);
                             % scale trial predictors by betas
-                            pred = model.trial_preds.S{cc, ss, ee};
+                            pred = model.trial_preds.pred{cc, ss, ee};
                             pred = pred .* repmat(amp, size(pred, 1), 1);
                             % store trial predictors in roi
                             roi.trial_preds{cc, ss, ee} = pred;

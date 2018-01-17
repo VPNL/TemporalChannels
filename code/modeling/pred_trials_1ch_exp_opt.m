@@ -32,7 +32,7 @@ for ee = 1:nexps
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
-            model.trial_preds.S{cc, ss, ee} = fmriS;
+            model.trial_preds.pred{cc, ss, ee} = fmriS;
         end
     end
     rcnt = rcnt + nruns(ee, 1);
