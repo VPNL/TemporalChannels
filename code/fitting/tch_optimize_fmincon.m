@@ -170,6 +170,24 @@ for ss = 1:length(sessions)
                 params.n2{1} = x_opt(3);
                 params.kappa{1} = x_opt(4);
                 params.tau_pe{1} = x_opt(5) * 1000;
+            case '1ch-exp-opt'
+                obj_fun = tch_obj_fun_1ch_exp_opt(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                x_init = [tau_s tau_ae]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1], [20 60], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
+            case '2ch-exp-quad-opt'
+                obj_fun = tch_obj_fun_2ch_exp_quad_opt(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                x_init = [tau_s tau_ae]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1], [20 60], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
             case '3ch-exp-quad-exp-opt'
                 obj_fun = tch_obj_fun_3ch_exp_quad_exp_opt(sroi, omodel);
                 tau_s = omodel.params.tau_s{1};
@@ -177,7 +195,7 @@ for ss = 1:length(sessions)
                 tau_pe = omodel.params.tau_pe{1} / 1000;
                 x_init = [tau_s tau_ae tau_pe]; 
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 1 .1], [50 60 12], [], fmin_options);
+                    [], [], [4 1 .1], [20 60 12], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.tau_pe{1} = x_opt(3) * 1000;
