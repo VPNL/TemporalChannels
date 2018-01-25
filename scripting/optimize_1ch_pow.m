@@ -12,9 +12,9 @@ for rr = 1:length(rois)
     fname = [strrep(rois{rr}, '_', '-') '_' model_type '_split-half.mat'];
     if exist(fullfile(mdir, 'results', fname), 'file') == 0
         [roi1, model1] = tch_model_roi(rois{rr}, model_type, ...
-            fit_exps(1, :), val_exps(1, :)1, 1, sessions);
+            fit_exps(1, :), val_exps(1, :), 1, sessions);
         [roi2, model2] = tch_model_roi(rois{rr}, model_type, ...
-            fit_exps(2, :), val_exps(2, :)1, 1, sessions);
+            fit_exps(2, :), val_exps(2, :), 1, sessions);
         roi = pool_across_folds(roi1, roi2);
         save(fullfile(mdir, 'results', fname), 'roi');
     end
