@@ -58,6 +58,13 @@ for ss = 1:length(sessions)
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], 1, 60, [], fmin_options);
                 params.tau_ae{1} = x_opt(1) * 1000;
+            case '1ch-quad-opt'
+                obj_fun = tch_obj_fun_1ch_quad_opt(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                x_init = tau_s; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], 4, 20, [], fmin_options);
+                params.tau_s{1} = x_opt(1);
             case '2ch-pow-quad'
                 obj_fun = tch_obj_fun_2ch_pow_quad(sroi, omodel);
                 x_init = omodel.params.epsilon{1};
@@ -199,6 +206,16 @@ for ss = 1:length(sessions)
                 params.tau_s{1} = x_opt(1);
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.tau_pe{1} = x_opt(3) * 1000;
+            case '2ch-exp-cquad-opt'
+                obj_fun = tch_obj_fun_2ch_exp_cquad_opt(sroi, omodel);
+                x_init = [omodel.params.tau_s{1}  omodel.params.tau_ae{1} ...
+                    omodel.params.sigma{1} omodel.params.tau2{1} / 1000];
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 1 .001 .01], [20 60 1 1], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
+                params.sigma{1} = x_opt(3);
+                params.tau2{1} = x_opt(4) * 1000;
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);

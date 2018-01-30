@@ -84,6 +84,11 @@ switch model_type
         irfs.hrf = repmat({hrf}, 1, nsessions);
         adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+    case '1ch-quad-opt'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
     case '2ch-lin-htd'
         irfs.hrf = repmat({hrf}, 1, nsessions);
         irfs.dhrf = repmat({dhrf}, 1, nsessions);
@@ -356,6 +361,20 @@ switch model_type
         adapt_exp = exp(-(1:60000) / tau_ae);
         persist_exp = exp(-(1:12000) / tau_pe);
         irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '2ch-exp-cquad-opt'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
+        params.tau2 = repmat({tau2}, 1, nsessions);
+        params.sigma = repmat({sigma}, 1, nsessions);
+        lpf = exp(-(0:999) / tau2); lpf = lpf / sum(lpf);
+        irfs.lpf = repmat({lpf}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
 end

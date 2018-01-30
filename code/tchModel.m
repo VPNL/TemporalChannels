@@ -320,6 +320,8 @@ classdef tchModel
                     model = pred_runs_1ch_exp(model);
                 case '1ch-cexp'
                     model = pred_runs_1ch_cexp(model);
+                case '1ch-quad-opt'
+                    model = pred_runs_1ch_quad_opt(model);
                 case '2ch-lin-lin'
                     model = pred_runs_2ch_lin_lin(model);
                 case '2ch-lin-quad'
@@ -370,6 +372,8 @@ classdef tchModel
                     model = pred_runs_2ch_exp_quad_opt(model);
                 case '3ch-exp-quad-exp-opt'
                     model = pred_runs_3ch_exp_quad_exp_opt(model);
+                case '2ch-exp-cquad-opt'
+                    model = pred_runs_2ch_exp_cquad_opt(model);
             end
         end
         
@@ -392,6 +396,8 @@ classdef tchModel
                     model = pred_trials_1ch_exp(model);
                 case '1ch-cexp'
                     model = pred_trials_1ch_cexp(model);
+                case '1ch-quad-opt'
+                    model = pred_trials_1ch_quad_opt(model);
                 case '2ch-lin-lin'
                     model = pred_trials_2ch_lin_lin(model);
                 case '2ch-lin-quad'
@@ -442,6 +448,8 @@ classdef tchModel
                     model = pred_trials_2ch_exp_quad_opt(model);
                 case '3ch-exp-quad-exp-opt'
                     model = pred_trials_3ch_exp_quad_exp_opt(model);
+                case '2ch-exp-cquad-opt'
+                    model = pred_trials_2ch_exp_cquad_opt(model);
             end
         end
         

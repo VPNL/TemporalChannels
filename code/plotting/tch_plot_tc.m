@@ -44,6 +44,10 @@ if err_flag
 end
 hold on; ma = plot(x, y_mean, 'Color', lcol, 'LineWidth', lw);
 ymin = min(y_mean - err); ymax = max(y_mean + err);
-if err_flag == 1; h = me; else; h = ma; end
+if err_flag == 1;
+    h = me;
+else
+    h = ma;
+end
 
 end
