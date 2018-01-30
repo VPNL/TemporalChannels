@@ -211,7 +211,7 @@ for ss = 1:length(sessions)
                 x_init = [omodel.params.tau_s{1}  omodel.params.tau_ae{1} ...
                     omodel.params.sigma{1} omodel.params.tau2{1} / 1000];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 1 .001 .01], [20 60 1 1], [], fmin_options);
+                    [], [], [4 12 .001 .05], [20 60 .1 1], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.sigma{1} = x_opt(3);
