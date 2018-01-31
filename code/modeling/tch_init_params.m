@@ -20,7 +20,7 @@ epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for multi-channel moddels
 [tau_s, tau_t, tau_p] = deal(4.93); n1 = 9; n2 = 10; kappa = 1.33;
 % exponential time constants for decay
-tau_pe = 500; tau_ae = 10000;
+tau_pe = 500; tau_ae = 20000;
 % default paramters for balloon model (see Chen & Glover, 2015)
 tauP = 25; tauN = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
 % parameters of gamma IRF for balloon model
