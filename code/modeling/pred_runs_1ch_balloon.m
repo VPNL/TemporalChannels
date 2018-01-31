@@ -2,7 +2,7 @@ function model = pred_runs_1ch_balloon(model)
 % Generates run predictors using a standard single-channel balloon model.
 
 % define global variables
-global which_tau tau_n tau_p tauMTT alpha E0 V0 tau;
+global which_tau tauN tauP tauMTT alpha E0 V0 tau;
 % get design parameters
 params = model.params; irfs_init = model.irfs; dt = params.delta_t;
 fs = model.fs; tr = model.tr; rd = model.run_durs; stim = model.stim;
@@ -41,8 +41,8 @@ for ss = 1:nsess
                 % initialize variables
                 [v, q, IN_FLOW, OUT_FLOW, CMRO2] = deal(1);
                 S = 0; OEF = params.E0; t = time_vecs{rr, ss}; 
-                which_tau = 1; tauMTT = params.tauMTT; tau = params.tau_p;
-                tau_p = params.tau_p; tau_n = params.tau_n;
+                which_tau = 1; tauMTT = params.tauMTT; tau = params.tauP;
+                tauP = params.tauP; tauN = params.tauN;
                 alpha = params.alpha; E0 = params.E0; V0 = params.V0;
                 % get the simulated values of all variables
                 for ii = 1:size(time_vecs{rr, ss}, 1) - 1

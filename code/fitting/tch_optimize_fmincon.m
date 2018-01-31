@@ -216,6 +216,19 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.sigma{1} = x_opt(3);
                 params.tau2{1} = x_opt(4) * 1000;
+            case '3ch-exp-quad-crect-opt'
+                obj_fun = tch_obj_fun_3ch_exp_quad_crect_opt(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                tau_p = omodel.params.tau_p{1};
+                epsilon = omodel.params.epsilon{1};
+                x_init = [tau_s tau_ae tau_p epsilon]; 
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 12 4 .001], [20 60 20 1], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
+                params.tau_p{1} = x_opt(3);
+                params.epsilon{1} = x_opt(4);
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);

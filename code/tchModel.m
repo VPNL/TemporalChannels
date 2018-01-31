@@ -116,7 +116,7 @@ classdef tchModel
                 error('Incorrect number of input arguments.');
             end
             % check for invalid model type and initialize model parameters
-            check_model_type(model.type); nsess = length(model.sessions);
+            nsess = length(model.sessions); check_model_type(model.type);
             [params, irfs] = tch_init_params(type, nsess, model.fs);
             model.params = params; model.irfs = irfs;
             model.num_exps = length(model.experiments);
@@ -229,7 +229,7 @@ classdef tchModel
             elseif ~isempty(strfind(model.type, 'ch-cexp'))
                 model = code_adapt_decay(model, 'cexp');
             end
-            if model.num_channels > 2 && ~isempty(strfind(model.type, '-exp'))
+            if model.num_channels > 2 && isfield(model.params, 'tau_pe')
                 model = code_persist_decay(model);
             end
         end
@@ -374,6 +374,8 @@ classdef tchModel
                     model = pred_runs_3ch_exp_quad_exp_opt(model);
                 case '2ch-exp-cquad-opt'
                     model = pred_runs_2ch_exp_cquad_opt(model);
+                case '3ch-exp-quad-crect-opt'
+                    model = pred_runs_3ch_exp_quad_crect_opt(model);
             end
         end
         
@@ -450,6 +452,8 @@ classdef tchModel
                     model = pred_trials_3ch_exp_quad_exp_opt(model);
                 case '2ch-exp-cquad-opt'
                     model = pred_trials_2ch_exp_cquad_opt(model);
+                case '3ch-exp-quad-crect-opt'
+                    model = pred_trials_3ch_exp_quad_crect_opt(model);
             end
         end
         

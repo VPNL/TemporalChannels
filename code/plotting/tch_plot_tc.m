@@ -34,7 +34,7 @@ if nargin > 4 && size(y, 1) > 1
         err = err / (sqrt(size(y, 1) - 1));
     end
 else
-    err = zeros(size(y));
+    err = zeros(1, size(y, 2));
 end
 
 % plot line and error region

@@ -2,7 +2,7 @@ function model = pred_trials_1ch_balloon(model)
 % Generates trial predictors using a standard single-channel balloon model.
 
 % define global variables and signal parameters
-global which_tau tau_n tau_p tau tauMTT alpha E0 V0;
+global which_tau tauN tauP tau tauMTT alpha E0 V0;
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
@@ -32,8 +32,8 @@ for ee = 1:nexps
                 % initialize variables
                 [v, q, IN_FLOW, OUT_FLOW, CMRO2] = deal(1);
                 S = 0; OEF = model.params.E0; which_tau = 1;
-                tau = model.params.tau_p; tauMTT = model.params.tauMTT;
-                tau_p = model.params.tau_p; tau_n = model.params.tau_n;
+                tau = model.params.tauP; tauMTT = model.params.tauMTT;
+                tauP = model.params.tauP; tauN = model.params.tauN;
                 E0 = model.params.E0; V0 = model.params.V0;
                 alpha = model.params.alpha;
                 % get the simulated values of all variables                

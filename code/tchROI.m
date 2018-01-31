@@ -285,7 +285,7 @@ classdef tchROI
         function [roi, model] = tch_fit(roi, model, optim_proc, fit_exps)
             if nargin < 3; optim_proc = 0; end
             if nargin < 4; fit_exps = model.experiments; end
-            check_model(roi, model); npreds = size(model.run_preds{1, 1}, 2);
+            npreds = size(model.run_preds{1, 1}, 2); check_model(roi, model);
             % subtract baseline estimates from centered time series
             tcs = cellfun(@(X, Y) X - Y, roi.run_avgs, roi.baseline, 'uni', false);
             rfs = cellfun(@(X) X / model.tr, model.run_durs, 'uni', false);

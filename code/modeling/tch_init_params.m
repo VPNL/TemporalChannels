@@ -18,11 +18,11 @@ dhrf = [diff(hrf); 0]; dhrf = dhrf * (max(hrf) / max(dhrf));
 % default paramters for CTS family of moddels
 epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for multi-channel moddels
-tau_s = 4.93; tau_t = 4.93; tau_d = 10; n1 = 9; n2 = 10; kappa = 1.33;
+[tau_s, tau_t, tau_p] = deal(4.93); n1 = 9; n2 = 10; kappa = 1.33;
 % exponential time constants for decay
 tau_pe = 500; tau_ae = 10000;
 % default paramters for balloon model (see Chen & Glover, 2015)
-tau_p = 25; tau_n = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
+tauP = 25; tauN = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
 % parameters of gamma IRF for balloon model
 tau_g = 0.24; lag = 1; exponent = 2;
 % setup structs
@@ -32,8 +32,8 @@ switch model_type
     case '1ch-lin'
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '1ch-balloon'
-        params.tau_p = tau_p;   % viscoelastic time constant for inflation
-        params.tau_n = tau_n;   % viscoelastic time constant for deflation
+        params.tauP = tauP;   % viscoelastic time constant for inflation
+        params.tauN = tauN;   % viscoelastic time constant for deflation
         params.E0 = E0;         % resting oxygen extraction fraction
         params.V0 = V0;         % resting blood volume
         params.tauMTT = tauMTT; % transit time through balloon
@@ -102,6 +102,8 @@ switch model_type
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
+        %nrfT = -tch_irfs('T', tau_t, 9, 17, .5);
+        %nrfT = -tch_irfs('T', tau_t, 5, 9, .5);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '2ch-lin-rect'
@@ -182,12 +184,12 @@ switch model_type
     case '3ch-opt'
         params.tau_s = repmat({tau_s}, 1, nsessions);
         params.tau_t = repmat({tau_t}, 1, nsessions);
-        params.tau_d = repmat({tau_d}, 1, nsessions);
+        params.tau_d = repmat({tau_p}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        nrfP = tch_irfs('P', tau_d, n1, n2, kappa, fs);
+        nrfP = tch_irfs('P', tau_p, n1, n2, kappa, fs);
         irfs.nrfP = repmat({nrfP}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '3ch-lin-quad-exp'
@@ -374,6 +376,20 @@ switch model_type
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '3ch-exp-quad-crect-opt'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
+        params.tau_p = repmat({tau_p}, 1, nsessions);
+        params.epsilon = repmat({epsilon}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        nrfP = tch_irfs('P', tau_p, n1, n2, kappa, fs);
+        irfs.nrfP = repmat({nrfP}, 1, nsessions);
         adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);

@@ -28,7 +28,7 @@ switch param
         param_min = 1;
     case 'tau_t'
         param_min = 1;
-    case 'tau_d'
+    case 'tau_p'
         param_min = 1;
     case 'n1'
         param_min = 9;
@@ -208,6 +208,16 @@ switch model.type
             model.params.tau_s, 'uni', false);
         model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
             model.params.tau_s, 'uni', false);
+        adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_ae, 'uni', false);
+        model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
+    case '3ch-exp-quad-crect-opt'
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfP = cellfun(@(X) tch_irfs('P', X), ...
+            model.params.tau_p, 'uni', false);
         adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
             model.params.tau_ae, 'uni', false);
         model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
