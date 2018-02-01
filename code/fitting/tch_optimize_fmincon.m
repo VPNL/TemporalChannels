@@ -222,7 +222,7 @@ for ss = 1:length(sessions)
                 tau_ae = omodel.params.tau_ae{1} / 1000;
                 tau_p = omodel.params.tau_p{1};
                 epsilon = omodel.params.epsilon{1};
-                x_init = [tau_s tau_ae tau_p epsilon]; 
+                x_init = [tau_s tau_ae tau_p epsilon];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
                     [], [], [4 12 4 .001], [20 60 20 1], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
