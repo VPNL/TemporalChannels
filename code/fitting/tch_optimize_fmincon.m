@@ -229,6 +229,26 @@ for ss = 1:length(sessions)
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.tau_p{1} = x_opt(3);
                 params.epsilon{1} = x_opt(4);
+            case '2ch-exp-crect'
+                obj_fun = tch_obj_fun_2ch_exp_crect(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                tau_ae = omodel.params.tau_ae{1} / 1000;
+                epsilon = omodel.params.epsilon{1};
+                x_init = [tau_s tau_ae epsilon];
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 12 .001], [20 60 1], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.tau_ae{1} = x_opt(2) * 1000;
+                params.epsilon{1} = x_opt(3);
+            case '2ch-lin-crect'
+                obj_fun = tch_obj_fun_2ch_lin_crect(sroi, omodel);
+                tau_s = omodel.params.tau_s{1};
+                epsilon = omodel.params.epsilon{1};
+                x_init = [tau_s epsilon];
+                x_opt = fmincon(obj_fun, x_init, [], [], ...
+                    [], [], [4 .001], [20 1], [], fmin_options);
+                params.tau_s{1} = x_opt(1);
+                params.epsilon{1} = x_opt(2);
         end
         for pp = 1:length(param_names)
             pn = param_names{pp}; pv = params.(pn){1}; pstr = num2str(pv, 3);
