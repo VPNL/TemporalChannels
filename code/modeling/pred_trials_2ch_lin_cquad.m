@@ -1,6 +1,6 @@
-function model = pred_trials_2ch_lin_crect(model)
+function model = pred_trials_2ch_lin_cquad(model)
 % Generates trial predictors using the 2 temporal-channel model with 
-% linear sustained and rectified + compressed transient channels.
+% linear sustained and quadratic + compressed transient channels.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
@@ -27,8 +27,8 @@ for ee = 1:nexps
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs and code adaptation
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predTr = rectify(convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs));
-            predTc = rectify(predTr, 'abs', .001) .^ model.params.epsilon{ss};
+            predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predTc = rectify(predTq, 'abs', .001) .^ model.params.epsilon{ss};
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);

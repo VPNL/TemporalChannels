@@ -1,6 +1,6 @@
-function model = pred_trials_2ch_lin_crect(model)
+function model = pred_trials_2ch_exp_cquad(model)
 % Generates trial predictors using the 2 temporal-channel model with 
-% linear sustained and rectified + compressed transient channels.
+% adapted sustained and quadratic + compressed transient channels.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
@@ -23,14 +23,18 @@ for ee = 1:nexps
         cstim = model.stim{rcnt, 1}(cstim_start:cstim_stop, :);
         cstim(1:fs * model.pre_dur, :) = 0;
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
+        dcstim = diff(sum(cstim, 2));
+        starts = find(dcstim == 1) / fs; stops = find(dcstim == -1) / fs;
         % generate trial predictor per session
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs and code adaptation
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predTr = rectify(convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs));
-            predTc = rectify(predTr, 'abs', .001) .^ model.params.epsilon{ss};
+            adapt_exp = irfs.adapt_exp{ss};
+            adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
+            predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predTc = rectify(predTq, 'abs', .001) .^ model.params.epsilon{ss};
             % convolve neural predictors with HRF
-            fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
+            fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmriS;

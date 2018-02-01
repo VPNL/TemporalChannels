@@ -234,6 +234,19 @@ switch model.type
             model.params.tau_s, 'uni', false);
         model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
             model.params.tau_s, 'uni', false);
+    case '2ch-exp-cquad'
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
+            model.params.tau_s, 'uni', false);
+        adapt_exps = cellfun(@(X) exp(-(1:60000) / X), ...
+            model.params.tau_ae, 'uni', false);
+        model.irfs.adapt_exp = adapt_exps; model = code_adapt_decay(model);
+    case '2ch-lin-cquad'
+        model.irfs.nrfS = cellfun(@(X) tch_irfs('S', X), ...
+            model.params.tau_s, 'uni', false);
+        model.irfs.nrfT = cellfun(@(X) tch_irfs('T', X), ...
+            model.params.tau_s, 'uni', false);
 end
 
 end
