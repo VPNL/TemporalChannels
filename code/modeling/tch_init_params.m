@@ -409,7 +409,7 @@ switch model_type
         params.epsilon = repmat({epsilon}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = -tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
         case '2ch-exp-cquad'
@@ -428,7 +428,7 @@ switch model_type
         params.epsilon = repmat({epsilon}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = -tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
 end
