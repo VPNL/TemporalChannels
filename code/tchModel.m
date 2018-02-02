@@ -381,9 +381,9 @@ classdef tchModel
                 case '2ch-lin-crect'
                     model = pred_runs_2ch_lin_crect(model);
                 case '2ch-exp-cquad'
-                    model = pred_runs_2ch_exp_crect(model);
+                    model = pred_runs_2ch_exp_cquad(model);
                 case '2ch-lin-cquad'
-                    model = pred_runs_2ch_lin_crect(model);
+                    model = pred_runs_2ch_lin_cquad(model);
             end
         end
         
