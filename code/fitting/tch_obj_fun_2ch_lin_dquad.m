@@ -1,4 +1,4 @@
-function obj_fun = tch_obj_fun_2ch_lin_cquad(roi, model)
+function obj_fun = tch_obj_fun_2ch_lin_dquad(roi, model)
 % Generates anonymous objective function that can be passed to fmincon for
 % 2-channel model with optimized linear sustained and quadratic + 
 % compressed transient channels).
@@ -14,7 +14,7 @@ function obj_fun = tch_obj_fun_2ch_lin_cquad(roi, model)
 % 
 % AS 1/2018
 
-if ~strcmp(model.type, '2ch-lin-cquad'); error('Incompatible model type'); end
+if ~strcmp(model.type, '2ch-lin-dquad'); error('Incompatible model type'); end
 stim = model.stim; nruns = size(stim, 1); irfs = model.irfs; fs = model.fs;
 run_avgs = roi.run_avgs; baseline = roi.baseline; tr = roi.tr;
 % generate IRFs/filters for optimization
@@ -32,26 +32,26 @@ conv_snTd = @(s, tau, sigma) cellfun(@(X, Y) X ./ (X + Y .^ 2), ...
 conv_nbS = @(s, tau) cellfun(@(NS) convolve_vecs(NS, irfs.hrf{1}, fs, 1 / tr), ...
     conv_snS(s, tau), 'uni', false);
 % transient BOLD: transient response * HRF
-conv_nbT = @(s, tau, epsilon) cellfun(@(NT) convolve_vecs(NT, irfs.hrf{1}, fs, 1 / tr), ...
-    conv_snTd(s, tau, epsilon), 'uni', false);
+conv_nbT = @(s, tau, sigma) cellfun(@(NT) convolve_vecs(NT, irfs.hrf{1}, fs, 1 / tr), ...
+    conv_snTd(s, tau, sigma), 'uni', false);
 % channel predictors: [sustained BOLD, transient BOLD]
-conv_nb = @(s, tau, epsilon) cellfun(@(S, T) [S T], ...
-    conv_nbS(s, tau), conv_nbT(s, tau, epsilon), 'uni', false);
+conv_nb = @(s, tau, sigma) cellfun(@(S, T) [S T], ...
+    conv_nbS(s, tau), conv_nbT(s, tau, sigma), 'uni', false);
 % measured signal: time series - baseline estimates
 comp_bs = @(m, b0) cellfun(@(M, B0) M - repmat(B0, size(M, 1), 1), ...
     m, b0, 'uni', false);
 % channel weights: channel predictors \ measured signal
-comp_ws = @(s, tau, epsilon, m, b0) ...
-    cell2mat(conv_nb(s, tau, epsilon)) \ cell2mat(comp_bs(m, b0));
+comp_ws = @(s, tau, sigma, m, b0) ...
+    cell2mat(conv_nb(s, tau, sigma)) \ cell2mat(comp_bs(m, b0));
 % predicted signal: channel predictors x channel weights
-pred_bs = @(s, tau, epsilon, m, b0) cellfun(@(P, W) P .* repmat(W, size(P, 1), 1), ...
-    conv_nb(s, tau, epsilon), repmat({comp_ws(s, tau, epsilon, m, b0)'}, nruns, 1), 'uni', false);
+pred_bs = @(s, tau, sigma, m, b0) cellfun(@(P, W) P .* repmat(W, size(P, 1), 1), ...
+    conv_nb(s, tau, sigma), repmat({comp_ws(s, tau, sigma, m, b0)'}, nruns, 1), 'uni', false);
 % model residuals: (predicted signal - measured signal)^2
-calc_br = @(s, tau, epsilon, m, b0) cellfun(@(S, M) (sum(S, 2) - M) .^ 2, ...
-    pred_bs(s, tau, epsilon, m, b0), comp_bs(m, b0), 'uni', false);
+calc_br = @(s, tau, sigma, m, b0) cellfun(@(S, M) (sum(S, 2) - M) .^ 2, ...
+    pred_bs(s, tau, sigma, m, b0), comp_bs(m, b0), 'uni', false);
 % model error: summed squared residuals for all run time series
-calc_me = @(s, tau, epsilon, m, b0) ...
-    sum(cell2mat(calc_br(s, tau, epsilon, m, b0)));
+calc_me = @(s, tau, sigma, m, b0) ...
+    sum(cell2mat(calc_br(s, tau, sigma, m, b0)));
 obj_fun = @(x) calc_me(stim, x(1), x(2), run_avgs, baseline);
 
 end
