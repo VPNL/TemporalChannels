@@ -412,7 +412,7 @@ switch model_type
         nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
-        case '2ch-exp-cquad'
+    case '2ch-exp-cquad'
         params.tau_s = repmat({tau_s}, 1, nsessions);
         params.tau_ae = repmat({tau_ae}, 1, nsessions);
         params.epsilon = repmat({epsilon}, 1, nsessions);
@@ -426,6 +426,25 @@ switch model_type
     case '2ch-lin-cquad'
         params.tau_s = repmat({tau_s}, 1, nsessions);
         params.epsilon = repmat({epsilon}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '2ch-exp-dquad'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
+        params.sigma = repmat({sigma}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '2ch-lin-dquad'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.sigma = repmat({sigma}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);

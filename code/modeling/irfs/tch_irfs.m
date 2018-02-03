@@ -24,8 +24,8 @@ if nargin < 6; fs = 1000; end
 tau2 = kappa * tau;
 
 % generate filters
-time = 0:tau * 1000; % time in ms
-for t = time
+f1 = []; f2 = [];
+for t = 0:tau * 1000 % time in ms
     % excitatory filter
     f1(t + 1) = ((tau * gamma(n1)) ^ -1) * ...
         ((t / tau) ^ (n1 - 1)) * exp(-t / tau);
