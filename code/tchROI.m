@@ -281,7 +281,7 @@ classdef tchROI
             end
         end
         
-        % use GLM to fit channel weights for each predictor in model
+%         % use GLM to fit channel weights for each predictor in model
         function [roi, model] = tch_fit(roi, model, optim_proc, fit_exps)
             if nargin < 3; optim_proc = 0; end
             if nargin < 4; fit_exps = model.experiments; end

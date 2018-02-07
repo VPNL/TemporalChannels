@@ -6,7 +6,7 @@ rois = {'pFus_faces' 'ITG_bodies' 'pOTS_characters' ...
         'pSTS_faces' 'MTG_bodies' 'V1' 'hV4' 'MT'};
 fit_exps = {'ExpAo' 'ExpBo' 'ExpCo'; 'ExpAe' 'ExpBe' 'ExpCe'};
 val_exps = {'ExpAe' 'ExpBe' 'ExpCe'; 'ExpAo' 'ExpBo' 'ExpCo'};
-sessions = {'ad' 'as' 'bj' 'cs' 'em' 'jg' 'kg' 'md' 'mg' 'sc' 'wd' 'yl'};
+sessions = {'as' 'bj' 'cs' 'em' 'jg' 'kg' 'md' 'mg' 'sc' 'wd' 'yl'};
 
 for rr = 1:length(rois)
     fname = [strrep(rois{rr}, '_', '-') '_' model_type '_split-half.mat'];

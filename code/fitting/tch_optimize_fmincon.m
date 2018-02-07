@@ -2,8 +2,8 @@ function [roi, model] = tch_optimize_fmincon(roi, model, fit_exps)
 % Nonlinear optimization prodcedure using built-in fmincon algorithm.
 
 param_names = fieldnames(model.params); sessions = roi.sessions;
-if length(param_names) <= 3; fprec = 1e-6; end
-if length(param_names) > 3; fprec = 1e-4; end
+if length(param_names) <= 3; fprec = 1e-8; end
+if length(param_names) > 3; fprec = 1e-6; end
 for ss = 1:length(sessions)
     fname_opt = ['optimization_results_' model.type '_fit' [fit_exps{:}] '.mat'];
     fpath_opt = fullfile(sessions{ss}, 'ROIs', roi.name, fname_opt);
@@ -236,7 +236,7 @@ for ss = 1:length(sessions)
                 epsilon = omodel.params.epsilon{1};
                 x_init = [tau_s tau_ae epsilon];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 12 .001], [20 60 1], [], fmin_options);
+                    [], [], [4 12 .001], [20 60 .5], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.epsilon{1} = x_opt(3);
@@ -246,27 +246,27 @@ for ss = 1:length(sessions)
                 epsilon = omodel.params.epsilon{1};
                 x_init = [tau_s epsilon];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 .001], [20 1], [], fmin_options);
+                    [], [], [4 .001], [20 .5], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.epsilon{1} = x_opt(2);
             case '2ch-exp-cquad'
                 obj_fun = tch_obj_fun_2ch_exp_cquad(sroi, omodel);
                 tau_s = omodel.params.tau_s{1};
-                tau_ae = omodel.params.tau_ae{1} / 1000;
-                epsilon = omodel.params.epsilon{1};
-                x_init = [tau_s tau_ae epsilon];
+                tau_t = omodel.params.tau_t{1};
+                tau_ae = omodel.params.tau_ae{1} / 10000;
+                x_init = [tau_s tau_t tau_ae];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 12 .001], [20 60 1], [], fmin_options);
+                    [], [], [4 1 1], [20 20 6], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
-                params.tau_ae{1} = x_opt(2) * 1000;
-                params.epsilon{1} = x_opt(3);
+                params.tau_t{1} = x_opt(2);
+                params.tau_ae{1} = x_opt(3) * 10000;
             case '2ch-lin-cquad'
                 obj_fun = tch_obj_fun_2ch_lin_cquad(sroi, omodel);
                 tau_s = omodel.params.tau_s{1};
                 epsilon = omodel.params.epsilon{1};
                 x_init = [tau_s epsilon];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 .001], [20 1], [], fmin_options);
+                    [], [], [4 .001], [20 .5], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.epsilon{1} = x_opt(2);
             case '2ch-exp-dquad'
@@ -276,7 +276,7 @@ for ss = 1:length(sessions)
                 sigma = omodel.params.sigma{1};
                 x_init = [tau_s tau_ae sigma];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 12 .001], [20 60 1], [], fmin_options);
+                    [], [], [4 12 .001], [20 60 .5], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.tau_ae{1} = x_opt(2) * 1000;
                 params.sigma{1} = x_opt(3);
@@ -286,7 +286,7 @@ for ss = 1:length(sessions)
                 sigma = omodel.params.sigma{1};
                 x_init = [tau_s sigma];
                 x_opt = fmincon(obj_fun, x_init, [], [], ...
-                    [], [], [4 .001], [20 1], [], fmin_options);
+                    [], [], [4 .001], [20 .5], [], fmin_options);
                 params.tau_s{1} = x_opt(1);
                 params.sigma{1} = x_opt(2);
         end
