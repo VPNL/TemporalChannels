@@ -1,18 +1,18 @@
-function model = pred_trials_3ch_cexp_quad_exp(model)
-% Generates trial predictors using a 3 temporal-channel model with 
-% compressed/adapted sustained, quadratic transient, and optimized 
-% persistent channel. 
+function model = pred_trials_3ch_exp_cquad_rect(model)
+% Generates trial predictors using the 3 temporal-channel model with 
+% adapted sustained and quadratic + compressed transient and persistent
+% channels.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
 cond_list = model.cond_list; nconds_max = max(cellfun(@length, cond_list));
-stimfiles = model.stimfiles; nruns = model.num_runs;
-fs = model.fs; tr = model.tr; nexps = model.num_exps; rcnt = 1;
+fs = model.fs; tr = model.tr; nexps = model.num_exps;
 model.trial_preds.S = cell(nconds_max, nsess, nexps);
 model.trial_preds.T = cell(nconds_max, nsess, nexps);
-model.trial_preds.P = cell(nconds_max, nsess, nexps);
+stimfiles = model.stimfiles; nruns = model.num_runs; rcnt = 1;
 
 for ee = 1:nexps
+    % get stimulus information from example run
     [~, ~, ~, ~, ton, toff, tc, ~, cl] = tch_stimfile(stimfiles{rcnt, 1});
     for cc = 1:length(cond_list{ee})
         % find trial onset and offset times and calculate duration
@@ -24,22 +24,26 @@ for ee = 1:nexps
         cstim = model.stim{rcnt, 1}(cstim_start:cstim_stop, :);
         cstim(1:fs * model.pre_dur, :) = 0;
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
-        dcstim = diff(sum(cstim, 2)); cpersist = code_persist_act(cstim);
+        dcstim = diff(sum(cstim, 2));
         starts = find(dcstim == 1) / fs; stops = find(dcstim == -1) / fs;
         dstarts = stops; dstops = starts; dstops(1) = [];
         dstops = [dstops; size(cstim, 1) / fs];
+        % generate trial predictor per session
         for ss = 1:length(sessions)
-            % convolve stimulus with channel IRFs
+            % convolve stimulus with channel IRFs and code adaptation
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            adapt_exp = model.irfs.adapt_exp{ss};
+            adapt_exp = irfs.adapt_exp{ss};
             adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
             predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predTc = rectify(predTq, 'abs', .001) .^ .1;
+            %predP = rectify(convolve_vecs(cstim, irfs.nrfP{ss}, fs, fs)) .^ 2;
             persist_exp = model.irfs.persist_exp{ss};
             persist_act = code_exp_decay(cpersist, dstarts, dstops, persist_exp, fs);
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
-            fmriT = convolve_vecs(predTq, irfs.hrf{ss}, fs, 1 / tr);
-            fmriP = convolve_vecs(persist_act, irfs.hrf{ss}, fs, 1 / tr);
+            fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);
+            %fmriP = convolve_vecs(predP, irfs.hrf{ss}, fs, 1 / tr);
+            fmriP = convolve_vecs(persist_act, irfs.hrf{ss}, fs, 1 / tr);            % convolve neural predictors with HRF
             % store fMRI predictors in model structure
             model.trial_preds.S{cc, ss, ee} = fmriS;
             model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;

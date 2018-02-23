@@ -1,6 +1,6 @@
-function model = pred_runs_1ch_exp_opt(model)
-% Generates run predictors using a single-channel model with optimized
-% optimized adapted sustained channel.
+function model = pred_runs_1ch_rect(model)
+% Generates run predictors using the 1 temporal-channel model with 
+% optimized rectified transient channel.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -17,12 +17,12 @@ for ff = 1:length(irfs_names)
 end
 
 % generate run predictors for each session
-predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
-    model.adapt_act, irfs.nrfS, 'uni', false); predS(empty_cells) = {1};
-fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    predS, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
-run_preds = cellfun(@(X) X, ...
-    fmriS, 'uni', false); run_preds(empty_cells) = {[]};
+predTq = cellfun(@(X, Y) rectify(convolve_vecs(X, Y, fs, fs)), ...
+    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {1};
+fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
+    predTq, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
+run_preds = cellfun(@(X) X * model.normT, ...
+    fmriT, 'uni', false); run_preds(empty_cells) = {[]};
 model.run_preds = run_preds;
 
 end

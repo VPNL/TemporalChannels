@@ -74,7 +74,7 @@ for ee = 1:nexps
         leg{5} = 'Persistent'; ptrs = [ptrs dp];
     end
     legend(ptrs, leg, 'Location', 'NorthWestOutside'); legend boxoff;
-    title([roi.experiments{ee}], 'FontSize', 8); ylabel('fMRI (% signal)');
+    title([roi.experiments{1, ee}], 'FontSize', 8); ylabel('fMRI (% signal)');
     set(gca, 'XColor', 'w'); axis tight;
 end
 

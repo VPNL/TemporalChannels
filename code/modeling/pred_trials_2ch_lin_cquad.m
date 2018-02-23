@@ -28,7 +28,7 @@ for ee = 1:nexps
             % convolve stimulus with channel IRFs and code adaptation
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
             predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
-            predTc = rectify(predTq, 'abs', .001) .^ model.params.epsilon{ss};
+            predTc = rectify(predTq, 'abs', .001) .^ .1;
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);

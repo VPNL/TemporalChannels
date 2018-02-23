@@ -1,6 +1,6 @@
-function model = pred_runs_1ch_quad_opt(model)
+function model = pred_runs_1ch_cquad(model)
 % Generates run predictors using the 1 temporal-channel model with 
-% optimized quadratic transient channel.
+% optimized quadratic + compressed transient channel.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -18,9 +18,10 @@ end
 
 % generate run predictors for each session
 predTq = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, ...
-    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {1};
+    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {[]};
+predTc = cellfun(@(X) rectify(X, 'abs', .001) .^ .1, predTq, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    predTq, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
+    predTc, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
 run_preds = cellfun(@(X) [X * model.normT], ...
     fmriT, 'uni', false); run_preds(empty_cells) = {[]};
 model.run_preds = run_preds;

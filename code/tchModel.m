@@ -11,7 +11,6 @@
 %        '1ch-div'  -- CTS with divisive normalization (CTS-n; Zhou 2017)
 %        '1ch-dcts' -- dynamic CTS (dCTS; Zhou 2017)
 %        '1ch-exp'  -- stimulus-specific adaptation model (exponential)
-%        '1ch-cexp' -- compressed adaptation model (CTS-p + exponential)
 %      Dual-channel models:
 %        '2ch-lin-lin'   -- linear susatined and linear transient
 %        '2ch-lin-quad'  -- linear susatined and quadratic transient
@@ -21,8 +20,6 @@
 %        '2ch-div-quad'  -- sustained with CTS-n and quadratic transient
 %        '2ch-exp-quad'  -- adapted sustained and quadratic transient
 %        '2ch-exp-rect'  -- adapted sustained and rectified transient
-%        '2ch-cexp-quad' -- compressed/adapted sustained and quadratic transient
-%        '2ch-cexp-rect' -- compressed/adapted sustained and rectified transient
 %      Multi-channel models:
 %        '3ch-lin-quad-exp'  -- linear sustained, quadratic transient, and persistent
 %        '3ch-lin-rect-exp'  -- linear sustained, rectified transient, and persistent
@@ -30,8 +27,6 @@
 %        '3ch-pow-rect-exp'  -- CTS-p on sustained, rectified transient, and persistent
 %        '3ch-exp-quad-exp'  -- adapted sustained, quadratic transient, and persistent
 %        '3ch-exp-rect-exp'  -- adapted sustained, rectified transient, and persistent
-%        '3ch-cexp-quad-exp' -- compressed/adapted sustained, quadratic transient, and persistent
-%        '3ch-cexp-rect-exp' -- compressed/adapted sustained, rectified transient, and persistent
 %   2) exps: array of experiments for fitting model (e.g., {'Exp1' 'Exp2'})
 %   3) sessions: array of names or paths to session data directories
 %
@@ -45,11 +40,9 @@
 %   exps = {'Exp1' 'Exp2' 'Exp3'};
 %   roi = tchROI('V1', exps);
 %   roi = select_sessions(roi);
-%   model = tchModel('2ch', exps, roi.sessions);
-%   model = norm_model(model, 1);
-%   model = code_stim(model);
-%   model = pred_runs(model);
-%   model = pred_trials(model);
+%   model = tchModel('2ch-lin-quad', exps, roi.sessions);
+%   model = code_stim(model); model = norm_model(model, 1);
+%   model = pred_runs(model); model = pred_trials(model);
 %
 % AS 2/2017
 
@@ -306,6 +299,36 @@ classdef tchModel
             switch model.type
                 case '1ch-lin'
                     model = pred_runs_1ch_lin(model);
+                case '1ch-exp'
+                    model = pred_runs_1ch_exp(model);
+                case '1ch-rect'
+                    model = pred_runs_1ch_rect(model);
+                case '1ch-quad'
+                    model = pred_runs_1ch_quad(model);
+                case '1ch-cquad'
+                    model = pred_runs_1ch_cquad(model);
+                case '1ch-sig'
+                    model = pred_runs_1ch_sig(model);
+                case '2ch-lin-rect'
+                    model = pred_runs_2ch_lin_rect(model);
+                case '2ch-exp-rect'
+                    model = pred_runs_2ch_exp_rect(model);
+                case '2ch-lin-quad'
+                    model = pred_runs_2ch_lin_quad(model);
+                case '2ch-exp-quad'
+                    model = pred_runs_2ch_exp_quad(model);
+                case '2ch-lin-cquad'
+                    model = pred_runs_2ch_lin_cquad(model);
+                case '2ch-exp-cquad'
+                    model = pred_runs_2ch_exp_cquad(model);
+                case '2ch-lin-sig'
+                    model = pred_runs_2ch_lin_sig(model);
+                case '2ch-exp-sig'
+                    model = pred_runs_2ch_exp_sig(model);
+                case '2ch-exp-crect'
+                    model = pred_runs_2ch_exp_crect(model);
+                case '3ch-exp-crect-crect'
+                    model = pred_runs_3ch_exp_crect_crect(model);
                 case '2ch-lin-htd'
                     model = pred_runs_2ch_lin_htd(model);
                 case '1ch-balloon'
@@ -316,32 +339,14 @@ classdef tchModel
                     model = pred_runs_1ch_div(model);
                 case '1ch-dcts'
                     model = pred_runs_1ch_dcts(model);
-                case '1ch-exp'
-                    model = pred_runs_1ch_exp(model);
-                case '1ch-cexp'
-                    model = pred_runs_1ch_cexp(model);
-                case '1ch-quad-opt'
-                    model = pred_runs_1ch_quad_opt(model);
                 case '2ch-lin-lin'
                     model = pred_runs_2ch_lin_lin(model);
-                case '2ch-lin-quad'
-                    model = pred_runs_2ch_lin_quad(model);
-                case '2ch-lin-rect'
-                    model = pred_runs_2ch_lin_rect(model);
                 case '2ch-pow-quad'
                     model = pred_runs_2ch_pow_quad(model);
                 case '2ch-pow-rect'
                     model = pred_runs_2ch_pow_rect(model);
                 case '2ch-div-quad'
                     model = pred_runs_2ch_div_quad(model);
-                case '2ch-exp-quad'
-                    model = pred_runs_2ch_exp_quad(model);
-                case '2ch-exp-rect'
-                    model = pred_runs_2ch_exp_rect(model);
-                case '2ch-cexp-quad'
-                    model = pred_runs_2ch_cexp_quad(model);
-                case '2ch-cexp-rect'
-                    model = pred_runs_2ch_cexp_rect(model);
                 case '3ch-lin-quad-exp'
                     model = pred_runs_3ch_lin_quad_exp(model);
                 case '3ch-lin-rect-exp'
@@ -354,40 +359,20 @@ classdef tchModel
                     model = pred_runs_3ch_exp_quad_exp(model);
                 case '3ch-exp-rect-exp'
                     model = pred_runs_3ch_exp_rect_exp(model);
-                case '3ch-cexp-quad-exp'
-                    model = pred_runs_3ch_cexp_quad_exp(model);
-                case '3ch-cexp-rect-exp'
-                    model = pred_runs_3ch_cexp_rect_exp(model);
-                case '2ch-lin-quad-opt'
-                    model = pred_runs_2ch_lin_quad_opt(model);
-                case '2ch-lin-rect-opt'
-                    model = pred_runs_2ch_lin_rect_opt(model);
                 case '3ch-lin-quad-exp-opt'
                     model = pred_runs_3ch_lin_quad_exp_opt(model);
                 case '3ch-lin-rect-exp-opt'
                     model = pred_runs_3ch_lin_rect_exp_opt(model);
-                case '1ch-exp-opt'
-                    model = pred_runs_1ch_exp_opt(model);
-                case '2ch-exp-quad-opt'
-                    model = pred_runs_2ch_exp_quad_opt(model);
                 case '3ch-exp-quad-exp-opt'
                     model = pred_runs_3ch_exp_quad_exp_opt(model);
-                case '2ch-exp-cquad-opt'
-                    model = pred_runs_2ch_exp_cquad_opt(model);
-                case '3ch-exp-quad-crect-opt'
-                    model = pred_runs_3ch_exp_quad_crect_opt(model);
-                case '2ch-exp-crect'
-                    model = pred_runs_2ch_exp_crect(model);
                 case '2ch-lin-crect'
                     model = pred_runs_2ch_lin_crect(model);
-                case '2ch-exp-cquad'
-                    model = pred_runs_2ch_exp_cquad(model);
-                case '2ch-lin-cquad'
-                    model = pred_runs_2ch_lin_cquad(model);
                 case '2ch-exp-dquad'
                     model = pred_runs_2ch_exp_dquad(model);
                 case '2ch-lin-dquad'
                     model = pred_runs_2ch_lin_dquad(model);
+                case '3ch-exp-cquad-rect'
+                    model = pred_runs_3ch_exp_cquad_rect(model);
             end
         end
         
@@ -396,6 +381,36 @@ classdef tchModel
             switch model.type
                 case '1ch-lin'
                     model = pred_trials_1ch_lin(model);
+                case '1ch-exp'
+                    model = pred_trials_1ch_exp(model);
+                case '1ch-rect'
+                    model = pred_trials_1ch_rect(model);
+                case '1ch-quad'
+                    model = pred_trials_1ch_quad(model);
+                case '1ch-cquad'
+                    model = pred_trials_1ch_cquad(model);
+                case '1ch-sig'
+                    model = pred_trials_1ch_sig(model);
+                case '2ch-lin-rect'
+                    model = pred_trials_2ch_lin_rect(model);
+                case '2ch-exp-rect'
+                    model = pred_trials_2ch_exp_rect(model);
+                case '2ch-lin-quad'
+                    model = pred_trials_2ch_lin_quad(model);
+                case '2ch-exp-quad'
+                    model = pred_trials_2ch_exp_quad(model);
+                case '2ch-lin-cquad'
+                    model = pred_trials_2ch_lin_cquad(model);
+                case '2ch-exp-cquad'
+                    model = pred_trials_2ch_exp_cquad(model);
+                case '2ch-lin-sig'
+                    model = pred_trials_2ch_lin_sig(model);
+                case '2ch-exp-sig'
+                    model = pred_trials_2ch_exp_sig(model);
+                case '2ch-exp-crect'
+                    model = pred_trials_2ch_exp_crect(model);
+                case '3ch-exp-crect-crect'
+                    model = pred_trials_3ch_exp_crect_crect(model);
                 case '2ch-lin-htd'
                     model = pred_trials_2ch_lin_htd(model);
                 case '1ch-balloon'
@@ -406,32 +421,14 @@ classdef tchModel
                     model = pred_trials_1ch_div(model);
                 case '1ch-dcts'
                     model = pred_trials_1ch_dcts(model);
-                case '1ch-exp'
-                    model = pred_trials_1ch_exp(model);
-                case '1ch-cexp'
-                    model = pred_trials_1ch_cexp(model);
-                case '1ch-quad-opt'
-                    model = pred_trials_1ch_quad_opt(model);
                 case '2ch-lin-lin'
                     model = pred_trials_2ch_lin_lin(model);
-                case '2ch-lin-quad'
-                    model = pred_trials_2ch_lin_quad(model);
-                case '2ch-lin-rect'
-                    model = pred_trials_2ch_lin_rect(model);
                 case '2ch-pow-quad'
                     model = pred_trials_2ch_pow_quad(model);
                 case '2ch-pow-rect'
                     model = pred_trials_2ch_pow_rect(model);
                 case '2ch-div-quad'
                     model = pred_trials_2ch_div_quad(model);
-                case '2ch-exp-quad'
-                    model = pred_trials_2ch_exp_quad(model);
-                case '2ch-exp-rect'
-                    model = pred_trials_2ch_exp_rect(model);
-                case '2ch-cexp-quad'
-                    model = pred_trials_2ch_cexp_quad(model);
-                case '2ch-cexp-rect'
-                    model = pred_trials_2ch_cexp_rect(model);
                 case '3ch-lin-quad-exp'
                     model = pred_trials_3ch_lin_quad_exp(model);
                 case '3ch-lin-rect-exp'
@@ -444,40 +441,22 @@ classdef tchModel
                     model = pred_trials_3ch_exp_quad_exp(model);
                 case '3ch-exp-rect-exp'
                     model = pred_trials_3ch_exp_rect_exp(model);
-                case '3ch-cexp-quad-exp'
-                    model = pred_trials_3ch_cexp_quad_exp(model);
-                case '3ch-cexp-rect-exp'
-                    model = pred_trials_3ch_cexp_rect_exp(model);
-                case '2ch-lin-quad-opt'
-                    model = pred_trials_2ch_lin_quad_opt(model);
-                case '2ch-lin-rect-opt'
-                    model = pred_trials_2ch_lin_rect_opt(model);
                 case '3ch-lin-quad-exp-opt'
                     model = pred_trials_3ch_lin_quad_exp_opt(model);
                 case '3ch-lin-rect-exp-opt'
                     model = pred_trials_3ch_lin_rect_exp_opt(model);
-                case '1ch-exp-opt'
-                    model = pred_trials_1ch_exp_opt(model);
-                case '2ch-exp-quad-opt'
-                    model = pred_trials_2ch_exp_quad_opt(model);
                 case '3ch-exp-quad-exp-opt'
                     model = pred_trials_3ch_exp_quad_exp_opt(model);
                 case '2ch-exp-cquad-opt'
                     model = pred_trials_2ch_exp_cquad_opt(model);
                 case '3ch-exp-quad-crect-opt'
                     model = pred_trials_3ch_exp_quad_crect_opt(model);
-                case '2ch-exp-crect'
-                    model = pred_trials_2ch_exp_crect(model);
-                case '2ch-lin-crect'
-                    model = pred_trials_2ch_lin_crect(model);
-                case '2ch-exp-cquad'
-                    model = pred_trials_2ch_exp_cquad(model);
-                case '2ch-lin-cquad'
-                    model = pred_trials_2ch_lin_cquad(model);
                 case '2ch-exp-dquad'
                     model = pred_trials_2ch_exp_dquad(model);
                 case '2ch-lin-dquad'
                     model = pred_trials_2ch_lin_dquad(model);
+                case '3ch-exp-cquad-rect'
+                    model = pred_trials_3ch_exp_cquad_rect(model);
             end
         end
         

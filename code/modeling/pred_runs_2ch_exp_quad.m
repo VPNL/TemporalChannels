@@ -1,6 +1,6 @@
 function model = pred_runs_2ch_exp_quad(model)
-% Generates run predictors using the 2 temporal-channel model with adapted
-% sustained and quradratic transient channels.
+% Generates run predictors using the 2 temporal-channel model with 
+% optimized adapted sustained and quadratic transient channel.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -17,13 +17,16 @@ for ff = 1:length(irfs_names)
 end
 
 % generate run predictors for each session
+predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
+    model.adapt_act, irfs.nrfS, 'uni', false); predS(empty_cells) = {1};
 predTq = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, ...
-    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {[]};
+    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {1};
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    model.adapt_act, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
+    predS, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     predTq, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
-model.run_preds = cellfun(@(X, Y) [X Y * model.normT], ...
-    fmriS, fmriT, 'uni', false);
+run_preds = cellfun(@(X, Y) [X Y * model.normT], ...
+    fmriS, fmriT, 'uni', false); run_preds(empty_cells) = {[]};
+model.run_preds = run_preds;
 
 end

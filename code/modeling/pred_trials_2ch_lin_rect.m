@@ -1,6 +1,6 @@
 function model = pred_trials_2ch_lin_rect(model)
-% Generates trial predictors using the 2 temporal-channel with linear 
-% sustained and rectified transient channel.
+% Generates trial predictors using the 2 temporal-channel with optimized 
+% linear sustained and rectified transient channels.
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;

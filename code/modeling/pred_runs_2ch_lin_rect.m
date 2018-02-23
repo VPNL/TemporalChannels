@@ -1,6 +1,6 @@
 function model = pred_runs_2ch_lin_rect(model)
-% Generates run predictors using the 2 temporal-channel model with linear
-% sustained and rectified transient channel. 
+% Generates run predictors using the 2 temporal-channel with optimized 
+% linear sustained and rectified transient channels. 
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -14,7 +14,7 @@ end
 % generate run predictors for each session
 predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
     stim, irfs.nrfS, 'uni', false); predS(empty_cells) = {[]};
-predTr = cellfun(@(X, Y) rectify(convolve_vecs(X, Y, fs, fs), 'positive'), ...
+predTr = cellfun(@(X, Y) rectify(convolve_vecs(X, Y, fs, fs)), ...
     stim, irfs.nrfT, 'uni', false); predTr(empty_cells) = {[]};
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     predS, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};

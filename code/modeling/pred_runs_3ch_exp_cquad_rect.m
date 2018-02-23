@@ -1,7 +1,6 @@
-function model = pred_runs_3ch_cexp_quad_exp(model)
-% Generates run predictors using the 3 temporal-channel model with
-% compressed/adapted sustained, quradratic transient, and optimized persistent
-% channel.
+function model = pred_runs_3ch_exp_cquad_rect(model)
+% Generates run predictors using the 3 temporal-channel model with adapted
+% sustained and quadratic + compressed transient and persistent channels.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -19,15 +18,19 @@ end
 
 % generate run predictors for each session
 predTq = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, ...
-    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {1};
+    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {[]};
+predTc = cellfun(@(X) rectify(X, 'abs', .001) .^ .1, predTq, 'uni', false);
+%predP = cellfun(@(X, Y) rectify(convolve_vecs(X, Y, fs, fs)) .^ 2, ...
+%    stim, irfs.nrfP, 'uni', false); predP(empty_cells) = {[]};
 fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     model.adapt_act, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    predTq, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
+    predTc, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
+%fmriP = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
+%    predP, irfs.hrf, 'uni', false); fmriP(empty_cells) = {[]};
 fmriP = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
     model.persist_act, irfs.hrf, 'uni', false); fmriP(empty_cells) = {[]};
-run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normP], ...
-    fmriS, fmriT, fmriP, 'uni', false); run_preds(empty_cells) = {[]};
-model.run_preds = run_preds;
+model.run_preds = cellfun(@(X, Y, Z) [X Y * model.normT Z * model.normP], ...
+    fmriS, fmriT, fmriP, 'uni', false);
 
 end

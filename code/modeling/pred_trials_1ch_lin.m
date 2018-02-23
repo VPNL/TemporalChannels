@@ -22,7 +22,8 @@ for ee = 1:nexps
         cstim(1:fs * model.pre_dur, :) = 0;
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         for ss = 1:length(sessions)
-            fmri = convolve_vecs(cstim,  irfs.hrf{ss}, fs, 1 / tr);
+            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
+            fmri = convolve_vecs(predS,  irfs.hrf{ss}, fs, 1 / tr);
             model.trial_preds.pred{cc, ss, ee} = fmri;
         end
     end

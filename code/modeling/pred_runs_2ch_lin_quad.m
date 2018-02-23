@@ -1,6 +1,6 @@
 function model = pred_runs_2ch_lin_quad(model)
-% Generates run predictors using the 2 temporal-channel with linear
-% sustained and quadratic transient channel. 
+% Generates run predictors using the 2 temporal-channel with optimized 
+% linear sustained and quadratic transient channels. 
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;

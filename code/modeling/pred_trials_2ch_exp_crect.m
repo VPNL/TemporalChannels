@@ -32,7 +32,7 @@ for ee = 1:nexps
             adapt_exp = irfs.adapt_exp{ss};
             adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
             predTr = rectify(convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs));
-            predTc = rectify(predTr, 'abs', .001) .^ model.params.epsilon{ss};
+            predTc = rectify(predTr, 'abs', .001) .^ .1;
             % convolve neural predictors with HRF
             fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
             fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);

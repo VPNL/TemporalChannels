@@ -1,11 +1,12 @@
 function model = pred_trials_1ch_exp(model)
-% Generates trial predictors using adapted sustained channel.
+% Generates trial predictors using a single-channel model with optimized
+% adapted sustained channel. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
 cond_list = model.cond_list; nconds_max = max(cellfun(@length, cond_list));
 fs = model.fs; tr = model.tr; nexps = model.num_exps;
-model.trial_preds.pred = cell(nconds_max, nsess, nexps);
+model.trial_preds.S = cell(nconds_max, nsess, nexps);
 stimfiles = model.stimfiles; nruns = model.num_runs; rcnt = 1;
 
 for ee = 1:nexps
@@ -23,16 +24,15 @@ for ee = 1:nexps
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         dcstim = diff(sum(cstim, 2));
         starts = find(dcstim == 1) / fs; stops = find(dcstim == -1) / fs;
-        % generate trial predictor per session
         for ss = 1:length(sessions)
-            % convolve stimulus with channel IRFs and code adaptation
-            pred = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            adapt_exp = irfs.adapt_exp{ss};
-            adapt_act = code_exp_decay(pred, starts, stops, adapt_exp, fs);
+            % convolve stimulus with channel IRFs
+            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
+            adapt_exp = model.irfs.adapt_exp{ss};
+            adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
             % convolve neural predictors with HRF
-            fmri = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
+            fmriS = convolve_vecs(adapt_act, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
-            model.trial_preds.pred{cc, ss, ee} = fmri;
+            model.trial_preds.pred{cc, ss, ee} = fmriS;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

@@ -1,13 +1,12 @@
-function model = pred_trials_2ch_lin_rect_opt(model)
-% Generates trial predictors using the 2 temporal-channel with optimized 
-% linear sustained and rectified transient channels.
+function model = pred_trials_1ch_cquad(model)
+% Generates trial predictors using a 1 temporal-channel model with 
+% optimized adapted quadratic + compressed transient channels. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
 cond_list = model.cond_list; nconds_max = max(cellfun(@length, cond_list));
 fs = model.fs; tr = model.tr; nexps = model.num_exps;
-model.trial_preds.S = cell(nconds_max, nsess, nexps);
-model.trial_preds.T = cell(nconds_max, nsess, nexps);
+model.trial_preds.pred = cell(nconds_max, nsess, nexps);
 stimfiles = model.stimfiles; nruns = model.num_runs; rcnt = 1;
 
 for ee = 1:nexps
@@ -25,14 +24,12 @@ for ee = 1:nexps
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         for ss = 1:length(sessions)
             % convolve stimulus with channel IRFs
-            predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            predTr = rectify(convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs));
+            predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
+            predTc = rectify(predTq, 'abs', .001) .^ .1;
             % convolve neural predictors with HRF
-            fmriS = convolve_vecs(predS, irfs.hrf{ss}, fs, 1 / tr);
-            fmriT = convolve_vecs(predTr, irfs.hrf{ss}, fs, 1 / tr);
+            fmriT = convolve_vecs(predTc, irfs.hrf{ss}, fs, 1 / tr);
             % store fMRI predictors in model structure
-            model.trial_preds.S{cc, ss, ee} = fmriS;
-            model.trial_preds.T{cc, ss, ee} = fmriT * model.normT;
+            model.trial_preds.pred{cc, ss, ee} = fmriT * model.normT;
         end
     end
     rcnt = rcnt + nruns(ee, 1);

@@ -1,6 +1,6 @@
 function model = pred_trials_2ch_exp_quad(model)
-% Generates trial predictors using the 2 temporal-channel model with 
-% adapted sustained and quradratic transient channels.
+% Generates trial predictors using a 2 temporal-channel model with 
+% optimized adapted sustained and quadratic transient channels. 
 
 % get design parameters
 sessions = model.sessions; nsess = length(sessions); irfs = model.irfs;
@@ -25,11 +25,10 @@ for ee = 1:nexps
         cstim(fs * (model.pre_dur + td):size(cstim, 1), :) = 0;
         dcstim = diff(sum(cstim, 2));
         starts = find(dcstim == 1) / fs; stops = find(dcstim == -1) / fs;
-        % generate trial predictor per session
         for ss = 1:length(sessions)
-            % convolve stimulus with channel IRFs and code adaptation
+            % convolve stimulus with channel IRFs
             predS = convolve_vecs(cstim, irfs.nrfS{ss}, fs, fs);
-            adapt_exp = irfs.adapt_exp{ss};
+            adapt_exp = model.irfs.adapt_exp{ss};
             adapt_act = code_exp_decay(predS, starts, stops, adapt_exp, fs);
             predTq = convolve_vecs(cstim, irfs.nrfT{ss}, fs, fs) .^ 2;
             % convolve neural predictors with HRF

@@ -11,8 +11,10 @@ for ff = 1:length(irfs_names)
 end
 
 % generate run predictors for each session
+predS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
+    stim, irfs.nrfS, 'uni', false); predS(empty_cells) = {[]};
 run_preds = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    stim, irfs.hrf, 'uni', false); run_preds(empty_cells) = {[]};
+    predS, irfs.hrf, 'uni', false); run_preds(empty_cells) = {[]};
 model.run_preds = run_preds;
 
 end

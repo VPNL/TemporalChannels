@@ -1,6 +1,6 @@
-function model = pred_runs_2ch_cexp_quad(model)
-% Generates run predictors using the 2 temporal-channel model with
-% compressed/adapted sustained and quradratic transient channels.
+function model = pred_runs_1ch_sig(model)
+% Generates run predictors using a 1 temporal-channel model with sigmoid 
+% transient channels.
 
 % get design parameters
 fs = model.fs; tr = model.tr; stim = model.stim;
@@ -17,13 +17,14 @@ for ff = 1:length(irfs_names)
 end
 
 % generate run predictors for each session
-predTq = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs) .^ 2, ...
-    stim, irfs.nrfT, 'uni', false); predTq(empty_cells) = {[]};
-fmriS = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    model.adapt_act, irfs.hrf, 'uni', false); fmriS(empty_cells) = {[]};
+predT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, fs), ...
+    stim, irfs.nrfT, 'uni', false); predT(empty_cells) = {[]};
+predTs = cellfun(@(X, Lp, Kp, Ln, Kn) tch_sigmoid(X, Lp, Kp, Ln, Kn), ...
+    predT, params.lambda_p, params.kappa_p, params.lambda_p, params.kappa_n, 'uni', false);
 fmriT = cellfun(@(X, Y) convolve_vecs(X, Y, fs, 1 / tr), ...
-    predTq, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
-model.run_preds = cellfun(@(X, Y) [X Y * model.normT], ...
-    fmriS, fmriT, 'uni', false);
+    predTs, irfs.hrf, 'uni', false); fmriT(empty_cells) = {[]};
+run_preds = cellfun(@(X) X * model.normT, ...
+    fmriT, 'uni', false); run_preds(empty_cells) = {[]};
+model.run_preds = run_preds;
 
 end
