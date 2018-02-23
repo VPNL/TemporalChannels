@@ -76,6 +76,7 @@ switch model_type
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '2ch-exp-rect'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
         params.tau_ae = repmat({tau_ae}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
