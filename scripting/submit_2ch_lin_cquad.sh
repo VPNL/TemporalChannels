@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=c2lcq
+#SBATCH --job-name=c2lc
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=c2ec
+#SBATCH --job-name=c1q
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
@@ -9,4 +9,4 @@
 #SBATCH -p hns,normal
 
 module load matlab/R2017a
-matlab -nodisplay < optimize_2ch_exp_cquad.m
+matlab -nodisplay < optimize_1ch_quad.m
