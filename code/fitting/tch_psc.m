@@ -1,5 +1,5 @@
-function tc = tch_psc(tc, detrend_option)
-% Preprocess voxel time series and convert to precent signal change.
+function tc = tch_psc(tc, detrend_option, tr)
+% Preprocess voxel time series and convert to percent signal change.
 %
 % INPUTS
 %   1) tc: TR by voxel data matrix of fMRI time series
@@ -8,6 +8,7 @@ function tc = tch_psc(tc, detrend_option)
 %      2 = normalization with linear trend removal
 %      3 = normalization with linear + quadratic trend removal
 %      4 = normalization with low frequency baseline drift removal
+%   3) tr: fMRI repetition time (s)
 %
 % OUTPUT
 %   tc: preprocessed TR by voxel data matrix
@@ -15,7 +16,8 @@ function tc = tch_psc(tc, detrend_option)
 % Adapted from vistaoft (http://github.com/vistalab/vistasoft/)
 % AS 2/2017
 
-if nargin == 1; detrend_option = 3; end
+if nargin < 2; detrend_option = 3; end
+if nargin < 3; tr = 1; end
 
 if isempty(tc)
     tc = [];
@@ -50,7 +52,7 @@ else
     end
     % remove low frequency baseline drifts
     if detrend_option > 3
-        frame_win = 20; k = ones(frame_win, 1) / frame_win;
+        frame_win = round(20 / tr); k = ones(frame_win, 1) / frame_win;
         pad_frames = num_frames + 2 * frame_win;  niter = 2;
         % initialize baseline array for single period
         baseline = zeros(pad_frames, num_vox);

@@ -26,33 +26,29 @@ else
 end
 
 % initialize model struct
-model.design_mat = [];
-model.betas = [];
-model.residual = [];
-model.stdevs = [];
-model.dof = [];
+model = struct('design_mat', [], 'dof', [], 'betas', [], 'residual', [], 'var_covar', []);
+
+% compute degrees of freedom and store design matrix
+model.design_mat = X;
+model.dof = size(Y, 1) - rank(X);
 
 % get number of TRs, voxels, and predictors
-[num_trs, num_vox] = size(Y);
-num_preds = size(X, 2);
-   
-% compute degrees of freedom and store design matrix
-model.dof = size(Y, 1) - rank(X);
-model.design_mat = X;
+[num_trs, num_vox] = size(Y); num_preds = size(X, 2);
 
 % estimate beta weights for each predictor in the design matrix
-model.betas = X \ Y;
+betas = X \ Y; model.betas = reshape(betas, [1 num_preds num_vox]);
 
 % compute residual error at each time point
-model.residual = Y - X * model.betas;
+model.residual = Y - X * betas;
 
-% estimate the standard deviation of each beta
-indep_noise = inv(X' * eye(num_trs) * X);
-error_var = sqrt(sum(model.residual .^ 2) / model.dof);
-model.stdevs = sqrt((diag(indep_noise) .* diag(X' * X)) * error_var .^ 2);
+% compute residual variance and variance-covariance matrix
+model.resid_var = sum(model.residual .^ 2) / model.dof;
+vin = inv(X' * eye(num_trs) * X); model.var_covar = X' * X;
 
-% reshape betas and stadard deviations
-model.betas = reshape(model.betas,[1 num_preds num_vox]);
-model.stdevs = reshape(model.stdevs,[1 num_preds num_vox]);
+% compute standard deviations and standard errors of betas
+stdevs = sqrt(diag(vin) .* diag(model.var_covar) * model.resid_var);
+sems = stdevs ./ sqrt(repmat(round(sum(X))', [1 num_vox]));
+model.stdevs = reshape(stdevs, [1 num_preds num_vox]);
+model.sems = reshape(sems, [1 num_preds num_vox]);
 
 end

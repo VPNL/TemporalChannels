@@ -207,7 +207,7 @@ classdef tchROI
             % select sessions with region and find paths to data files
             roi = select_sessions(roi); fpaths = roi.filenames;
             raw_runs = cellfun(@(X) tch_load(X, 'tSeries'), fpaths, 'uni', false);
-            roi.runs = cellfun(@(X) tch_psc(X, detrend_option), raw_runs, 'uni', false);
+            roi.runs = cellfun(@(X) tch_psc(X, detrend_option, roi.tr), raw_runs, 'uni', false);
         end
         
         % check dimensionality of roi time series and model predictions
@@ -281,7 +281,7 @@ classdef tchROI
             end
         end
         
-%         % use GLM to fit channel weights for each predictor in model
+        % use GLM to fit channel weights for each predictor in model
         function [roi, model] = tch_fit(roi, model, optim_proc, fit_exps)
             if nargin < 3; optim_proc = 0; end
             if nargin < 4; fit_exps = model.experiments; end
@@ -296,18 +296,22 @@ classdef tchROI
                 b0 = cell2mat(cellfun(@(X, Y) code_stim_vec(zeros(X, nruns), 1:X, Y), ...
                     rfs(:, ss), num2cell(1:size(tcs, 1))', 'uni', false));
                 predictors = [cell2mat(model.run_preds(:, ss)) b0];
-                % fit GLM and store betas, SEMs, and variance explained
+                % fit GLM, then store betas and other parametesr
                 tc = cell2mat(tcs(:, ss)); roi.model.run_tcs{ss} = tc;
                 mm = tch_glm(tc, predictors);
                 roi.model.run_preds{ss} = predictors * mm.betas';
                 roi.model.betas{ss} = mm.betas(1:npreds);
                 roi.model.stdevs{ss} = mm.stdevs(1:npreds);
+                roi.model.sems{ss} = mm.sems(1:npreds);
                 roi.model.residual{ss} = mm.residual;
-                res_var = sum(mm.residual .^ 2) ./ sum((tc - mean(tc)) .^ 2);
-                roi.model.varexp{ss} = 1 - res_var;
-                % store paramters of nuisance regressors
+                roi.model.resid_var{ss} = mm.resid_var;
+                roi.model.var_covar{ss} = mm.var_covar;
+                resp_var = sum((tc - mean(tc)) .^ 2) / mm.dof;
+                roi.model.varexp{ss} = 1 - (mm.resid_var / resp_var);
                 roi.model.rbetas{ss} = mm.betas(npreds + 1:npreds + nruns);
                 roi.model.rstdevs{ss} = mm.stdevs(npreds + 1:npreds + nruns);
+                roi.model.rsems{ss} = mm.sems(npreds + 1:npreds + nruns);
+                roi.model.dof{ss} = mm.dof;
             end
             % optimize model parameters if applicable
             if model.optimize_flag == 1 && optim_proc == 1

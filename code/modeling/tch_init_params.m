@@ -20,9 +20,9 @@ epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for channel IRFs
 [tau_s, tau_t] = deal(4.93); n1 = 9; n2 = 10; kappa = 1.33;
 % default parameters for sigmoid functions
-[lambda_p, lambda_n] = deal(.1); [kappa_p, kappa_n] = deal(3);
+lambda_p = .1; kappa_p = 5; lambda_n = .1; kappa_n = 1;
 % exponential time constants for decay
-tau_pe = 200; tau_ae = 20000;
+tau_pe = 200; tau_ae = 10000;
 % default paramters for balloon model (see Chen & Glover, 2015)
 tauP = 25; tauN = 25; tauMTT = 2.5; alpha = 0.4; E0 = 0.4; V0 = 0.03; 
 % parameters of gamma IRF for balloon model
@@ -31,6 +31,8 @@ tau_g = 0.24; lag = 1; exponent = 2;
 params = struct; irfs = struct;
 
 switch model_type
+    case '1ch-glm'
+        irfs.hrf = repmat({hrf}, 1, nsessions);
     case '1ch-lin'
         params.tau_s = repmat({tau_s}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
@@ -181,7 +183,7 @@ switch model_type
         persist_exp = exp(-(1:12000) / tau_pe);
         irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '1ch-balloon'
+    case '1ch-clx'
         params.tauP = tauP;     % viscoelastic time constant for inflation
         params.tauN = tauN;     % viscoelastic time constant for deflation
         params.E0 = E0;         % resting oxygen extraction fraction

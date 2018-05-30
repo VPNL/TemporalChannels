@@ -1,4 +1,4 @@
-function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, sessions)
+function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, sessions, val_betas)
 % Wrapper function that fits a temporal model object (tchModel) to a region
 % time series object (tchROI) and plots the fit and predictions of the 
 % model. To validate the solution, include the optional fourth input
@@ -13,6 +13,7 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, 
 %   4) val_exps: set/s of experiments for validating the fit (optional)
 %   5) opt_proc: optimization procedure (1 = fmincon, 2 = custom two-stage)
 %   6) sessions: cell array of sessions (defaul = all)
+%   7) val_betas: vaidate betas as well as timing params (defaul = 1)
 % 
 % OUTPUTS
 %   1) roi: fitted tchROI object containing measured and predicted responses
@@ -43,6 +44,7 @@ mpath = fileparts(mfilename('fullpath')); addpath(genpath(mpath));
 if nargin < 4 || isempty(val_exps); cv_flag = 0; else; cv_flag = 1; end
 if nargin < 5 || isempty(opt_proc); opt_proc = 1; end
 if nargin < 6; sessions = []; end
+if nargin < 7; val_betas = 1; end
 
 %% Fit the model to fit_exps
 
@@ -91,7 +93,9 @@ if cv_flag
         [roi(vn), model(vn)] = tch_fit(roi(vn), model(vn), opt_proc, fit_exps);
         roi(vn) = tch_pred(roi(vn), model(vn));
         % use model fit from fit_exps to predict data in val_exps
-        roi(vn) = tch_recompute(roi(vn), model(vn), roi(1).model);
+        if val_betas == 1
+            roi(vn) = tch_recompute(roi(vn), model(vn), roi(1).model);
+        end
     end
 end
 
@@ -102,10 +106,13 @@ if cv_flag
         fname = [fname '_val' [roi(vv + 1).experiments{:}]];
     end
 end
-if opt_proc == 1
-    fpath = fullfile(roi(1).project_dir, 'results', [fname '.mat']);
-elseif opt_proc == 2
-    fpath = fullfile(roi(1).project_dir, 'results', 'custom_optimization', [fname '.mat']);
+switch opt_proc
+    case 0
+        fpath = fullfile(roi(1).project_dir, 'results', [fname '.mat']);
+    case 1
+        fpath = fullfile(roi(1).project_dir, 'results', [fname '.mat']);
+    case 2
+        fpath = fullfile(roi(1).project_dir, 'results', 'custom_optimization', [fname '.mat']);
 end
 save(fpath, 'roi', 'model', '-v7.3');
 

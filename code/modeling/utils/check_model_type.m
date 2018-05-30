@@ -10,7 +10,7 @@ function optimize_flag = check_model_type(model_type)
 % 
 % AS 10/2017
 
-valid_models = {'1ch-lin' '1ch-exp' '1ch-rect' '1ch-quad' '1ch-cquad' '1ch-sig'...
+valid_models = {'1ch-glm' '1ch-lin' '1ch-exp' '1ch-rect' '1ch-quad' '1ch-cquad' '1ch-sig'...
     '2ch-lin-rect' '2ch-exp-rect' '2ch-lin-quad' '2ch-exp-quad' ...
     '2ch-lin-cquad' '2ch-exp-cquad' '2ch-lin-sig' '2ch-exp-sig' ...
     '1ch-balloon' '1ch-pow' '1ch-div' '1ch-dcts'  '2ch-lin-lin' '2ch-lin-htd' ...
@@ -21,7 +21,7 @@ valid_models = {'1ch-lin' '1ch-exp' '1ch-rect' '1ch-quad' '1ch-cquad' '1ch-sig'.
 if sum(strcmp(model_type, valid_models)) == 0
     error('Invalid model');
 end
-no_opt_strs = {'balloon'};
+no_opt_strs = {'glm' 'balloon'};
 if contains(model_type, no_opt_strs)
     optimize_flag = 0;
 else

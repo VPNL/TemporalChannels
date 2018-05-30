@@ -219,6 +219,8 @@ classdef tchModel
             stims(empty_cells) = {[]}; model.stim = stims;
             if ~isempty(strfind(model.type, 'ch-exp'))
                 model = code_adapt_decay(model, 'exp');
+            elseif ~isempty(strfind(model.type, 'ch-as'))
+                model = code_adapt_decay(model, 'exp');
             elseif ~isempty(strfind(model.type, 'ch-cexp'))
                 model = code_adapt_decay(model, 'cexp');
             end
@@ -297,6 +299,8 @@ classdef tchModel
         % generate fMRI predictors for each session and run
         function model = pred_runs(model)
             switch model.type
+                case '1ch-glm'
+                    model = pred_runs_1ch_glm(model);
                 case '1ch-lin'
                     model = pred_runs_1ch_lin(model);
                 case '1ch-exp'
@@ -379,6 +383,8 @@ classdef tchModel
         % generate fMRI predictors for each session and trial type
         function model = pred_trials(model)
             switch model.type
+                case '1ch-glm'
+                    model = pred_trials_1ch_glm(model);
                 case '1ch-lin'
                     model = pred_trials_1ch_lin(model);
                 case '1ch-exp'

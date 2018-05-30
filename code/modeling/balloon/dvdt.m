@@ -4,7 +4,7 @@ function rate = dvdt(t, v, in_flow)
 % Adapted from code by JG (gru.stanford.edu/svn/matlab/balloonmodel.m)
 % AS 9/2017
 
-global which_tau tau_n tau_p tauMTT alpha;
+global which_tau tauN tauP tauMTT alpha;
 
 % get in_flow if it is passed by runge_kutta
 if (iscell(in_flow))
@@ -12,9 +12,9 @@ if (iscell(in_flow))
 end
 
 if (which_tau == 1)
-    rate = ((1 / tauMTT) * (in_flow - v ^ (1 / alpha))) / (1 + (tau_p / tauMTT));
+    rate = ((1 / tauMTT) * (in_flow - v ^ (1 / alpha))) / (1 + (tauP / tauMTT));
 else
-    rate = ((1 / tauMTT) * (in_flow - v ^ (1 / alpha))) / (1 + (tau_n / tauMTT));
+    rate = ((1 / tauMTT) * (in_flow - v ^ (1 / alpha))) / (1 + (tauN / tauMTT));
 end
 
 if rate < 0
