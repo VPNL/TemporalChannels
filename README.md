@@ -104,7 +104,7 @@ The `tch_model_roi` wrapper function is used to fit and validate various tempora
 
 4. Model timing and compression parameters are optimized for each session when applicable.
     1. Optimized parameters are stored in a struct `roi(1).model.params` with each field containing a different parameter (e.g., `roi(1).model.params.tau_s(N)` contains the optimized IRF time constant for the *N*-th session). 
-    2. Default parameters are applied when no optimization option is selected.
+    2. Default parameters are applied when no optimization option is selected (see [tch_init_params.m](https://github.com/VPNL/TemporalChannels/blob/master/code/modeling/tch_init_params.m) for more details).
  
 5. Fitted β weights (and optimized parameters) are used to predict responses to each trial type.
     1. The average response to each trial type is stored in a 3D cell array `roi(1).trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_avgs(:, N, K)` contains the average response to each trial type in the *K*-th experiment of the *N*-th session).
