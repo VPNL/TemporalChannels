@@ -20,7 +20,7 @@ epsilon = 0.1; tau1 = 100; tau2 = 150; sigma = 0.1;
 % default paramters for channel IRFs
 [tau_s, tau_t] = deal(4.93); n1 = 9; n2 = 10; kappa = 1.33;
 % default parameters for sigmoid functions
-lambda_p = .1; kappa_p = 5; lambda_n = .1; kappa_n = 1;
+lambda_p = .1; kappa_p = 3; lambda_n = .1; kappa_n = 3;
 % exponential time constants for decay
 tau_pe = 200; tau_ae = 10000;
 % default paramters for balloon model (see Chen & Glover, 2015)
