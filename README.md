@@ -5,7 +5,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
 - The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions.
 - Functions from the Optimization and Symbolic Math Toolboxes are used in some analyses. 
 - An example dataset is available [here](https://osf.io/mw5pk) (archive is **20 GB**). 
-- Please cite our paper if you use the code in this repository: [https://doi.org/10.1073/pnas.1704877114]
+- Please cite our papers if you use the code in this repository: https://doi.org/10.1073/pnas.1704877114 and https://www.biorxiv.org/content/biorxiv/early/2018/06/29/358473.full.pdf
 - *Disclaimer:* It is important to vary experimental timing parameters (e.g., stimulus and ISI durations) in data used for model fitting to minimize collinearity between channel predictors and constrain the solution of the model. 
 * * *
 *Contents:*
@@ -28,7 +28,7 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
  
 ### Organizing the data directory
  
-To work with the example dataset, download the [data archives](https://osf.io/mw5pk) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
+To work with the example dataset from our [paper](https://doi.org/10.1073/pnas.1704877114), download the [data archives](https://osf.io/mw5pk) and extract all session directories in `~/TemporalChannels/data/` of your local branch of the repository. 
  
 To work with your own dataset, create a separate directory for each experimental session in  `~/TemporalChannels/data/`. Here, a *session* is an fMRI scan session for a single participant comprised of a series of runs acquired with the same scan settings (slice prescription, voxel size, etc.). Therefore, a single participant can have multiple session directories (e.g., from experiments on different days). Data used for model fitting should vary experimental timing parameters and ideally contain prolonged baseline periods (≥12 s) to allow consistent baseline subtraction across different conditions and experiments.  
  
@@ -99,12 +99,16 @@ The `tch_model_roi` wrapper function is used to fit and validate various tempora
 3. Response amplitudes (*β* weights) for each predictor in the model are estimated separately for each session using a general linear model (GLM).
     1. Fitted *β* weights for each predictor are stored in a 1D cell array `roi(1).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(1).model.betas(N)` contains the *β* weights for the *N*-th session). For multi-channel models, weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel.
     2. Model performance (*R*^2) is calculated across all experiments and stored in a 1D cell array `roi(1).model.varexp` with each cell indexing model performance for a single session (e.g., `roi(1).model.varexp(N)` contains *R*^2 for the *N*-th session).
+
+4. When applicable, model timing and compression parameters are optimized for each session.
+    1. Optimized parameters are stored in a struct `roi(1).model.params` with each field containing the model parameters for different parameter (e.g., `roi(1).model.params.tau_s(N)` contains the optimized IRF time constant for the *N*-th session). 
+    2. Default parameters are applied when no optimization option is selected.
  
-4. Fitted β weights are used to predict responses to each trial type.
+5. Fitted β weights (and optimized parameters) are used to predict responses to each trial type.
     1. The average response to each trial type is stored in a 3D cell array `roi(1).trial_avgs` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_avgs(:, N, K)` contains the average response to each trial type in the *K*-th experiment of the *N*-th session).
     2. The predicted fMRI response to each trial type is stored in a 3D cell array `roi(1).trial_preds` with each row indexing a trial type, each column indexing a session, and each slice indexing an experiment (e.g., `roi(1).trial_preds(:, N, K)` contains the predicted response to each trial type in the *K*-th experiment of the *N*-th session).
  
-5. Model validation is performed using the fitted *β* weights to predict responses in independent data.
+6. Model validation is performed using the fitted *β* weights (and optimized parameters) to predict responses in independent data.
     1. *β* weights fitted to independent data are stored in a 1D cell array `roi(2).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(2).model.betas(N)` contains the *β* weights for the *N*-th session fitted to data in `roi(1)`).
     2. Model performance (*R*^2) is calculated for each session across all experiments in the validation data and stored in a 1D cell array `roi(2).model.varexp` with each cell indexing validation performance for a single session (e.g., `roi(2).model.varexp(N)` contains validated *R*^2 for the *N*-th session).
  
@@ -121,11 +125,13 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
         3. `‘1ch-balloon’` — nonlinear hemodynamic balloon model (Buxton et al., 1998)
     2. Single-channel models (solved with optimized time/compression parameters)
         1. `‘1ch-lin’` — optimized linear sustained channel
-        2. `‘1ch-pow’` — compressive temporal summation (CTS) model with power law (CTS-p; Zhou et al., 2018)
-        3. `‘1ch-div’` — CTS model with divisive normalization (CTS-n; Zhou et al., 2018)
-        4. `‘1ch-dcts’` — dynamic CTS model (dCTS; Zhou et al., 2018)
-        5. `‘1ch-exp’` — adaptation model with exponential decay
-        6. `‘1ch-sig’` — optimized transient channel with sigmoid nonlinearity
+        2. `‘1ch-exp’` — adaptation model with exponential decay
+        3. `‘1ch-pow’` — compressive temporal summation (CTS) model with power law (CTS-p; Zhou et al., 2018)
+        4. `‘1ch-div’` — CTS model with divisive normalization (CTS-n; Zhou et al., 2018)
+        5. `‘1ch-dcts’` — dynamic CTS model (dCTS; Zhou et al., 2018)
+        6. `‘1ch-rect’` — optimized transient channel with rectification nonlinearity
+        7. `‘1ch-quad’` — optimized transient channel with quadratic nonlinearity
+        8. `‘1ch-sig’` — optimized transient channel with sigmoid nonlinearity
     3. Two-channel models (solved with optimized time/compression parameters)
         1. `‘2ch-lin-quad’` — linear sustained and quadratic transient channels (Stigliani et al., 2017)
         2. `‘2ch-lin-rect’` — linear sustained and rectified transient channels
@@ -133,18 +139,13 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
         4. `‘2ch-pow-rect’` — sustained with CTS-p and rectified transient channels
         5. `‘2ch-exp-quad’` — sustained with adaptation and quadratic transient channels
         6. `‘2ch-exp-rect’` — sustained with adaptation and rectified transient channels
-        7. `‘2ch-exp-sig’` — sustained with adaptation and transient with sigmoid nonlinearity (A+S model)
-    4. Three-channel models (solved with optimized time/compression parameters)
-        1. `‘3ch-lin-quad-exp’` — linear sustained, quadratic transient, and persistent channels
-        2. `‘3ch-lin-rect-exp’` — linear sustained, rectified transient, and persistent channels
-        3. `‘3ch-pow-quad-exp’` — sustained with CTS-p, quadratic transient, and persistent channels
-        4. `‘3ch-pow-rect-exp’` — sustained with CTS-p, rectified transient, and persistent channels
-        5. `‘3ch-exp-quad-exp’` — sustained with adaptation, quadratic transient, and persistent channels
-        6. `‘3ch-exp-rect-exp’` — sustained with adaptation, rectified transient, and persistent channels
+        7. `‘2ch-exp-sig’` — sustained with adaptation and transient with sigmoid nonlinearity (A+S)
  
 3. *fit_exps* — which experiment/s to use for fitting the model (e.g., `{'Exp1' 'Exp2'}`) with experiment names matching the stems of filenames in the session Stimuli directories (`~/TemporalChannels/data/*/Stimuli/`).
  
 4. *val_exps* — optional argument specifying which experiment/s to use for validating the model (e.g., `{'Exp3' 'Exp4'}`). To assess validation accuracy independently for multiple experiments or sets of experiments, you can also pass a 2D cell array with different validation sets in different rows (e.g., passing `{'Exp3'; 'Exp4'}` calculates validation accuracy for each experiment individually). 
+
+5. *optim_proc* — optional argument specifying which optimization procedure to use (0 = no optimization, 1 = fmincon, 2 = custom two stage). 
  
 #### Outputs
  
@@ -154,7 +155,8 @@ After fitting a model to data from each session, the function plots the session-
     1. `roi(1).run_avgs` — contains average time series for each run in *fit_exps* (see `roi(2).run_avgs` for the first set of *val_exps* if applicable)
     2. `roi(1).trial_avgs` —  contains average time series for each trial type in *fit_exps* (see `roi(2).trial_avgs` for the first set of *val_exps*)
     3. `roi(1).model` — contains model fits and *R*^2 (see `roi(2).model` for the first set of *val_exps*)
-    4. See properties in `tchROI` class file for more details ([`~/TemporalChannels/functions/tchROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchROI.m))
+    4. `roi(1).model.params` — contains optimized model timing and compression parameters if applicable (see `roi(1).model.params` for a list of optimized parameters)
+    5. See properties in `tchROI` class file for more details ([`~/TemporalChannels/functions/tchROI.m`](https://github.com/VPNL/TemporalChannels/blob/master/code/tchROI.m))
  
 2. *model* — object of the class `tchModel` that stores channel predictors for each session.
     1. `model(1).run_preds` — contains predictors for each run in *fit_exps* (see `model(2).run_preds` for the first set of *val_exps* if applicable)
@@ -221,9 +223,13 @@ Example of fitting a two-channel model using V1 data from Exp1 & Exp2:
  
     [roi, model] = tch_model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'});
  
-Example of fitting a GLM using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
+Example of fitting a two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
  
     [roi, model] = tch_model_roi(‘V1', '1ch-lin', {‘Exp1’ 'Exp2'}, 'Exp3');
+
+Example of fitting and optimizing a two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
+ 
+    [roi, model] = tch_model_roi(‘V1', '1ch-lin', {‘Exp1’ 'Exp2'}, 'Exp3', 1);
  
 ### Using tchModel class methods
  
@@ -243,7 +249,7 @@ Example of creating predictors using a tchModel object (`model`):
  
 The `tchROI.m` class file defines a class of objects that store and operate on fMRI time series for a given region of interest using the methods listed in the example below.
  
-Example of fitting a model to a tchROI object (`roi`):
+Example of fitting and optimizing a model to a tchROI object (`roi`):
  
     roi_name = 'V1';                  % name of region to model
     fit_exps = {'Exp1' 'Exp2'};       % list of experiments for fitting
@@ -251,7 +257,7 @@ Example of fitting a model to a tchROI object (`roi`):
     roi = tch_runs(roi);              % preprocess run time series
     roi = tch_trials(roi, model);     % compile responses to each trial
     roi = tch_noise_ceil(roi);        % estimate noise ceiling for each region
-    roi = tch_fit(roi, model);        % fit model for each session
+    roi = tch_fit(roi, model, 1);     % fit model for each session
     roi = tch_pred(roi, model);       % predict responses for each trial type
  
 Plot mean response across all sessions for each trial type in experiments:

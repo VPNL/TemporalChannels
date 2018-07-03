@@ -3,7 +3,7 @@ function irf = tch_irfs(channel, tau, n1, n2, kappa, fs)
 % the formulation outlined by Watson (1986).
 % 
 % INPUT
-%   1) channel: 'S' (sustained), 'T' (transient), or 'P' (persistent)
+%   1) channel: 'S' (sustained) or 'T' (transient)
 %   2) tau: time constant of excitatory mechanism (ms)
 %   3) n1: number of stages in excitatory mechanism
 %   4) n2: number of stages in inhibitory mechanism
@@ -16,6 +16,9 @@ function irf = tch_irfs(channel, tau, n1, n2, kappa, fs)
 % AS 2/2017
 
 channel = upper(channel(1));
+if sum(strcmp(channel, {'S' 'T'})) ~= 1
+    error('Channel input must be "S" or "T"');
+end
 if nargin < 2; tau = 4.93; end
 if nargin < 3; n1 = 9; end
 if nargin < 4; n2 = 10; end
@@ -37,10 +40,9 @@ end
 % derive sustained and transient IRFs
 irfS = f1;
 irfT = f1 - f2;
-irfP = f2 - f1;
+
 % normalize max of IRFs
 irfT = irfT * (max(irfS) / max(irfT));
-irfP = irfP * (max(irfS) / max(irfP));
 
 % output sustained or transient IRF
 switch channel
@@ -48,10 +50,6 @@ switch channel
         irf = resample(irfS, 1, 1000 / fs)';
     case 'T'
         irf = resample(irfT, 1, 1000 / fs)';
-    case 'P'
-        irf = resample(irfP, 1, 1000 / fs)';
-    otherwise
-        error('Unexpected channel input.');
 end
 
 % clip values from end that are close to zero for efficiency

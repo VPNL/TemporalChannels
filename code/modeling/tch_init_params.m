@@ -46,144 +46,7 @@ switch model_type
         params.tau_ae = repmat({tau_ae}, 1, nsessions);
         adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-    case '1ch-rect'
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '1ch-quad'
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '1ch-cquad'
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '1ch-sig'
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.lambda_p = repmat({lambda_p}, 1, nsessions);
-        % params.lambda_n = repmat({lambda_n}, 1, nsessions);
-        params.kappa_p = repmat({kappa_p}, 1, nsessions);
-        params.kappa_n = repmat({kappa_n}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-lin-rect'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-rect'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-    case '2ch-lin-quad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-quad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-lin-cquad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-cquad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-lin-sig'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.lambda_p = repmat({lambda_p}, 1, nsessions);
-        params.kappa_p = repmat({kappa_p}, 1, nsessions);
-        params.kappa_n = repmat({kappa_n}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-sig'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        params.lambda_p = repmat({lambda_p}, 1, nsessions);
-        % params.lambda_n = repmat({lambda_n}, 1, nsessions);
-        params.kappa_p = repmat({kappa_p}, 1, nsessions);
-        params.kappa_n = repmat({kappa_n}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-crect'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '3ch-exp-crect-crect'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '3ch-exp-cquad-rect'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        params.tau_t = repmat({tau_t}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        %params.tau_p = repmat({tau_p}, 1, nsessions);
-        %nrfP = tch_irfs('P', tau_p, n1, n2, kappa, fs);
-        %irfs.nrfP = repmat({nrfP}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '1ch-clx'
+    case '1ch-balloon'
         params.tauP = tauP;     % viscoelastic time constant for inflation
         params.tauN = tauN;     % viscoelastic time constant for deflation
         params.E0 = E0;         % resting oxygen extraction fraction
@@ -221,14 +84,61 @@ switch model_type
         nrfS = resample(nrfS/sum(nrfS), 1, 1000 / fs)';
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '1ch-rect'
+        params.tau_t = repmat({tau_t}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '1ch-quad'
+        params.tau_t = repmat({tau_t}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '1ch-sig'
+        params.tau_t = repmat({tau_t}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        params.lambda_p = repmat({lambda_p}, 1, nsessions);
+        % params.lambda_n = repmat({lambda_n}, 1, nsessions);
+        params.kappa_p = repmat({kappa_p}, 1, nsessions);
+        params.kappa_n = repmat({kappa_n}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
     case '2ch-lin-htd'
         irfs.hrf = repmat({hrf}, 1, nsessions);
         irfs.dhrf = repmat({dhrf}, 1, nsessions);
-    case '2ch-lin-lin'
+    case '2ch-lin-rect'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '2ch-exp-rect'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+    case '2ch-lin-quad'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        irfs.hrf = repmat({hrf}, 1, nsessions);
+    case '2ch-exp-quad'
+        params.tau_s = repmat({tau_s}, 1, nsessions);
+        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
+        irfs.nrfS = repmat({nrfS}, 1, nsessions);
+        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
+        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        params.tau_ae = repmat({tau_ae}, 1, nsessions);
+        adapt_exp = exp(-(1:60000) / tau_ae);
+        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
     case '2ch-pow-quad'
         params.epsilon = repmat({epsilon}, 1, nsessions);
@@ -244,132 +154,29 @@ switch model_type
         nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-div-quad'
-        params.sigma = repmat({sigma}, 1, nsessions);
-        nrfS = watson_irfs('S', fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = watson_irfs('T', fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-dcts-quad'
-        params.tau2 = repmat({tau2}, 1, nsessions);
-        params.sigma = repmat({0.1}, 1, nsessions);
-        lpf = exp(-(0:999) / tau2); lpf = lpf / sum(lpf);
-        irfs.lpf = repmat({lpf}, 1, nsessions);
-        nrfS = watson_irfs('S', fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = watson_irfs('T', fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '3ch-lin-quad-exp'
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-lin-rect-exp'
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-pow-quad-exp'
-        params.epsilon = repmat({epsilon}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-pow-rect-exp'
-        params.epsilon = repmat({epsilon}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-exp-quad-exp'
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-exp-rect-exp'
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_t, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-    case '3ch-exp-quad-exp-opt'
+    case '2ch-lin-sig'
         params.tau_s = repmat({tau_s}, 1, nsessions);
-        params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        params.tau_pe = repmat({tau_pe}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        adapt_exp = exp(-(1:60000) / tau_ae);
-        persist_exp = exp(-(1:12000) / tau_pe);
-        irfs.persist_exp = repmat({persist_exp}, 1, nsessions);
-        irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
+        params.lambda_p = repmat({lambda_p}, 1, nsessions);
+        params.kappa_p = repmat({kappa_p}, 1, nsessions);
+        params.kappa_n = repmat({kappa_n}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-lin-crect'
+    case '2ch-exp-sig'
         params.tau_s = repmat({tau_s}, 1, nsessions);
-        params.epsilon = repmat({epsilon}, 1, nsessions);
         nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
         irfs.nrfS = repmat({nrfS}, 1, nsessions);
         nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
         irfs.nrfT = repmat({nrfT}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-exp-dquad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
         params.tau_ae = repmat({tau_ae}, 1, nsessions);
-        params.sigma = repmat({sigma}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
         adapt_exp = exp(-(1:60000) / tau_ae);
         irfs.adapt_exp = repmat({adapt_exp}, 1, nsessions);
-        irfs.hrf = repmat({hrf}, 1, nsessions);
-    case '2ch-lin-dquad'
-        params.tau_s = repmat({tau_s}, 1, nsessions);
-        params.sigma = repmat({sigma}, 1, nsessions);
-        nrfS = tch_irfs('S', tau_s, n1, n2, kappa, fs);
-        irfs.nrfS = repmat({nrfS}, 1, nsessions);
-        nrfT = tch_irfs('T', tau_s, n1, n2, kappa, fs);
-        irfs.nrfT = repmat({nrfT}, 1, nsessions);
+        params.lambda_p = repmat({lambda_p}, 1, nsessions);
+        % params.lambda_n = repmat({lambda_n}, 1, nsessions);
+        params.kappa_p = repmat({kappa_p}, 1, nsessions);
+        params.kappa_n = repmat({kappa_n}, 1, nsessions);
         irfs.hrf = repmat({hrf}, 1, nsessions);
 end
 

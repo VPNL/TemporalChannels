@@ -38,14 +38,10 @@ for pp = 1:length(param_names)
             plims{pp} = [1 50];
         case 'tau_t'
             plims{pp} = [1 50];
-        case 'tau_d'
-            plims{pp} = [1 50];
         case 'kappa'
             plims{pp} = [1 10];
         case 'tau_ae'
             plims{pp} = [100 60000];
-        case 'tau_pe'
-            plims{pp} = [10 12000];
     end
     params_grid{pp} = linspace(plims{pp}(1), plims{pp}(2), grid_size);
 end

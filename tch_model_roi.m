@@ -1,4 +1,4 @@
-function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, sessions, val_betas)
+function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, sessions)
 % Wrapper function that fits a temporal model object (tchModel) to a region
 % time series object (tchROI) and plots the fit and predictions of the 
 % model. To validate the solution, include the optional fourth input
@@ -11,9 +11,8 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, 
 %   2) type: which type of model to use
 %   3) fit_exps: set of experiments for fitting the model (e.g., {'Exp1' 'Exp2'})
 %   4) val_exps: set/s of experiments for validating the fit (optional)
-%   5) opt_proc: optimization procedure (1 = fmincon, 2 = custom two-stage)
+%   5) opt_proc: optimization procedure (0 = no optimization, 1 = fmincon, 2 = custom two-stage)
 %   6) sessions: cell array of sessions (defaul = all)
-%   7) val_betas: vaidate betas as well as timing params (defaul = 1)
 % 
 % OUTPUTS
 %   1) roi: fitted tchROI object containing measured and predicted responses
@@ -21,20 +20,17 @@ function [roi, model] = tch_model_roi(name, type, fit_exps, val_exps, opt_proc, 
 % 
 % EXAMPLES
 % 
-% Fit a single-channel GLM to multiple experiments in V1:
-% [roi, model] = tch_model_roi('V1', '1ch-lin', {'Exp1' 'Exp2' 'Exp3'});
+% Fit a single-channel linear model to multiple experiments in V1:
+% [roi, model] = tch_model_roi('V1', '1ch-lin', {'Exp1' 'Exp2'});
 % 
-% Validate the fit of GLM across data from multiple experiments:
-% [roi, model] = tch_model_roi('V1', '1ch-lin', {'Exp1' 'Exp2'}, {'Exp3' 'Exp4'});
+% Validate the solution of this model in another experiment:
+% [roi, model] = tch_model_roi('V1', '1ch-lin', {'Exp1' 'Exp2'}, {'Exp3'});
 %
-% Validate the fit of GLM on data separately for each validation experiment:
-% [roi, model] = tch_model_roi('V1', '1ch-lin', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
+% Optimize A+S model using fmincon and validate fit:
+% [roi, model] = tch_model_roi('V1', '2ch-exp-sig', {'Exp1' 'Exp2'}, {'Exp3'}, 1);
 % 
-% Optimize CTS-power model using fmincon and validate fit:
-% [roi, model] = tch_model_roi('V1', '1ch-pow', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'}, [], );
-% 
-% Validate the fit of GLM on data separately for each validation experiment:
-% [roi, model] = tch_model_roi('V1', '2ch-lin-quad', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'; 'Exp3'; 'Exp4'});
+% Validate the fit of this A+S model for each fit experiment:
+% [roi, model] = tch_model_roi('V1', '2ch-exp-sig', {'Exp1' 'Exp2'}, {'Exp1'; 'Exp2'}, 1);
 % 
 % AS 2/2017
 
@@ -44,7 +40,6 @@ mpath = fileparts(mfilename('fullpath')); addpath(genpath(mpath));
 if nargin < 4 || isempty(val_exps); cv_flag = 0; else; cv_flag = 1; end
 if nargin < 5 || isempty(opt_proc); opt_proc = 1; end
 if nargin < 6; sessions = []; end
-if nargin < 7; val_betas = 1; end
 
 %% Fit the model to fit_exps
 
@@ -93,9 +88,7 @@ if cv_flag
         [roi(vn), model(vn)] = tch_fit(roi(vn), model(vn), opt_proc, fit_exps);
         roi(vn) = tch_pred(roi(vn), model(vn));
         % use model fit from fit_exps to predict data in val_exps
-        if val_betas == 1
-            roi(vn) = tch_recompute(roi(vn), model(vn), roi(1).model);
-        end
+        roi(vn) = tch_recompute(roi(vn), model(vn), roi(1).model);
     end
 end
 
