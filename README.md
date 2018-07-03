@@ -147,7 +147,10 @@ Fitting a model using the `tch_model_roi` function requires passing at least thr
  
 4. *val_exps* — optional argument specifying which experiment/s to use for validating the model (e.g., `{'Exp3' 'Exp4'}`). To assess validation accuracy independently for multiple experiments or sets of experiments, you can also pass a 2D cell array with different validation sets in different rows (e.g., passing `{'Exp3'; 'Exp4'}` calculates validation accuracy for each experiment individually). 
 
-5. *optim_proc* — optional argument specifying which optimization procedure to use (0 = no optimization, 1 = fmincon, 2 = custom two stage). 
+5. *optim_proc* — optional argument specifying which optimization procedure to use.
+    1. 0 = no optimization (default)
+    2. 1 = fmincon method (recommended)
+    3. 2 = custom two-stage procedure
  
 #### Outputs
  
