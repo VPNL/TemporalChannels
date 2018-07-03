@@ -102,8 +102,8 @@ The `tch_model_roi` wrapper function is used to fit and validate various tempora
     1. Fitted *β* weights for each predictor are stored in a 1D cell array `roi(1).model.betas` with each cell containing the model solution for an individual session (e.g., `roi(1).model.betas(N)` contains the *β* weights for the *N*-th session). For multi-channel models, weights are organized such that *β*s from the sustained channel are indexed before *β*s from the transient channel.
     2. Model performance (*R*^2) is calculated across all experiments and stored in a 1D cell array `roi(1).model.varexp` with each cell indexing model performance for a single session (e.g., `roi(1).model.varexp(N)` contains *R*^2 for the *N*-th session).
 
-4. When applicable, model timing and compression parameters are optimized for each session.
-    1. Optimized parameters are stored in a struct `roi(1).model.params` with each field containing the model parameters for different parameter (e.g., `roi(1).model.params.tau_s(N)` contains the optimized IRF time constant for the *N*-th session). 
+4. Model timing and compression parameters are optimized for each session when applicable.
+    1. Optimized parameters are stored in a struct `roi(1).model.params` with each field containing a different parameter (e.g., `roi(1).model.params.tau_s(N)` contains the optimized IRF time constant for the *N*-th session). 
     2. Default parameters are applied when no optimization option is selected.
  
 5. Fitted β weights (and optimized parameters) are used to predict responses to each trial type.
