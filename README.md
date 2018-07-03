@@ -5,7 +5,9 @@ Code for modeling fMRI responses to time-varying stimuli using a temporal channe
 - The code in this repository is compatible with [MATLAB](https://www.mathworks.com) R2016b and later versions.
 - Functions from the Optimization and Symbolic Math Toolboxes are used in some analyses. 
 - An example dataset is available [here](https://osf.io/mw5pk) (archive is **20 GB**). 
-- Please cite our papers if you use the code in this repository: https://doi.org/10.1073/pnas.1704877114 and https://www.biorxiv.org/content/biorxiv/early/2018/06/29/358473.full.pdf
+- Please cite our papers if you use the code in this repository: 
+  - https://doi.org/10.1073/pnas.1704877114
+  - https://www.biorxiv.org/content/biorxiv/early/2018/06/29/358473.full.pdf
 - *Disclaimer:* It is important to vary experimental timing parameters (e.g., stimulus and ISI durations) in data used for model fitting to minimize collinearity between channel predictors and constrain the solution of the model. 
 * * *
 *Contents:*
