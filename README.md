@@ -224,17 +224,17 @@ By default, outputs are saved in the results directory (`~/TemporalChannels/resu
  
 ### Using the tch_model_roi function
  
-Example of fitting a two-channel model using V1 data from Exp1 & Exp2:
+Fitting a stock two-channel model to V1 data from Exp1 & Exp2:
  
     [roi, model] = tch_model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'});
  
-Example of fitting a two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
+Fitting a stock two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
  
-    [roi, model] = tch_model_roi(‘V1', '1ch-lin', {‘Exp1’ 'Exp2'}, 'Exp3');
+    [roi, model] = tch_model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'}, 'Exp3');
 
-Example of fitting and optimizing a two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
+Optimizing a two-channel model using V1 data from Exp1 & Exp2 and then validating on V1 data from Exp3:
  
-    [roi, model] = tch_model_roi(‘V1', '1ch-lin', {‘Exp1’ 'Exp2'}, 'Exp3', 1);
+    [roi, model] = tch_model_roi(‘V1', '2ch-lin-quad', {‘Exp1’ 'Exp2'}, 'Exp3', 1);
  
 ### Using tchModel class methods
  
